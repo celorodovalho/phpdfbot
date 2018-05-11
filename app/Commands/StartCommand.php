@@ -34,9 +34,13 @@ class StartCommand extends Command
         $text = '';
         $keys = [];
         $inline_keyboard = [
+//             [
+//               'text' => "PHPDFBOT",
+//               'url' => 'https://t.me/phpdfb'
+//             ],
             [
-              'text' => "PHPDF",
-              'url' => 'https://t.me/phpdf'
+              'text' => "Leia as Regras",
+              'url' => 'https://t.me/phpdf/8726'
             ],
             [
               'text' => "Vagas",
@@ -53,7 +57,7 @@ class StartCommand extends Command
 
         $this->replyWithMessage([
             'parse_mode' => 'Markdown',
-            'text' => "Olá " . $name . '! Bem-vindo ao @phpdfbot. Por favor veja as vagas em @phpdfvagas ou junte-se à nossa comunidade @phpdf!',
+            'text' => "Olá " . $name . '! Bem-vindo ao @phpdf. Ao entrar, leia nossas regras e se quiser confira nosso canal de vagas:',
             'reply_markup' => json_encode([
                 'inline_keyboard' => [$inline_keyboard],
 //                 'keyboard' => [$keys],

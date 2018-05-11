@@ -25,5 +25,6 @@ Route::group(['middleware' => ['web']], function () {
     Route::any('/sendChannelMessage', 'Bot\DefaultController@sendChannelMessage');
     Route::any('/crawler', 'Bot\DefaultController@crawler');
     Route::any('/resume/{email}', 'Bot\DefaultController@sendResume');
+    Route::any('/notify', 'Bot\DefaultController@notifyGroup');
 });
 
