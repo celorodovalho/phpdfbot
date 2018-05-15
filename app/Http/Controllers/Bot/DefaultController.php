@@ -264,6 +264,7 @@ class DefaultController extends Controller
         ])
       ]);
       Storage::put($vagasEnviadas, '');
+      return response()->json(['status'=>'success', 'results' => 'ok']);
     } catch (\Exception $ex) {
       throw $ex;
     }
@@ -276,9 +277,7 @@ class DefaultController extends Controller
       $this->getComoequetala();
       $this->getQueroworkar();
      
-      return response()->json([
-        'results' => 'ok'
-      ]);
+      return response()->json(['status'=>'success', 'results' => 'ok']);
     } catch (\Exception $e) {
       Log::info('EX', [$e]);
       return response()->json([
@@ -308,7 +307,7 @@ class DefaultController extends Controller
     $client = new Client();
     $res = preg_match_all("/(castgroup|stefanini)/i",$email);
     if (!$res) {
-      //$crawler = $client->request('GET', 'https://marcelorodovalho.com.br/rodovalhos-bot/public/index.php/resume/'.$email);
+      $crawler = $client->request('GET', 'https://marcelorodovalho.com.br/rodovalhos-bot/public/index.php/resume/'.$email);
     }
   }
   
