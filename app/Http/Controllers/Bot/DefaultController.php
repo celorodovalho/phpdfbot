@@ -98,12 +98,6 @@ class DefaultController extends Controller
 
         die;
     }
-
-    public function mail()
-    {
-      Mail::to('marcelo2208@gmail.com')->send(new Resume());
-      die;
-    }
   
 //   private $channel = 144068960;
   private $channel = '@phpdfvagas';
@@ -133,40 +127,47 @@ class DefaultController extends Controller
               Storage::put($threadId, $threadId);
             }
             $subject = "@phpdfbot\r\n\r\n*".(isset($body['subject']) ? $body['subject'] : 'Vagas @phpdf')."*\r\n\r\n";
-            if(isset($body['image'])) {
-                $url = $body['image'];
-                if (filter_var($body['image'], FILTER_VALIDATE_URL) === false) {
-                    $filename = 'img/phpdfbot-'.time().".png";
-                    $pngUrl = public_path().'/'.$filename;
-                    $image = base64_decode($body['image']);
-                    Storage::disk('uploads')->put($filename, $image);
-                    $url = Storage::disk('uploads')->url($filename);   
-                } else {
-                    $image = file_get_contents($url);
-                }
-                $msg = '';
-                if (isset($body['message'])) {
-//                   $msg = strip_tags($body['message']);
-//                   $msg = str_replace(['*','_','`'], '', $msg);
-//                   $msg = str_split($msg, 200-strlen($subject));
-//                   $msg = reset($msg);
-                }
-                
-                if ($image) {
-                  $textFromImage = $this->extractTextFromImage($image);
-                  if ($textFromImage && strlen(trim($textFromImage['text'])) > 0) {
-                    $tMsg = Telegram::sendPhoto([
-                        'chat_id' => $this->channel,
-                        'photo' => $url,
-                        'caption' => $subject, //.$msg,
-                        'parse_mode' => 'Markdown'
-                    ]);
-                    $textFromImage = $textFromImage['text'];
-//                   $textFromImage = str_replace(['*','_','`'], '', $textFromImage);
-                    if(!isset($body['message'])) {
-                      $body['message'] = $textFromImage;
-                    } else {
-                      $body['message'] .= $textFromImage;
+            if(isset($body['image']) && is_array($body['image'])) {
+                foreach($body['image'] as $img) {
+                  $url = $img;
+                  if (filter_var($img, FILTER_VALIDATE_URL) === false) {
+                      $filename = 'img/phpdfbot-'.time().".png";
+                      $pngUrl = public_path().'/'.$filename;
+                      $image = base64_decode($img);
+                      Storage::disk('uploads')->put($filename, $image);
+                      $url = Storage::disk('uploads')->url($filename);   
+                  } else {
+                      $image = file_get_contents($url);
+                  }
+                  $msg = '';
+                  if (isset($body['message'])) {
+  //                   $msg = strip_tags($body['message']);
+  //                   $msg = str_replace(['*','_','`'], '', $msg);
+  //                   $msg = str_split($msg, 200-strlen($subject));
+  //                   $msg = reset($msg);
+                  }
+
+                  if ($image) {
+                    $textFromImage = $this->extractTextFromImage($image);
+                    if ($textFromImage && strlen(trim($textFromImage['text'])) > 0) {
+                      $tPhoto = Telegram::sendPhoto([
+                          'chat_id' => $this->channel,
+                          'photo' => $url,
+                          'caption' => $subject, //.$msg,
+                          'parse_mode' => 'Markdown'
+                      ]);
+                      $textFromImage = $textFromImage['text'];
+                      $textFromImage = str_replace(['*','_','`'], '', $textFromImage);
+                      $tMsg = Telegram::sendMessage([
+                          'reply_to_message_id' => $tPhoto->getMessageId(),
+                          'chat_id' => $this->channel,
+                          'text' => $textFromImage,
+                      ]);
+                      if(!isset($body['message'])) {
+                        $body['message'] = $textFromImage;
+                      } else {
+                        $body['message'] .= $textFromImage;
+                      }
                     }
                   }
                 }
@@ -178,7 +179,7 @@ class DefaultController extends Controller
                 //$bodyStr = strip_tags($bodyStr);
                 $bodyStr = trim($bodyStr, " \t\n\r\0\x0B-");
                 $bodyStr = str_replace('##', '`', $bodyStr);
-                $bodyStr = str_replace(['>>'], '', $bodyStr);
+                $bodyStr = str_replace(['>>','--'], '', $bodyStr);
                 $lines = explode(PHP_EOL, $bodyStr);
                 foreach ($lines as $key => $line) {
                   $line = trim($line);
@@ -305,9 +306,9 @@ class DefaultController extends Controller
   {
     $email = is_array($email) ? reset($email) : $email;
     $client = new Client();
-    $res = preg_match_all("/(castgroup|stefanini)/i",$email);
+    $res = preg_match_all("/(castgroup|stefanini|engesoftware|indra|otimicar|montreal)/i",$email);
     if (!$res) {
-      $crawler = $client->request('GET', 'https://marcelorodovalho.com.br/rodovalhos-bot/public/index.php/resume/'.$email);
+      $crawler = $client->request('GET', env("RESUME_URL").$email);
     }
   }
   
@@ -328,11 +329,17 @@ class DefaultController extends Controller
     $matches1 = preg_match_all("/(bras[íi]lia|distrito federal|df|bsb)/i",$words);
     $matches2 = preg_match_all("/(php|full[ -]*stack|arquiteto|(front|back)[ -]*end)/i",$words);
     $matches3 = preg_match_all("/(\.net|java(?!script)|(asp|dot)[ \.-]net|)/i",$words);
-    if ($matches1
-        && $matches2
-        && $matches3
+    Log::info('MATCHS', [
+      'matches1' => $matches1,
+      'matches2' => $matches2,
+      'matches3' => !$matches2,
+    ]);
+    if (
+//       $matches1
+//         && $matches2
+//         && !$matches3
 //       (strpos($words, 'brasília') !== false || strpos($words, 'brasilia') !== false || strpos($words, 'distrito federal') !== false || strpos($words, 'df') !== false || strpos($words, 'bsb') !== false)
-//       && (strpos($words, 'php') !== false || strpos($words, 'fullstack') !== false || strpos($words, 'full-stack') !== false || strpos($words, 'full stack') !== false || strpos($words, 'arquiteto') !== false || strpos($words, 'frontend') !== false || strpos($words, 'front-end') !== false || strpos($words, 'front end') !== false)
+       (strpos($words, 'php') !== false || strpos($words, 'fullstack') !== false || strpos($words, 'full-stack') !== false || strpos($words, 'full stack') !== false || strpos($words, 'arquiteto') !== false || strpos($words, 'frontend') !== false || strpos($words, 'front-end') !== false || strpos($words, 'front end') !== false)
     ) {
       $emails = $this->extractEmail($words);
       if(count($emails) > 0) {
@@ -347,7 +354,7 @@ class DefaultController extends Controller
 //     phpdfbot-1524852138.png
     $vision = new VisionClient([
         'keyFile' => json_decode(Storage::disk('uploads')->get('vision.json'), true),
-        'projectId' => '71f716ad1aed1941e303b032d6349637d716defd'
+        'projectId' => env("GOOGLE_PROJECT_ID")
     ]);
 //     $imageResource = Storage::disk('uploads')->get('img/phpdfbot-1524852138.png');
     $image = $vision->image($imageResource, [
