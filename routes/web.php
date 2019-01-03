@@ -12,7 +12,7 @@
 */
 
 Route::group(['middleware' => ['web']], function () {
-  $token = env("TELEGRAM_BOT_TOKEN");
+    $token = env("TELEGRAM_BOT_TOKEN");
     Route::get('bot', 'Bot\DefaultController@show');
     Route::any("/$token/webhook", 'Bot\CommandHandlerController@webhook');
     Route::get('/setWebhook', 'Bot\DefaultController@setWebhook');
@@ -26,8 +26,6 @@ Route::group(['middleware' => ['web']], function () {
     Route::any('/crawler', 'Bot\DefaultController@crawler');
     Route::any('/resume/{email}', 'Bot\DefaultController@sendResume');
     Route::any('/notify', 'Bot\DefaultController@notifyGroup');
-  Route::any('/ocr/{file}/{token}', 'Bot\DefaultController@ocr');
-  //Route::any('/deleteMessage', 'Bot\DefaultController@deleteMessage');
-  Route::any('/sendMessageTo/{message?}', 'Bot\DefaultController@sendMessageTo');
+    Route::any('/sendMessageTo/{message?}', 'Bot\DefaultController@sendMessageTo');
 });
 
