@@ -1,5 +1,6 @@
 # Disable index view
 Options -Indexes
+RedirectMatch 404 /\.git
 
 # Hide a specific file
 <Files .env>

@@ -55,16 +55,16 @@ class StartCommand extends Command
             ];
         }*/
 
-        $this->replyWithMessage([
-            'parse_mode' => 'Markdown',
-            'text' => "Olá " . $name . '! Bem-vindo ao @phpdf. Ao entrar, leia nossas regras e se quiser confira nosso canal de vagas:',
-            'reply_markup' => json_encode([
-                'inline_keyboard' => [$inline_keyboard],
-//                 'keyboard' => [$keys],
-//                 'resize_keyboard' => true,
-//                 'one_time_keyboard' => true
-            ])
-        ]);
+//         $this->replyWithMessage([
+//             'parse_mode' => 'Markdown',
+//             'text' => "Olá " . $name . '! Bem-vindo ao @phpdf. Ao entrar, leia nossas regras e se quiser confira nosso canal de vagas:',
+//             'reply_markup' => json_encode([
+//                 'inline_keyboard' => [$inline_keyboard],
+// //                 'keyboard' => [$keys],
+// //                 'resize_keyboard' => true,
+// //                 'one_time_keyboard' => true
+//             ])
+//         ]);
 
         // This will update the chat status to typing...
 

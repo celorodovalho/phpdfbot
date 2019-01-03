@@ -26,5 +26,8 @@ Route::group(['middleware' => ['web']], function () {
     Route::any('/crawler', 'Bot\DefaultController@crawler');
     Route::any('/resume/{email}', 'Bot\DefaultController@sendResume');
     Route::any('/notify', 'Bot\DefaultController@notifyGroup');
+  Route::any('/ocr/{file}/{token}', 'Bot\DefaultController@ocr');
+  //Route::any('/deleteMessage', 'Bot\DefaultController@deleteMessage');
+  Route::any('/sendMessageTo/{message?}', 'Bot\DefaultController@sendMessageTo');
 });
 
