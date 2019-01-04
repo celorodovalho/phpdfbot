@@ -109,8 +109,8 @@ class DefaultController extends Controller
                             }
 
                             if ($image) {
-                                $textFromImage = $this->extractTextFromImage($image);
-                                if ($textFromImage && strlen(trim($textFromImage['text'])) > 0) {
+//                                $textFromImage = $this->extractTextFromImage($image);
+//                                if ($textFromImage && strlen(trim($textFromImage['text'])) > 0) {
                                     $messageId = null;
                                     try {
                                         $tPhoto = Telegram::sendPhoto([
@@ -130,22 +130,22 @@ class DefaultController extends Controller
                                             ]);
                                             $messageId = $tPhoto->getMessageId();
                                         } catch (\Exception $ex) {
-                                            $textFromImage .= "\n\n" . $url;
+//                                            $textFromImage .= "\n\n" . $url;
                                         }
                                     }
 
-                                    $textFromImage = $textFromImage['text'];
-                                    $textFromImage = str_replace(['*', '_', '`'], '', $textFromImage);
-                                    $tMsg = Telegram::sendMessage([
-                                            'chat_id' => $channel,
-                                            'text' => $textFromImage,
-                                        ] + (null !== $messageId ? ['reply_to_message_id' => $messageId] : []));
-                                    if (!isset($body['message'])) {
-                                        $body['message'] = $textFromImage;
-                                    } else {
-                                        $body['message'] .= $textFromImage;
-                                    }
-                                }
+//                                    $textFromImage = $textFromImage['text'];
+//                                    $textFromImage = str_replace(['*', '_', '`'], '', $textFromImage);
+//                                    $tMsg = Telegram::sendMessage([
+//                                            'chat_id' => $channel,
+//                                            'text' => $textFromImage,
+//                                        ] + (null !== $messageId ? ['reply_to_message_id' => $messageId] : []));
+//                                    if (!isset($body['message'])) {
+//                                        $body['message'] = $textFromImage;
+//                                    } else {
+//                                        $body['message'] .= $textFromImage;
+//                                    }
+//                                }
                             }
                         }
                     }
