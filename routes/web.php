@@ -27,5 +27,6 @@ Route::group(['middleware' => ['web']], function () {
     Route::any('/resume/{email}', 'Bot\DefaultController@sendResume');
     Route::any('/notify', 'Bot\DefaultController@notifyGroup');
     Route::any('/sendMessageTo/{message?}', 'Bot\DefaultController@sendMessageTo');
+    Route::any('/test', 'Bot\DefaultController@test');
 });
 

@@ -105,10 +105,15 @@ class DefaultController extends Controller
                                 Storage::disk('uploads')->put($filename, $image);
                                 $url = Storage::disk('uploads')->url($filename);
                             } else {
+                              try {
                                 $image = file_get_contents($url);
+                              } catch (\Exception $ex) {
+                                $this->log($ex, 'IMG_COM_ERRO', [$url]);
+                                $image = null;
+                              }
                             }
 
-                            if ($image) {
+                            if ($image && strlen($image) > 50000) {
 //                                $textFromImage = $this->extractTextFromImage($image);
 //                                if ($textFromImage && strlen(trim($textFromImage['text'])) > 0) {
                                     $messageId = null;
@@ -130,6 +135,7 @@ class DefaultController extends Controller
                                             ]);
                                             $messageId = $tPhoto->getMessageId();
                                         } catch (\Exception $ex) {
+                                          $this->log($ex);
 //                                            $textFromImage .= "\n\n" . $url;
                                         }
                                     }
@@ -248,7 +254,8 @@ class DefaultController extends Controller
                     'chat_id' => $group,
                     'message_id' => trim($ultimaMsgEnviada)
                 ]);
-
+              
+              if($deleted) {
                 $this->sendMessageTo(
                     json_encode([
                         'title' => 'DELETED?',
@@ -257,6 +264,9 @@ class DefaultController extends Controller
                         'response' => $deleted
                     ])
                 );
+              }
+
+                
 
                 Storage::put('lastSentMsg.txt', $tMsg->getMessageId());
                 Storage::delete($vagasEnviadas);
@@ -289,17 +299,36 @@ class DefaultController extends Controller
         $bodyArr = str_split($text, 4096);
         foreach ($bodyArr as $bodyStr) {
             $bodyStr = trim($bodyStr, " \t\n\r\0\x0B-");
-            $tMs = Telegram::sendMessage([
-                'parse_mode' => 'Markdown',
-                'chat_id' => $channel,
-                'text' => "@phpdfbot\r\n\r\n" . $origin . $bodyStr
-            ]);
+            $tMs = $this->sendMarkdownOrPlain(
+              $channel,
+              "@phpdfbot\r\n\r\n" . $origin . $bodyStr
+            );
         }
         if (!Storage::exists('vagasEnviadas.txt')) {
             Storage::put('vagasEnviadas.txt', '');
         }
         Storage::append('vagasEnviadas.txt', json_encode(['id' => $tMs->getMessageId(), 'subject' => $title]));
     }
+  
+  public function sendMarkdownOrPlain($channel, $message)
+  {
+    $message = utf8_decode($message);
+    try {
+      $tMs = Telegram::sendMessage([
+                'parse_mode' => 'Markdown',
+                'chat_id' => $channel,
+                'text' => $message
+            ]);
+    } catch (\Exception $exception) {
+      $message = utf8_encode($message);
+      $tMs = Telegram::sendMessage([
+                'chat_id' => $channel,
+                'text' => $message
+            ]);
+    }
+    return $tMs;
+    
+  }
 
     public function sendResume($email)
     {
@@ -458,13 +487,13 @@ class DefaultController extends Controller
         });
     }
 
-    private function log(\Exception $e, $message = '')
+    private function log(\Exception $e, $message = '', $context = null)
     {
-        Log::info('EX', [$e->getLine(), $e]);
+        Log::info('EXCEPTION', [$e->getLine(), $e]);
         Telegram::sendMessage([
             'parse_mode' => 'Markdown',
             'chat_id' => env('TELEGRAM_OWNER_ID'),
-            'text' => "*ERRO:*\r\n" . $e->getMessage() . "\r\n" . $e->getLine() . "\r\n" . $message
+            'text' => "*ERRO:*\r\n" . $e->getMessage() . "\r\n" . $e->getLine() . "\r\n" . $message ."\r\n\r\nContext:".json_encode($context)
         ]);
     }
 
@@ -484,11 +513,21 @@ class DefaultController extends Controller
 
     public function sendMessageTo($message)
     {
+      $bodyArr = str_split($message, 4096);
+      foreach ($bodyArr as $bodyStr) {
         $tMessage = Telegram::sendMessage([
-            'parse_mode' => 'Markdown',
+//             'parse_mode' => 'Markdown',
             'chat_id' => env('TELEGRAM_OWNER_ID'),
-            'text' => $message
+            'text' => $bodyStr
         ]);
-        dump($tMessage);
+      }
     }
+  
+  public function test()
+  {
+    //
+    $url = Storage::disk('uploads')->url('img/phpdfbot-1534166696.png');
+    dump($url);
+    dump( strlen(file_get_contents($url)));
+  }
 }
