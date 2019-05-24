@@ -34,7 +34,7 @@ class StartCommand extends Command
             'parse_mode' => 'Markdown',
             'text' => "Olá $username! Seja bem-vindo! Ao entrar, apresente-se e leia nossas regras:",
             'reply_markup' => json_encode([
-                'inline_keyboard' => [
+                'inline_keyboard' => [[
                     [
                         'text' => "Leia as Regras",
                         'url' => 'https://t.me/phpdf/8726'
@@ -43,7 +43,7 @@ class StartCommand extends Command
                         'text' => "Vagas",
                         'url' => 'https://t.me/phpdfvagas'
                     ],
-                ]
+                ]]
             ])
         ]);
 
