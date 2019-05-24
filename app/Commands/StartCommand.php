@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
+use Log;
 
 class StartCommand extends Command
 {
@@ -41,6 +42,8 @@ class StartCommand extends Command
         foreach ($commands as $name => $command) {
             $response .= sprintf('/%s - %s' . PHP_EOL, $name, $command->getDescription());
         }
+
+        Log::info('/start', [$response]);
 
         // Reply with the commands list
         $this->replyWithMessage(['text' => $response]);
