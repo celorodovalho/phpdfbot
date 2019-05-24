@@ -52,6 +52,6 @@ class StartCommand extends Command
         // When you want to chain multiple commands within one or process the request further.
         // The method supports second parameter arguments which you can optionally pass, By default
         // it'll pass the same arguments that are received for this command originally.
-        $this->triggerCommand('subscribe');
+//        $this->triggerCommand('subscribe');
     }
 }
