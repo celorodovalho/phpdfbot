@@ -3,59 +3,27 @@
 namespace App\Http\Controllers\Bot;
 
 use App\Http\Controllers\Controller;
+use App\Mail\Resume;
+use Goutte\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Telegram;
-use App\Mail\Resume;
-use Illuminate\Support\Facades\Mail;
-use Goutte\Client;
 use Illuminate\Support\Facades\Storage;
-use Google\Cloud\Vision\VisionClient;
-use Carbon\Carbon;
+use Telegram;
 
 class DefaultController extends Controller
 {
-    public function show()
-    {
-        return 'ok';
-    }
-
     public function setWebhook()
     {
         $token = env("TELEGRAM_BOT_TOKEN");
         $appUrl = env("APP_URL");
         $response = Telegram::setWebhook(['url' => "$appUrl/index.php/$token/webhook"]);
-        //$update = Telegram::commandsHandler(true);
         return $response;
     }
 
     public function removeWebhook()
     {
         $response = Telegram::removeWebhook();
-        dump($response);
         return 'ok';
-    }
-
-    public function getUpdates()
-    {
-        $updates = Telegram::getUpdates();
-        dump($updates);
-        die;
-    }
-
-    public function getWebhookInfo()
-    {
-        Telegram::commandsHandler(true);
-        $updates = Telegram::getWebhookInfo();
-        dump($updates);
-        die;
-    }
-
-    public function getMe()
-    {
-        $updates = Telegram::getMe();
-        dump($updates);
-        die;
     }
 
     public function sendMessage(Request $request)
@@ -71,7 +39,7 @@ class DefaultController extends Controller
                 'text' => implode("\r\n\r\n", $arrBody)
             ]);
         }
-        die;
+        return null;
     }
 
     public function sendChannelMessage(Request $request)
@@ -83,7 +51,6 @@ class DefaultController extends Controller
                 Storage::put($vagasEnviadas, '');
             }
 
-            //$time = Storage::lastModified('lastTimeSent.txt');
             $arrBody = $request->all();
             $channel = env("TELEGRAM_CHANNEL");
 
@@ -100,58 +67,41 @@ class DefaultController extends Controller
                             $url = $img;
                             if (filter_var($img, FILTER_VALIDATE_URL) === false) {
                                 $filename = 'img/phpdfbot-' . time() . ".png";
-                                //$pngUrl = public_path() . '/' . $filename;
                                 $image = base64_decode($img);
                                 Storage::disk('uploads')->put($filename, $image);
                                 $url = Storage::disk('uploads')->url($filename);
                             } else {
-                              try {
-                                $image = file_get_contents($url);
-                              } catch (\Exception $ex) {
-                                $this->log($ex, 'IMG_COM_ERRO', [$url]);
-                                $image = null;
-                              }
+                                try {
+                                    $image = file_get_contents($url);
+                                } catch (\Exception $ex) {
+                                    $this->log($ex, 'IMG_COM_ERRO', [$url]);
+                                    $image = null;
+                                }
                             }
 
                             if ($image && strlen($image) > 50000) {
-//                                $textFromImage = $this->extractTextFromImage($image);
-//                                if ($textFromImage && strlen(trim($textFromImage['text'])) > 0) {
-                                    $messageId = null;
+                                $messageId = null;
+                                try {
+                                    $tPhoto = Telegram::sendPhoto([
+                                        'chat_id' => $channel,
+                                        'photo' => $url,
+                                        'caption' => $subject,
+                                        'parse_mode' => 'Markdown'
+                                    ]);
+                                    $messageId = $tPhoto->getMessageId();
+                                } catch (\Exception $ex) {
                                     try {
-                                        $tPhoto = Telegram::sendPhoto([
+                                        $tPhoto = Telegram::sendDocument([
                                             'chat_id' => $channel,
-                                            'photo' => $url,
+                                            'document' => $url,
                                             'caption' => $subject,
                                             'parse_mode' => 'Markdown'
                                         ]);
                                         $messageId = $tPhoto->getMessageId();
                                     } catch (\Exception $ex) {
-                                        try {
-                                            $tPhoto = Telegram::sendDocument([
-                                                'chat_id' => $channel,
-                                                'document' => $url,
-                                                'caption' => $subject,
-                                                'parse_mode' => 'Markdown'
-                                            ]);
-                                            $messageId = $tPhoto->getMessageId();
-                                        } catch (\Exception $ex) {
-                                          $this->log($ex);
-//                                            $textFromImage .= "\n\n" . $url;
-                                        }
+                                        $this->log($ex);
                                     }
-
-//                                    $textFromImage = $textFromImage['text'];
-//                                    $textFromImage = str_replace(['*', '_', '`'], '', $textFromImage);
-//                                    $tMsg = Telegram::sendMessage([
-//                                            'chat_id' => $channel,
-//                                            'text' => $textFromImage,
-//                                        ] + (null !== $messageId ? ['reply_to_message_id' => $messageId] : []));
-//                                    if (!isset($body['message'])) {
-//                                        $body['message'] = $textFromImage;
-//                                    } else {
-//                                        $body['message'] .= $textFromImage;
-//                                    }
-//                                }
+                                }
                             }
                         }
                     }
@@ -159,7 +109,6 @@ class DefaultController extends Controller
                         $message = $subject . $body['message'];
                         $bodyArr = str_split($message, 4096);
                         foreach ($bodyArr as $bodyStr) {
-                            //$bodyStr = strip_tags($bodyStr);
                             $bodyStr = trim($bodyStr, " \t\n\r\0\x0B-");
                             $bodyStr = str_replace('##', '`', $bodyStr);
                             $bodyStr = str_replace(['>>', '--'], '', $bodyStr);
@@ -185,9 +134,6 @@ class DefaultController extends Controller
                                 'parse_mode' => 'Markdown',
                                 'text' => $bodyStr,
                             ];
-                            if (isset($tMsg)) {
-                                $sendMsg['reply_to_message_id'] = $tMsg->getMessageId();
-                            }
 
                             try {
                                 $tMs = Telegram::sendMessage($sendMsg);
@@ -243,7 +189,7 @@ class DefaultController extends Controller
                 $tMsg = Telegram::sendPhoto([
                     'parse_mode' => 'Markdown',
                     'chat_id' => '@phpdf',
-                    'photo' => $appUrl.'img/phpdf.webp',
+                    'photo' => $appUrl . 'img/phpdf.webp',
                     'caption' => "Há novas vagas no canal! \r\nConfira: $channel 😉",
                     'reply_markup' => json_encode([
                         'inline_keyboard' => $vagas
@@ -254,19 +200,18 @@ class DefaultController extends Controller
                     'chat_id' => $group,
                     'message_id' => trim($ultimaMsgEnviada)
                 ]);
-              
-              if($deleted) {
-                $this->sendMessageTo(
-                    json_encode([
-                        'title' => 'DELETED?',
-                        'chat_id' => $group,
-                        'message_id' => trim($ultimaMsgEnviada),
-                        'response' => $deleted
-                    ])
-                );
-              }
 
-                
+                if ($deleted) {
+                    $this->sendMessageTo(
+                        json_encode([
+                            'title' => 'DELETED?',
+                            'chat_id' => $group,
+                            'message_id' => trim($ultimaMsgEnviada),
+                            'response' => $deleted
+                        ])
+                    );
+                }
+
 
                 Storage::put('lastSentMsg.txt', $tMsg->getMessageId());
                 Storage::delete($vagasEnviadas);
@@ -300,8 +245,8 @@ class DefaultController extends Controller
         foreach ($bodyArr as $bodyStr) {
             $bodyStr = trim($bodyStr, " \t\n\r\0\x0B-");
             $tMs = $this->sendMarkdownOrPlain(
-              $channel,
-              "@phpdfbot\r\n\r\n" . $origin . $bodyStr
+                $channel,
+                "@phpdfbot\r\n\r\n" . $origin . $bodyStr
             );
         }
         if (!Storage::exists('vagasEnviadas.txt')) {
@@ -309,26 +254,25 @@ class DefaultController extends Controller
         }
         Storage::append('vagasEnviadas.txt', json_encode(['id' => $tMs->getMessageId(), 'subject' => $title]));
     }
-  
-  public function sendMarkdownOrPlain($channel, $message)
-  {
-    $message = utf8_decode($message);
-    try {
-      $tMs = Telegram::sendMessage([
+
+    public function sendMarkdownOrPlain($channel, $message)
+    {
+        $message = utf8_decode($message);
+        try {
+            $tMs = Telegram::sendMessage([
                 'parse_mode' => 'Markdown',
                 'chat_id' => $channel,
                 'text' => $message
             ]);
-    } catch (\Exception $exception) {
-      $message = utf8_encode($message);
-      $tMs = Telegram::sendMessage([
+        } catch (\Exception $exception) {
+            $message = utf8_encode($message);
+            $tMs = Telegram::sendMessage([
                 'chat_id' => $channel,
                 'text' => $message
             ]);
+        }
+        return $tMs;
     }
-    return $tMs;
-    
-  }
 
     public function sendResume($email)
     {
@@ -353,39 +297,19 @@ class DefaultController extends Controller
     private function checkContentToSendMail($text)
     {
         $words = strtolower($text);
-        $matches1 = preg_match_all("/(bras[íi]lia|distrito federal|df|bsb)/i", $words);
-        $matches2 = preg_match_all("/(php|full[ -]*stack|arquiteto|(front|back)[ -]*end)/i", $words);
-        $matches3 = preg_match_all("/(\.net|java(?!script)|(asp|dot)[ \.-]net|)/i", $words);
-        if (
-//       $matches1
-//         && $matches2
-//         && !$matches3
-//       (strpos($words, 'brasília') !== false || strpos($words, 'brasilia') !== false || strpos($words, 'distrito federal') !== false || strpos($words, 'df') !== false || strpos($words, 'bsb') !== false)
-        (strpos($words, 'php') !== false || strpos($words, 'fullstack') !== false || strpos($words, 'full-stack') !== false || strpos($words, 'full stack') !== false || strpos($words, 'arquiteto') !== false || strpos($words, 'frontend') !== false || strpos($words, 'front-end') !== false || strpos($words, 'front end') !== false)
+        if (strpos($words, 'php') !== false
+            || strpos($words, 'fullstack') !== false
+            || strpos($words, 'full-stack') !== false
+            || strpos($words, 'full stack') !== false
+            || strpos($words, 'arquiteto') !== false
+            || strpos($words, 'frontend') !== false
+            || strpos($words, 'front-end') !== false
+            || strpos($words, 'front end') !== false
         ) {
             $emails = $this->extractEmail($words);
             if (count($emails) > 0) {
-                //$this->sendResume($emails);
+                $this->sendResume($emails);
             }
-        }
-    }
-
-    private function extractTextFromImage($imageResource)
-    {
-        $visionCredentials = file_get_contents(env('GOOGLE_APPLICATION_CREDENTIALS'));
-        $vision = new VisionClient([
-            'keyFile' => json_decode($visionCredentials, true),
-            'projectId' => env("GOOGLE_PROJECT_ID")
-        ]);
-        $image = $vision->image($imageResource, [
-            'TEXT_DETECTION'
-        ]);
-        $annotation = $vision->annotate($image);
-        $text = $annotation->fullText();
-        if ($text) {
-            return $text->info();
-        } else {
-            return null;
         }
     }
 
@@ -395,7 +319,8 @@ class DefaultController extends Controller
         $crawler = $client->request('GET', 'https://comoequetala.com.br/vagas-e-jobs?start=180');
         $crawler->filter('.uk-list.uk-list-space > li')->each(function ($node) {
             $client = new Client();
-            if (preg_match_all('#(wordpress|desenvolvedor|developer|programador|php|front-end|back-end|sistemas|full stack|full-stack|frontend|backend|arquiteto|fullstack)#i', $node->text(), $matches)) {
+            if (preg_match_all('#(wordpress|desenvolvedor|developer|programador|php|front-end|back-end|sistemas|' .
+                'full stack|full-stack|frontend|backend|arquiteto|fullstack)#i', $node->text())) {
                 $data = $node->filter('[itemprop="datePosted"]')->attr('content');
                 $data = new \DateTime($data);
                 $today = new \DateTime('now', new \DateTimeZone('America/Sao_Paulo'));
@@ -403,14 +328,18 @@ class DefaultController extends Controller
                     $link = $node->filter('[itemprop="url"]')->attr('content');
                     $crawler2 = $client->request('GET', $link);
                     $h3 = $crawler2->filter('[itemprop="title"],h3')->text();
-                    $p = $crawler2->filter('[itemprop="description"] p')->count() ? $crawler2->filter('[itemprop="description"] p')->text() : '';
-                    $p .= $crawler2->filter('.uk-width-1-1.uk-width-1-4@m')->count() ? $crawler2->filter('.uk-width-1-1.uk-width-1-4@m')->text() : '';
-                    $text = "*" . $node->filter('.uk-link')->text() . "*\r\n\r\n";
-                    $text .= $node->filter('.vaga_empresa')->count() ? "*Empresa:* " . $node->filter('.vaga_empresa')->text() . "\r\n\r\n" : '';
+                    $p = $crawler2->filter('[itemprop="description"] p')->count() ?
+                        $crawler2->filter('[itemprop="description"] p')->text() : '';
+                    $p .= $crawler2->filter('.uk-width-1-1.uk-width-1-4@m')->count() ?
+                        $crawler2->filter('.uk-width-1-1.uk-width-1-4@m')->text() : '';
+                    $text = '*' . $node->filter('.uk-link')->text() . "*\r\n\r\n";
+                    $text .= $node->filter('.vaga_empresa')->count() ?
+                        '*Empresa:* ' . $node->filter('.vaga_empresa')->text() . "\r\n\r\n" : '';
                     $text .= "*Local:* " . trim($node->filter('[itemprop="addressLocality"]')->text()) . "/"
                         . trim($node->filter('[itemprop="addressRegion"]')->text()) . "\r\n\r\n";
-                    $text .= $node->filter('[itemprop="description"]')->count() ? trim($node->filter('[itemprop="description"]')->text()) . "\r\n\r\n" : '';
-                    $text .= "*Como se candidatar:* " . $link;
+                    $text .= $node->filter('[itemprop="description"]')->count() ?
+                        trim($node->filter('[itemprop="description"]')->text()) . "\r\n\r\n" : '';
+                    $text .= '*Como se candidatar:* ' . $link;
                     $text .= $h3 . ":\r\n" . $p;
 
                     $this->checkContentToSendMail($text);
@@ -430,7 +359,7 @@ class DefaultController extends Controller
             $jobsPlace = $node->filter('.jobs-place');
             if ($jobsPlace->count()) {
                 $jobsPlace = $jobsPlace->text();
-                if (preg_match_all('#(Em qualquer lugar)#i', $jobsPlace, $matches)) {
+                if (preg_match_all('#(Em qualquer lugar)#i', $jobsPlace)) {
                     $data = $node->filter('.jobs-date')->text();
                     $data = preg_replace("/(  )+/", " ", $data);
                     $data = trim($data);
@@ -450,13 +379,13 @@ class DefaultController extends Controller
                     ];
                     $data = str_ireplace($months, array_keys($months), $data);
                     $data = strtolower($data);
-                    $data = explode(" ", $data);
+                    $data = explode(' ', $data);
                     $data = [
                         $data[1],
                         $data[0] . ',',
                         $data[2]
                     ];
-                    $data = implode(" ", $data);
+                    $data = implode(' ', $data);
                     $data = new \DateTime($data);
                     $today = new \DateTime('now', new \DateTimeZone('America/Sao_Paulo'));
                     if ($data->format('Ymd') === $today->format('Ymd')) {
@@ -476,7 +405,7 @@ class DefaultController extends Controller
                         $content = reset($content);
                         $text = "*$h3*\r\n\r\n" .
                             "$content\r\n\r\n" .
-                            "$link";
+                            $link;
 
                         $this->checkContentToSendMail($text);
                         $this->sendFromCrawler($h3, $text, "```\r\n" .
@@ -487,13 +416,15 @@ class DefaultController extends Controller
         });
     }
 
-    private function log(\Exception $e, $message = '', $context = null)
+    private function log(\Exception $exception, $message = '', $context = null)
     {
-        Log::info('EXCEPTION', [$e->getLine(), $e]);
+        Log::info('EXCEPTION', [$exception->getLine(), $exception]);
         Telegram::sendMessage([
             'parse_mode' => 'Markdown',
             'chat_id' => env('TELEGRAM_OWNER_ID'),
-            'text' => "*ERRO:*\r\n" . $e->getMessage() . "\r\n" . $e->getLine() . "\r\n" . $message ."\r\n\r\nContext:".json_encode($context)
+            'text' => "*ERRO:*\r\n" . $exception->getMessage() . "\r\n" .
+                $exception->getLine() . "\r\n" . $message . "\r\n\r\nContext:" .
+                json_encode($context)
         ]);
     }
 
@@ -513,21 +444,12 @@ class DefaultController extends Controller
 
     public function sendMessageTo($message)
     {
-      $bodyArr = str_split($message, 4096);
-      foreach ($bodyArr as $bodyStr) {
-        $tMessage = Telegram::sendMessage([
-//             'parse_mode' => 'Markdown',
-            'chat_id' => env('TELEGRAM_OWNER_ID'),
-            'text' => $bodyStr
-        ]);
-      }
+        $bodyArr = str_split($message, 4096);
+        foreach ($bodyArr as $bodyStr) {
+            Telegram::sendMessage([
+                'chat_id' => env('TELEGRAM_OWNER_ID'),
+                'text' => $bodyStr
+            ]);
+        }
     }
-  
-  public function test()
-  {
-    //
-    $url = Storage::disk('uploads')->url('img/phpdfbot-1534166696.png');
-    dump($url);
-    dump( strlen(file_get_contents($url)));
-  }
 }
