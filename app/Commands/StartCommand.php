@@ -24,7 +24,11 @@ class StartCommand extends Command
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
+        \Log::info('antes', ['oi']);
+
         $username = $this->update->getMessage()->from->username;
+
+        \Log::info('depois', [$username]);
 
         $this->replyWithMessage([
             'parse_mode' => 'Markdown',
