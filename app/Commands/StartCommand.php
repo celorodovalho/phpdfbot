@@ -24,23 +24,19 @@ class StartCommand extends Command
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
-        \Log::info('antes', ['oi']);
-
         $username = $this->update->getMessage()->from->username;
-
-        \Log::info('depois', [$username]);
 
         $this->replyWithMessage([
             'parse_mode' => 'Markdown',
-            'text' => "Olá $username! Seja bem-vindo! Ao entrar, apresente-se e leia nossas regras:",
+            'text' => "Olá @$username! Seja bem-vindo! Ao entrar, apresente-se e leia nossas regras:",
             'reply_markup' => json_encode([
                 'inline_keyboard' => [[
                     [
-                        'text' => "Leia as Regras",
+                        'text' => 'Leia as Regras',
                         'url' => 'https://t.me/phpdf/8726'
                     ],
                     [
-                        'text' => "Vagas",
+                        'text' => 'Vagas',
                         'url' => 'https://t.me/phpdfvagas'
                     ],
                 ]]
