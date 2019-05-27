@@ -21,6 +21,7 @@ class RequestController extends Controller
             ->preload();
         dump($messages);
         dump($messages->all());
+        dump(get_class_methods($messages));
         return 'ok';
     }
 }
