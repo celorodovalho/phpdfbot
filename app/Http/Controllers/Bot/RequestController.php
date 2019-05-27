@@ -40,8 +40,6 @@ class RequestController extends Controller
         }
         $messages = collect($messages);
 
-        dump($threads->getMessages()[0]->getPayload());
-        dump($threads->getMessages()[0]->getPayload()->getBody());
         dump($messages);
         return 'ok';
     }
