@@ -130,6 +130,6 @@ class RequestController extends Controller
         foreach ($body->childNodes as $child) {
             $mock->appendChild($mock->importNode($child, true));
         }
-        return trim(utf8_decode($mock->saveHTML()));
+        return trim(html_entity_decode($mock->saveHTML()));
     }
 }
