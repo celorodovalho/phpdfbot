@@ -106,6 +106,8 @@ class RequestController extends Controller
 
         $message = $messageArray[0];
 
+        $message = $this->closeOpenTags($message);
+
         $message = str_replace(['*', '_', '`'], '', $message);
         $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
         $message = str_ireplace(['<i>', '</i>', '<em>', '</em>'], '_', $message);
@@ -116,5 +118,17 @@ class RequestController extends Controller
         $message = preg_replace("/[\r\n]+/", "\n", $message);
         return trim($message);
 
+    }
+
+    private function closeOpenTags($message)
+    {
+        $dom = new \DOMDocument;
+        $dom->loadHTML($message);
+        $mock = new \DOMDocument;
+        $body = $dom->getElementsByTagName('body')->item(0);
+        foreach ($body->childNodes as $child) {
+            $mock->appendChild($mock->importNode($child, true));
+        }
+        return trim($mock->saveHTML());
     }
 }
