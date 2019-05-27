@@ -14,10 +14,11 @@ class RequestController extends Controller
     public function process(): string
     {
         $messages = LaravelGmail::message()
-            ->raw('(list:nvagas@googlegroups.com OR list:leonardoti@googlegroups.com ' .
-                'OR list:clubinfobsb@googlegroups.com OR to:nvagas@googlegroups.com OR to:vagas@noreply.github.com ' .
-                'OR to:clubinfobsb@googlegroups.com OR to:leonardoti@googlegroups.com)')
-            ->unread()
+            ->raw('(list:nvagas@googlegroups.com OR list:leonardoti@googlegroups.com OR list:clubinfobsb@googlegroups.com OR to:nvagas@googlegroups.com OR to:vagas@noreply.github.com OR to:clubinfobsb@googlegroups.com OR to:leonardoti@googlegroups.com) is:unread')
+//            ->raw('(list:nvagas@googlegroups.com OR list:leonardoti@googlegroups.com ' .
+//                'OR list:clubinfobsb@googlegroups.com OR to:nvagas@googlegroups.com OR to:vagas@noreply.github.com ' .
+//                'OR to:clubinfobsb@googlegroups.com OR to:leonardoti@googlegroups.com)')
+//            ->unread()
             ->preload();
         dump($messages);
         dump($messages->all());
