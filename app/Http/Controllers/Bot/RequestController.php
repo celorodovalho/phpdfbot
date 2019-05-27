@@ -17,7 +17,8 @@ class RequestController extends Controller
             ->raw('(list:nvagas@googlegroups.com OR list:leonardoti@googlegroups.com ' .
                 'OR list:clubinfobsb@googlegroups.com OR to:nvagas@googlegroups.com OR to:vagas@noreply.github.com ' .
                 'OR to:clubinfobsb@googlegroups.com OR to:leonardoti@googlegroups.com)')
-            ->unread();
+            ->unread()
+            ->all();
         dump($messages);
         return 'ok';
     }
