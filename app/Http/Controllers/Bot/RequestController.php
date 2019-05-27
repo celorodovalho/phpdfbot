@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Bot;
 
 use App\Http\Controllers\Controller;
+use Dacastro4\LaravelGmail\Services\Message\Mail;
 use LaravelGmail;
 use Telegram;
 
@@ -32,7 +33,16 @@ class RequestController extends Controller
             'q' => '(list:nvagas@googlegroups.com OR list:leonardoti@googlegroups.com OR list:clubinfobsb@googlegroups.com OR to:nvagas@googlegroups.com OR to:vagas@noreply.github.com OR to:clubinfobsb@googlegroups.com OR to:leonardoti@googlegroups.com) is:unread'
         ]);
 //        dump($threads->getThreads());
-        dump($threads->getMessages());
+
+        $allMessages = $threads->getMessages();
+        foreach ($allMessages as $message) {
+            $messages[] = new Mail($message, $this->preload);
+        }
+        $messages = collect($messages);
+
+        dump($threads->getMessages()[0]->getPayload());
+        dump($threads->getMessages()[0]->getPayload()->getBody());
+        dump($messages);
         return 'ok';
     }
 }
