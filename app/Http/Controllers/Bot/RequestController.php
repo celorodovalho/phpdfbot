@@ -124,7 +124,7 @@ class RequestController extends Controller
     private function closeOpenTags($message)
     {
         $dom = new \DOMDocument;
-        $dom->loadHTML($message);
+        $dom->loadHTML('<?xml encoding="utf-8" ?>' . $message);
         $mock = new \DOMDocument;
         $body = $dom->getElementsByTagName('body')->item(0);
         foreach ($body->childNodes as $child) {
