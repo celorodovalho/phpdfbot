@@ -86,14 +86,6 @@ class RequestController extends Controller
 
     private function sanitizeBody(string $message): string
     {
-        $message = str_replace(['*', '_', '`'], '', $message);
-        $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
-        $message = str_ireplace(['<i>', '</i>', '<em>', '</em>'], '_', $message);
-        $message = str_ireplace([
-            '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
-        ], '`', $message);
-        $message = strip_tags($message);
-
         $delimiters = [
             'You are receiving this because you are subscribed to this thread',
             'Você recebeu esta mensagem porque está inscrito para o Google',
@@ -114,6 +106,13 @@ class RequestController extends Controller
 
         $message = $messageArray[0];
 
+        $message = str_replace(['*', '_', '`'], '', $message);
+        $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
+        $message = str_ireplace(['<i>', '</i>', '<em>', '</em>'], '_', $message);
+        $message = str_ireplace([
+            '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
+        ], '`', $message);
+        $message = strip_tags($message);
 
         return preg_replace("/[\r\n]+/", "\n", $message);
     }
