@@ -32,9 +32,9 @@ class RequestController extends Controller
     {
         $messages = $this->getMessages();
 dump($messages->first()->getBody());
-$attachment = base64_decode($messages->first()->getAttachments(true)[0]);
-echo "<img src='data:image/jpeg;base64,$attachment'>";
-//dump($messages->first()->getAttachments(true));
+//$attachment = base64_decode($messages->first()->getAttachments(true)[0]);
+//echo "<img src='data:image/jpeg;base64,$attachment'>";
+dump($messages->first()->getAttachments());
         /** @var Mail $message */
         foreach ($messages as $message) {
             /** TODO: Format message here */
