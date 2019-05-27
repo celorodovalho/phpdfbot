@@ -2,34 +2,75 @@
 
 namespace App\Http\Controllers\Bot;
 
+use App\Contracts\Interfaces\OpportunityInterface;
+use App\Contracts\Opportunity;
 use App\Http\Controllers\Controller;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
 use LaravelGmail;
-use Telegram;
+use Telegram\Bot\BotsManager;
 
 class RequestController extends Controller
 {
+    /**
+     * @var \Telegram\Bot\Api
+     */
+    private $telegram;
+
+    /**
+     * RequestController constructor.
+     * @param BotsManager $botsManager
+     */
+    public function __construct(BotsManager $botsManager)
+    {
+        $this->telegram = $botsManager->bot();
+    }
+
     /**
      * @return string
      */
     public function process(): string
     {
+        $messages = $this->getMessages();
 
+        /** @var Mail $message */
+        foreach ($messages as $message) {
+            /** TODO: Format message here */
+            $opportunity = new Opportunity();
+            $opportunity->setTitle($message->getSubject())
+                ->setDescription($message->getBody());
+            $this->sendOpportunityToChannel($opportunity);
+        }
+        return 'ok';
+    }
+
+    private function getMessages(): \Illuminate\Support\Collection
+    {
         /** @var \Dacastro4\LaravelGmail\Services\Message $messageService */
         $messageService = LaravelGmail::message();
         $threads = $messageService->service->users_messages->listUsersMessages('me', [
             'q' => '(list:nvagas@googlegroups.com OR list:leonardoti@googlegroups.com ' .
                 'OR list:clubinfobsb@googlegroups.com OR to:nvagas@googlegroups.com OR to:vagas@noreply.github.com ' .
-                'OR to:clubinfobsb@googlegroups.com OR to:leonardoti@googlegroups.com) is:unread'
+                'OR to:clubinfobsb@googlegroups.com OR to:leonardoti@googlegroups.com) is:unread',
+            'maxResults' => 2
         ]);
 
+        $messages = [];
         $allMessages = $threads->getMessages();
         foreach ($allMessages as $message) {
             $messages[] = new Mail($message, true);
         }
-        $messages = collect($messages);
+        return collect($messages);
+    }
 
-        dump($messages);
-        return 'ok';
+    private function sendOpportunityToChannel(OpportunityInterface $opportunity): void
+    {
+        $this->telegram->sendMessage([
+            'parse_mode' => 'Markdown',
+            'chat_id' => env('TELEGRAM_OWNER_ID'),
+            'text' => implode("\r\n", [
+                $opportunity->getTitle(),
+                $opportunity->getDescription()
+            ])
+        ]);
     }
 }

@@ -14,8 +14,7 @@ class DefaultController extends Controller
     private $botsManager;
 
     /**
-     * WebhookCommand constructor.
-     *
+     * DefaultController constructor.
      * @param BotsManager $botsManager
      */
     public function __construct(BotsManager $botsManager)
