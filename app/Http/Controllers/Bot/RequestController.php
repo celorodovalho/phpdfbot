@@ -19,7 +19,7 @@ class RequestController extends Controller
                 'OR to:clubinfobsb@googlegroups.com OR to:leonardoti@googlegroups.com)')
             ->unread()
             ->preload()
-            ->take(10);
+            ->all();
         dump($messages);
         dump(get_class_methods($messages));
         return 'ok';
