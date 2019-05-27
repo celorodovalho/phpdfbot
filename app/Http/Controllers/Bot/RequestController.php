@@ -36,7 +36,7 @@ class RequestController extends Controller
 
         $allMessages = $threads->getMessages();
         foreach ($allMessages as $message) {
-            $messages[] = new Mail($message, $this->preload);
+            $messages[] = new Mail($message, true);
         }
         $messages = collect($messages);
 
