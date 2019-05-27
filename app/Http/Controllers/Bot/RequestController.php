@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Bot;
 use App\Contracts\Interfaces\OpportunityInterface;
 use App\Contracts\Opportunity;
 use App\Http\Controllers\Controller;
+use Dacastro4\LaravelGmail\Services\Message\Attachment;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
 use LaravelGmail;
 use Telegram\Bot\BotsManager;
@@ -34,7 +35,10 @@ class RequestController extends Controller
 dump($messages->first()->getBody());
 //$attachment = base64_decode($messages->first()->getAttachments(true)[0]);
 //echo "<img src='data:image/jpeg;base64,$attachment'>";
-dump($messages->first()->getAttachments());
+        /** @var Attachment $attach */
+        $attach = $messages->first()->getAttachments()[0];
+        dump($attach->getMimeType());
+        dump($attach->getData());
         /** @var Mail $message */
         foreach ($messages as $message) {
             /** TODO: Format message here */
