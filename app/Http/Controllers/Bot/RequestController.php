@@ -44,6 +44,7 @@ class RequestController extends Controller
         foreach ($messages as $message) {
             $body = $this->sanitizeBody($message->getHtmlBody());
             dump($body);
+            var_dump($body);
             /** TODO: Format message here */
             $opportunity = new Opportunity();
             $opportunity->setTitle($message->getSubject())
