@@ -31,13 +31,13 @@ class RequestController extends Controller
     public function process(): string
     {
         $messages = $this->getMessages();
-
+dump($messages);
         /** @var Mail $message */
         foreach ($messages as $message) {
             /** TODO: Format message here */
             $opportunity = new Opportunity();
             $opportunity->setTitle($message->getSubject())
-                ->setDescription($message->getBody());
+                ->setDescription($message->getFromName());
             $this->sendOpportunityToChannel($opportunity);
         }
         return 'ok';
