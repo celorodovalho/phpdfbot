@@ -28,11 +28,11 @@ class RequestController extends Controller
 
         /** @var \Dacastro4\LaravelGmail\Services\Message $messageService */
         $messageService = LaravelGmail::message();
-        $threads = $messageService->service->users_threads->listUsersThreads('me', [
+        $threads = $messageService->service->users_messages->listUsersMessages('me', [
             'q' => '(list:nvagas@googlegroups.com OR list:leonardoti@googlegroups.com OR list:clubinfobsb@googlegroups.com OR to:nvagas@googlegroups.com OR to:vagas@noreply.github.com OR to:clubinfobsb@googlegroups.com OR to:leonardoti@googlegroups.com) is:unread'
         ]);
-        dump($threads->getThreads());
-        dump($threads->getThreads()->getMessages());
+//        dump($threads->getThreads());
+        dump($threads->getMessages());
         return 'ok';
     }
 }
