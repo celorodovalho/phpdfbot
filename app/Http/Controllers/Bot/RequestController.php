@@ -42,7 +42,7 @@ class RequestController extends Controller
 //        echo "<img src='data:$myme;base64,$attachment'>";
         /** @var Mail $message */
         foreach ($messages as $message) {
-            dump($message->getRawPlainTextBody());
+            dump(strip_tags($message->getRawHtmlBody()));
             /** TODO: Format message here */
             $opportunity = new Opportunity();
             $opportunity->setTitle($message->getSubject())
