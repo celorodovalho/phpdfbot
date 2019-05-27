@@ -39,6 +39,7 @@ return [
 		'readonly',
 		'modify',
 		'metadata',
+        'all'
 	],
 
 	/*
