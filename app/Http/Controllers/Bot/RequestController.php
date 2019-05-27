@@ -31,7 +31,7 @@ class RequestController extends Controller
     public function process(): string
     {
         $messages = $this->getMessages();
-dump($messages);
+dump($messages->first());
         /** @var Mail $message */
         foreach ($messages as $message) {
             /** TODO: Format message here */
