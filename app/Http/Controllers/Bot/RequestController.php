@@ -17,13 +17,13 @@ class RequestController extends Controller
 //            ->raw('list:nvagas@googlegroups.com')
 //            ->raw('list:leonardoti@googlegroups.com')
 //            ->raw('list:clubinfobsb@googlegroups.com')
-            ->to('nvagas@googlegroups.com')
-            ->to('vagas@noreply.github.com')
-            ->to('clubinfobsb@googlegroups.com')
-            ->to('leonardoti@googlegroups.com')
+//            ->to('nvagas@googlegroups.com')
+//            ->to('vagas@noreply.github.com')
+//            ->to('clubinfobsb@googlegroups.com')
+//            ->to('leonardoti@googlegroups.com')
 //            ->fromThese()
             ->unread()
-            ->preload()
+//            ->preload()
             ->all();
         dump($messages);
         dump(get_class_methods($messages));
