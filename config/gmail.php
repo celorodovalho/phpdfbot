@@ -35,12 +35,18 @@ return [
 
 	'state' => null,
 
-	'scopes' => [
-//		'readonly',
-//		'modify',
-//		'metadata',
-        'all'
-	],
+    'scopes' => [
+        'all',
+        'compose',
+        'insert',
+        'labels',
+        'metadata',
+        'modify',
+        'readonly',
+        'send',
+        'settings_basic',
+        'settings_sharing',
+    ],
 
 	/*
 	|--------------------------------------------------------------------------
