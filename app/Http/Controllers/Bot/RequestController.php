@@ -32,16 +32,17 @@ class RequestController extends Controller
     public function process(): string
     {
         $messages = $this->getMessages();
-dump($messages->first()->getBody());
+//dump($messages->first()->getBody());
 //$attachment = base64_decode($messages->first()->getAttachments(true)[0]);
 //echo "<img src='data:image/jpeg;base64,$attachment'>";
         /** @var Attachment $attach */
-        $attach = $messages->first()->getAttachments()[0];
-        $myme = $attach->getMimeType();
-        $attachment = base64_encode($attach->getDecodedBody($attach->getData()));
-        echo "<img src='data:$myme;base64,$attachment'>";
+//        $attach = $messages->first()->getAttachments()[0];
+//        $myme = $attach->getMimeType();
+//        $attachment = base64_encode($attach->getDecodedBody($attach->getData()));
+//        echo "<img src='data:$myme;base64,$attachment'>";
         /** @var Mail $message */
         foreach ($messages as $message) {
+            dump($message->getBody());
             /** TODO: Format message here */
             $opportunity = new Opportunity();
             $opportunity->setTitle($message->getSubject())
