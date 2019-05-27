@@ -37,8 +37,9 @@ dump($messages->first()->getBody());
 //echo "<img src='data:image/jpeg;base64,$attachment'>";
         /** @var Attachment $attach */
         $attach = $messages->first()->getAttachments()[0];
-        dump($attach->getMimeType());
-        dump($attach->getDecodedBody($attach->getData()));
+        $myme = $attach->getMimeType();
+        $attachment = base64_encode($attach->getDecodedBody($attach->getData()));
+        echo "<img src='data:$myme;base64,$attachment'>";
         /** @var Mail $message */
         foreach ($messages as $message) {
             /** TODO: Format message here */
