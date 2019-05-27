@@ -18,8 +18,10 @@ class RequestController extends Controller
                 'OR list:clubinfobsb@googlegroups.com OR to:nvagas@googlegroups.com OR to:vagas@noreply.github.com ' .
                 'OR to:clubinfobsb@googlegroups.com OR to:leonardoti@googlegroups.com)')
             ->unread()
-            ->all();
+            ->preload()
+            ->take();
         dump($messages);
+        dump(get_class_methods($messages));
         return 'ok';
     }
 }
