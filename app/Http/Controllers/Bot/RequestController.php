@@ -105,6 +105,8 @@ class RequestController extends Controller
 
         $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
 
+        dump($messageArray);
+
         $message = $messageArray[0];
 
         $message = str_replace(['*', '_', '`'], '', $message);
