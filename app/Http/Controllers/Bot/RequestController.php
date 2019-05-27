@@ -86,38 +86,39 @@ class RequestController extends Controller
 
     private function sanitizeBody(string $message): string
     {
-        $delimiters = [
-            'You are receiving this because you are subscribed to this thread',
-            'Você recebeu esta mensagem porque está inscrito para o Google',
-            'Você está recebendo esta mensagem porque',
-            'Esta mensagem pode conter informa',
-            'Você recebeu esta mensagem porque',
-            'Antes de imprimir',
-            'This message contains',
-            'NVagas Conectando',
-            'cid:image',
-            'Atenciosamente',
-            'Att.',
-            'Att,',
-            'AVISO DE CONFIDENCIALIDADE',
-        ];
+        if ($message) {
+            $delimiters = [
+                'You are receiving this because you are subscribed to this thread',
+                'Você recebeu esta mensagem porque está inscrito para o Google',
+                'Você está recebendo esta mensagem porque',
+                'Esta mensagem pode conter informa',
+                'Você recebeu esta mensagem porque',
+                'Antes de imprimir',
+                'This message contains',
+                'NVagas Conectando',
+                'cid:image',
+                'Atenciosamente',
+                'Att.',
+                'Att,',
+                'AVISO DE CONFIDENCIALIDADE',
+            ];
 
-        $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
+            $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
 
-        $message = $messageArray[0];
+            $message = $messageArray[0];
 
-        $message = $this->closeOpenTags($message);
+            $message = $this->closeOpenTags($message);
 
-        $message = str_replace(['*', '_', '`'], '', $message);
-        $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
-        $message = str_ireplace(['<i>', '</i>', '<em>', '</em>'], '_', $message);
-        $message = str_ireplace([
-            '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
-        ], '`', $message);
-        $message = strip_tags($message);
-        $message = preg_replace("/[\r\n]+/", "\n", $message);
+            $message = str_replace(['*', '_', '`'], '', $message);
+            $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
+            $message = str_ireplace(['<i>', '</i>', '<em>', '</em>'], '_', $message);
+            $message = str_ireplace([
+                '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
+            ], '`', $message);
+            $message = strip_tags($message);
+            $message = preg_replace("/[\r\n]+/", "\n", $message);
+        }
         return trim($message);
-
     }
 
     private function closeOpenTags($message)
