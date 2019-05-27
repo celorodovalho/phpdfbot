@@ -50,17 +50,6 @@ class DefaultController extends Controller
         } catch (\Exception $exception) {
             return $exception->getMessage();
         }
-
         return 'ok';
-    }
-
-    /**
-     *
-     */
-    public function getMe()
-    {
-        $updates = Telegram::getMe();
-        dump($updates);
-        die;
     }
 }

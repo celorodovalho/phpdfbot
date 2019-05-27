@@ -34,9 +34,9 @@ return [
     'bots'                         => [
         'phpdfbot' => [
             'username'            => 'phpdfbot',
-            'token'               => env('TELEGRAM_BOT_TOKEN', '545873070:AAGgn56Ybmo0RJjCSJaTXeSiGJQ4KCV9Mkw'),
+            'token'               => env('TELEGRAM_BOT_TOKEN', ''),
 //            'certificate_path'    => env('TELEGRAM_CERTIFICATE_PATH', 'YOUR-CERTIFICATE-PATH'),
-            'webhook_url'         => env('TELEGRAM_WEBHOOK_URL', 'https://dev.marcelorodovalho.com/workspace/phpdfbot/public/index.php/webhook/545873070:AAGgn56Ybmo0RJjCSJaTXeSiGJQ4KCV9Mkw/phpdfbot'),
+            'webhook_url' => env('TELEGRAM_WEBHOOK_URL', env('APP_URL') . '/webhook/' . env('TELEGRAM_BOT_TOKEN') . '/phpdfbot'),
             'commands'            => [
                 //Acme\Project\Commands\MyTelegramBot\BotCommand::class
             ],

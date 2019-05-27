@@ -12,4 +12,5 @@
 */
 Route::get('/setWebhook/{bot}', 'Bot\DefaultController@setWebhook');
 Route::any('/webhook/{token}/{bot}', 'Bot\DefaultController@webhook');
-Route::get('/getMe', 'Bot\DefaultController@getMe');
+Route::any('/process', 'Bot\RequestController@process');
+//Route::get('/getMe', 'Bot\DefaultController@getMe');
