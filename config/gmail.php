@@ -40,7 +40,7 @@ return [
         'compose',
         'insert',
         'labels',
-        'metadata',
+//        'metadata',
         'modify',
         'readonly',
         'send',
