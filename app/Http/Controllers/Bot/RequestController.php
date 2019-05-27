@@ -109,7 +109,7 @@ class RequestController extends Controller
 
         $message = $messageArray[0];
 
-        $message = str_replace(['*', '_', '`'], '', $message);
+//        $message = str_replace(['*', '_', '`'], '', $message);
         $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
         $message = str_ireplace(['<i>', '</i>', '<em>', '</em>'], '_', $message);
         $message = str_ireplace([
