@@ -23,6 +23,7 @@ class RequestController extends Controller
         dump($messages);
         dump($messages->all());
         dump(get_class_methods($messages));
+        dump($messages->all()[0]);
         return 'ok';
     }
 }
