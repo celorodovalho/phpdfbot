@@ -93,6 +93,28 @@ class RequestController extends Controller
             '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
         ], '`', $message);
         $message = strip_tags($message);
+
+        $delimiters = [
+            'You are receiving this because you are subscribed to this thread',
+            'Você recebeu esta mensagem porque está inscrito para o Google',
+            'Você está recebendo esta mensagem porque',
+            'Esta mensagem pode conter informa',
+            'Você recebeu esta mensagem porque',
+            'Antes de imprimir',
+            'This message contains',
+            'NVagas Conectando',
+            'cid:image',
+            'Atenciosamente',
+            'Att.',
+            'Att,',
+            'AVISO DE CONFIDENCIALIDADE',
+        ];
+
+        $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
+
+        $message = $messageArray[0];
+
+
         return preg_replace("/[\r\n]+/", "\n", $message);
     }
 }
