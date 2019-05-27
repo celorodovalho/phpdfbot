@@ -38,7 +38,7 @@ dump($messages->first()->getBody());
         /** @var Attachment $attach */
         $attach = $messages->first()->getAttachments()[0];
         dump($attach->getMimeType());
-        dump($attach->getData());
+        dump($attach->getDecodedBody($attach->getData()));
         /** @var Mail $message */
         foreach ($messages as $message) {
             /** TODO: Format message here */
