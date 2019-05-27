@@ -107,6 +107,7 @@ class RequestController extends Controller
 
             $message = $messageArray[0];
 
+            $message = $this->removeEptyTagsRecursive($message);
             $message = $this->closeOpenTags($message);
 
             $message = str_replace(['*', '_', '`'], '', $message);
@@ -131,5 +132,36 @@ class RequestController extends Controller
             $mock->appendChild($mock->importNode($child, true));
         }
         return trim(html_entity_decode($mock->saveHTML()));
+    }
+
+    /**
+     * remove_empty_tags_recursive ()
+     * Remove the nested HTML empty tags from the string.
+     *
+     * @author    Junaid Atari <mj.atari@gmail.com>
+     * @version    1.0
+     * @param    string $str String to remove tags.
+     * @param    string $repto Replace empty string with.
+     * @return    string    Cleaned string.
+     */
+    private function removeEptyTagsRecursive($str, $repto = NULL)
+    {
+        //** Return if string not given or empty.
+        if (!is_string($str)
+            || trim($str) == '')
+            return $str;
+
+        //** Recursive empty HTML tags.
+        return preg_replace(
+
+        //** Pattern written by Junaid Atari.
+            '/<([^<\/>]*)>([\s]*?|(?R))<\/\1>/imsU',
+
+            //** Replace with nothing if string empty.
+            !is_string($repto) ? '' : $repto,
+
+            //** Source string
+            $str
+        );
     }
 }
