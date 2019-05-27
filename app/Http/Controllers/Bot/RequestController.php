@@ -44,7 +44,6 @@ class RequestController extends Controller
         foreach ($messages as $message) {
             $body = $this->sanitizeBody($message->getHtmlBody());
             dump($body);
-            var_dump($body);
             /** TODO: Format message here */
             $opportunity = new Opportunity();
             $opportunity->setTitle($message->getSubject())
@@ -105,18 +104,17 @@ class RequestController extends Controller
 
         $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
 
-        dump($messageArray);
-
         $message = $messageArray[0];
 
         $message = str_replace(['*', '_', '`'], '', $message);
-//        $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
-//        $message = str_ireplace(['<i>', '</i>', '<em>', '</em>'], '_', $message);
-//        $message = str_ireplace([
-//            '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
-//        ], '`', $message);
+        $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
+        $message = str_ireplace(['<i>', '</i>', '<em>', '</em>'], '_', $message);
+        $message = str_ireplace([
+            '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
+        ], '`', $message);
         $message = strip_tags($message);
+        $message = preg_replace("/[\r\n]+/", "\n", $message);
+        return trim($message);
 
-        return preg_replace("/[\r\n]+/", "\n", $message);
     }
 }
