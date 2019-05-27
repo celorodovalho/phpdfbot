@@ -14,19 +14,18 @@ class RequestController extends Controller
     public function process(): string
     {
         $messages = LaravelGmail::message()
-//            ->raw('list:nvagas@googlegroups.com')
-//            ->raw('list:leonardoti@googlegroups.com')
-//            ->raw('list:clubinfobsb@googlegroups.com')
-//            ->to('nvagas@googlegroups.com')
-//            ->to('vagas@noreply.github.com')
-//            ->to('clubinfobsb@googlegroups.com')
-//            ->to('leonardoti@googlegroups.com')
+            ->raw('list:nvagas@googlegroups.com')
+            ->raw('list:leonardoti@googlegroups.com')
+            ->raw('list:clubinfobsb@googlegroups.com')
+            ->to('nvagas@googlegroups.com')
+            ->to('vagas@noreply.github.com')
+            ->to('clubinfobsb@googlegroups.com')
+            ->to('leonardoti@googlegroups.com')
 //            ->fromThese()
             ->unread()
-//            ->preload()
-            ->all();
+            ->preload();
         dump($messages);
-        dump(get_class_methods($messages));
+        dump($messages->all());
         return 'ok';
     }
 }
