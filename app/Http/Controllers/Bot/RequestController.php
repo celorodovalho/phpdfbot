@@ -42,11 +42,12 @@ class RequestController extends Controller
 //        echo "<img src='data:$myme;base64,$attachment'>";
         /** @var Mail $message */
         foreach ($messages as $message) {
-            dump(strip_tags($message->getHtmlBody()));
+            $body = $this->sanitizeBody($message->getHtmlBody());
+            dump($body);
             /** TODO: Format message here */
             $opportunity = new Opportunity();
             $opportunity->setTitle($message->getSubject())
-                ->setDescription($message->getFromName());
+                ->setDescription($body);
             $this->sendOpportunityToChannel($opportunity);
         }
         return 'ok';
@@ -81,5 +82,17 @@ class RequestController extends Controller
                 $opportunity->getDescription()
             ])
         ]);
+    }
+
+    private function sanitizeBody(string $message): string
+    {
+        $message = str_replace(['*', '_', '`'], '', $message);
+        $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
+        $message = str_ireplace(['<i>', '</i>', '<em>', '</em>'], '_', $message);
+        $message = str_ireplace([
+            '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
+        ], '`', $message);
+        $message = strip_tags($message);
+        return preg_replace("/[\r\n]+/", "\n", $message);
     }
 }
