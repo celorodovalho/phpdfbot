@@ -121,7 +121,10 @@ class RequestController extends Controller
             $message = str_ireplace([
                 '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
             ], '`', $message);
+            $message = preg_replace('/<br(\s+)?\/?>/i', "\n", $message);
             $message = strip_tags($message);
+
+            dump($message);
             $message = str_replace(['**', '__', '``'], '', $message);
             $message = preg_replace("/[\r\n]+/", "\n", $message);
         }
