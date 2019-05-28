@@ -33,4 +33,6 @@ interface OpportunityInterface
     public function setPosition(string $position): self;
 
     public function addFile(string $file): self;
+
+    public function hasFile(): bool;
 }

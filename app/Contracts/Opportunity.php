@@ -17,6 +17,7 @@ class Opportunity implements OpportunityInterface
     private $salary;
     private $company;
     private $location;
+    /** @var Collection */
     private $files;
 
     /**
@@ -118,5 +119,10 @@ class Opportunity implements OpportunityInterface
         }
         $this->files->add($file);
         return $this;
+    }
+
+    public function hasFile(): bool
+    {
+        return $this->files->isNotEmpty();
     }
 }

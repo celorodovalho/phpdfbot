@@ -7,6 +7,7 @@ use App\Contracts\Opportunity;
 use App\Http\Controllers\Controller;
 use Dacastro4\LaravelGmail\Services\Message\Attachment;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
+use Illuminate\Support\Facades\Storage;
 use LaravelGmail;
 use Telegram\Bot\BotsManager;
 
@@ -32,30 +33,23 @@ class RequestController extends Controller
     public function process(): string
     {
         $messages = $this->getMessages();
-//dump($messages->first()->getBody());
-//$attachment = base64_decode($messages->first()->getAttachments(true)[0]);
-//echo "<img src='data:image/jpeg;base64,$attachment'>";
-        /** @var Attachment $attach */
-//        $attach = $messages->first()->getAttachments()[0];
-//        $myme = $attach->getMimeType();
-//        $attachment = base64_encode($attach->getDecodedBody($attach->getData()));
-//        echo "<img src='data:$myme;base64,$attachment'>";
         /** @var Mail $message */
         foreach ($messages as $message) {
             $body = $this->sanitizeBody($message->getHtmlBody());
+            /** TODO: Format message here */
+            $opportunity = new Opportunity();
+            $opportunity
+                ->setTitle($message->getSubject())
+                ->setDescription($body);
             if ($message->hasAttachments()) {
                 $attachments = $message->getAttachments();
                 /** @var \Dacastro4\LaravelGmail\Services\Message\Attachment $attachment */
                 foreach ($attachments as $attachment) {
-                    $filePath = $attachment->saveAttachmentTo();
-                    dump($filePath);
+                    $filePath = $attachment->saveAttachmentTo($message->getId() . '/', null, 'uploads');
+                    $fileUrl = Storage::disk('uploads')->get($filePath);
+                    $opportunity->addFile($fileUrl);
                 }
             }
-
-            /** TODO: Format message here */
-            $opportunity = new Opportunity();
-            $opportunity->setTitle($message->getSubject())
-                ->setDescription($body);
             $this->sendOpportunityToChannel($opportunity);
         }
         return 'ok';
@@ -112,7 +106,6 @@ class RequestController extends Controller
         $fromTo = '{' . implode(' ', $fromTo) . '}';
 
         $query = "$fromTo $mustIncludeWords is:unread";
-        dump($query);
         $messageService = LaravelGmail::message();
         $threads = $messageService->service->users_messages->listUsersMessages('me', [
             'q' => $query,
@@ -129,10 +122,7 @@ class RequestController extends Controller
 
     private function sendOpportunityToChannel(OpportunityInterface $opportunity): void
     {
-        dump(implode("\r\n", [
-            $opportunity->getTitle(),
-            $opportunity->getDescription()
-        ]));
+        dump($opportunity);
         return;
         $this->telegram->sendMessage([
             'parse_mode' => 'Markdown',
