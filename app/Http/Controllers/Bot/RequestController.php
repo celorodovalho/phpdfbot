@@ -43,7 +43,6 @@ class RequestController extends Controller
         /** @var Mail $message */
         foreach ($messages as $message) {
             $body = $this->sanitizeBody($message->getHtmlBody());
-            dump($body);
             /** TODO: Format message here */
             $opportunity = new Opportunity();
             $opportunity->setTitle($message->getSubject())
@@ -107,6 +106,11 @@ class RequestController extends Controller
 
     private function sendOpportunityToChannel(OpportunityInterface $opportunity): void
     {
+        dump(implode("\r\n", [
+            $opportunity->getTitle(),
+            $opportunity->getDescription()
+        ]));
+        return null;
         $this->telegram->sendMessage([
             'parse_mode' => 'Markdown',
             'chat_id' => env('TELEGRAM_OWNER_ID'),
@@ -141,13 +145,10 @@ class RequestController extends Controller
             $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
 
             $message = $messageArray[0];
-            dump($message);
 
             $message = $this->removeTagsAttributes($message);
             $message = $this->removeEptyTagsRecursive($message);
             $message = $this->closeOpenTags($message);
-
-            dump($message);
 
             $message = str_replace(['*', '_', '`'], '', $message);
             $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
@@ -160,7 +161,6 @@ class RequestController extends Controller
             $message = str_replace("</p>", "\r\n", $message);
             $message = strip_tags($message);
 
-            dump($message);
             $message = str_replace(['**', '__', '``'], '', $message);
             $message = preg_replace("/[\r\n]+/", "\n", $message);
         }
