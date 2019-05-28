@@ -7,6 +7,7 @@ use App\Contracts\Opportunity;
 use App\Http\Controllers\Controller;
 use Dacastro4\LaravelGmail\Services\Message\Attachment;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use LaravelGmail;
 use Telegram\Bot\BotsManager;
@@ -27,27 +28,27 @@ class RequestController extends Controller
         $this->telegram = $botsManager->bot();
     }
 
-    /**
-     * @return string
-     */
     public function process(): string
     {
         $messages = $this->getMessages();
         /** @var Mail $message */
         foreach ($messages as $message) {
             $body = $this->sanitizeBody($message->getHtmlBody());
+            $subject = $this->sanitizeSubject($message->getSubject());
             /** TODO: Format message here */
             $opportunity = new Opportunity();
             $opportunity
-                ->setTitle($message->getSubject())
+                ->setTitle($subject)
                 ->setDescription($body);
             if ($message->hasAttachments()) {
                 $attachments = $message->getAttachments();
                 /** @var \Dacastro4\LaravelGmail\Services\Message\Attachment $attachment */
                 foreach ($attachments as $attachment) {
-                    $filePath = $attachment->saveAttachmentTo($message->getId() . '/', null, 'uploads');
-                    $fileUrl = Storage::disk('uploads')->url($filePath);
-                    $opportunity->addFile($fileUrl);
+                    if ($attachment->getSize() > 50000) {
+                        $filePath = $attachment->saveAttachmentTo($message->getId() . '/', null, 'uploads');
+                        $fileUrl = Storage::disk('uploads')->url($filePath);
+                        $opportunity->addFile($fileUrl);
+                    }
                 }
             }
             $this->sendOpportunityToChannel($opportunity);
@@ -109,7 +110,7 @@ class RequestController extends Controller
         $messageService = LaravelGmail::message();
         $threads = $messageService->service->users_messages->listUsersMessages('me', [
             'q' => $query,
-            'maxResults' => 5
+//            'maxResults' => 5
         ]);
 
         $messages = [];
@@ -123,16 +124,73 @@ class RequestController extends Controller
     private function sendOpportunityToChannel(OpportunityInterface $opportunity): void
     {
         dump($opportunity);
-        return;
-        $this->telegram->sendMessage([
-            'parse_mode' => 'Markdown',
-            'chat_id' => env('TELEGRAM_OWNER_ID'),
-            /* TODO: Format this */
-            'text' => implode("\r\n", [
-                $opportunity->getTitle(),
-                $opportunity->getDescription()
-            ])
-        ]);
+
+        $messageId = null;
+        $chatId = env('TELEGRAM_OWNER_ID');
+
+        if ($opportunity->hasFile()) {
+            $files = $opportunity->getFiles();
+            foreach ($files as $file) {
+                try {
+                    $photoSent = $this->telegram->sendPhoto([
+                        'chat_id' => $chatId,
+                        'photo' => $file,
+                        'caption' => $opportunity->getTitle(),
+                        'parse_mode' => 'Markdown'
+                    ]);
+                    $messageId = $photoSent->getMessageId();
+                } catch (\Exception $ex) {
+                    try {
+                        $documentSent = $this->telegram->sendDocument([
+                            'chat_id' => $chatId,
+                            'document' => $file,
+                            'caption' => $opportunity->getTitle(),
+                            'parse_mode' => 'Markdown'
+                        ]);
+                        $messageId = $documentSent->getMessageId();
+                    } catch (\Exception $exception) {
+                        Log::error('FALHA_AO_ENVIAR_IMAGEM', [$exception]);
+                    }
+                }
+            }
+        }
+
+        $messageTexts = $this->formatTextOpportunity($opportunity);
+        $messageSent = null;
+        foreach ($messageTexts as $messageText) {
+            $sendMsg = [
+                'chat_id' => $chatId,
+                'parse_mode' => 'Markdown',
+                'text' => $messageText,
+            ];
+            if (isset($messageId)) {
+                $sendMsg['reply_to_message_id'] = $messageId;
+            }
+
+            try {
+                $messageSent = $this->telegram->sendMessage($sendMsg);
+            } catch (\Exception $exception) {
+                if ($exception->getCode() == 400) {
+                    $sendMsg['text'] = $this->removeMarkdown($messageText);
+                    unset($sendMsg['Markdown']);
+                    $messageSent = $this->telegram->sendMessage($sendMsg);
+                }
+                Log::error('FALHA_AO_ENVIAR_MENSAGEM', [$sendMsg]);
+            }
+        }
+
+        Storage::append('vagasEnviadas.txt', json_encode(['id' => $messageSent->getMessageId(), 'subject' => $opportunity->getTitle()]));
+    }
+
+    private function removeMarkdown(string $message): string
+    {
+        $message = str_replace(['*', '_', '`'], '', $message);
+        return trim($message, '[]');
+    }
+
+    private function sanitizeSubject(string $message): string
+    {
+        return trim(preg_replace('/\[(\w+)[^\]]*](.*?)\[\/\1]/i', '', $message));
     }
 
     private function sanitizeBody(string $message): string
@@ -163,7 +221,8 @@ class RequestController extends Controller
             $message = $this->removeEmptyTagsRecursive($message);
             $message = $this->closeOpenTags($message);
 
-            $message = str_replace(['*', '_', '`'], '', $message);
+            $message = $this->removeMarkdown($message);
+
             $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
             $message = str_ireplace(['<i>', '</i>', '<em>', '</em>'], '_', $message);
             $message = str_ireplace([
@@ -175,7 +234,9 @@ class RequestController extends Controller
             $message = strip_tags($message);
 
             $message = str_replace(['**', '__', '``'], '', $message);
+            $message = str_replace(['* *', '_ _', '` `'], '', $message);
             $message = preg_replace("/[\r\n]+/", "\n", $message);
+            $message = trim($message, " \t\n\r\0\x0B--");
         }
         return trim($message);
     }
@@ -205,5 +266,17 @@ class RequestController extends Controller
     private function removeEmptyTagsRecursive(string $str, string $repto = ''): string
     {
         return trim($str) === '' ? $str : preg_replace('/<([^<\/>]*)>([\s]*?|(?R))<\/\1>/imsU', $repto, $str);
+    }
+
+    private function formatTextOpportunity(OpportunityInterface $opportunity): array
+    {
+        return str_split(
+            sprintf(
+                "*%s*\n\n[`Descrição`]\n%s\n\n*PHPDF*\n✅ *Canal:* @phpdfvagas\n✅ *Grupo:* @phpdf",
+                $opportunity->getTitle(),
+                $opportunity->getDescription()
+            ),
+            4096
+        );
     }
 }
