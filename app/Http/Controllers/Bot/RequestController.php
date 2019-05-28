@@ -342,6 +342,7 @@ class RequestController extends Controller
 
 
                 Storage::put($lastSentMsg, $photo->getMessageId());
+                Storage::delete($vagasEnviadas);
                 Storage::put($vagasEnviadas, '');
             }
         } catch (\Exception $exception) {
