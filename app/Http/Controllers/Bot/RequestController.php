@@ -53,8 +53,9 @@ class RequestController extends Controller
                 $teste->getPayload(),
                 $teste->getPayload()->getBody(),
                 $teste->getPayload()->getParts(),
-                $message->getDecodedBody($teste->getPayload()->getParts()[0]->getParts()[0]->getBody()->getData()),
-                $message->getDecodedBody($teste->getPayload()->getParts()[0]->getParts()[1]->getBody()->getData()),
+//                $message->getDecodedBody($teste->getPayload()->getParts()[0]->getParts()[0]->getBody()->getData()),
+//                $message->getDecodedBody($teste->getPayload()->getParts()[0]->getParts()[1]->getBody()->getData()),
+                $message->payload->getParts()
 //                $teste->getPayload()->getParts()[0]->getBody()->getData(),
 //                $teste->getPayload()->getParts()[1]->getBody(),
 //                $teste->getPayload()->getParts()[1]->getBody()->getData(),
