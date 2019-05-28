@@ -190,7 +190,7 @@ class RequestController extends Controller
 
     private function sanitizeSubject(string $message): string
     {
-        return trim(preg_replace('/\[(\w+)[^\]]*](.*?)\[\/\1]/i', '', $message));
+        return trim(preg_replace('/\[.+?\]/', '', $message));
     }
 
     private function sanitizeBody(string $message): string
@@ -272,7 +272,7 @@ class RequestController extends Controller
     {
         return str_split(
             sprintf(
-                "*%s*\n\n[`Descrição`]\n%s\n\n*PHPDF*\n✅ *Canal:* @phpdfvagas\n✅ *Grupo:* @phpdf",
+                "*%s*\n\n[*Descrição*]\n%s\n\n*PHPDF*\n✅ *Canal:* @phpdfvagas\n✅ *Grupo:* @phpdf",
                 $opportunity->getTitle(),
                 $opportunity->getDescription()
             ),
