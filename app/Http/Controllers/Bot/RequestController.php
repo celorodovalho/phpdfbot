@@ -156,7 +156,7 @@ class RequestController extends Controller
         }
 
         $messageTexts = $this->formatTextOpportunity($opportunity);
-        $messageSent = null;
+        $messageSentId = null;
         foreach ($messageTexts as $messageText) {
             $sendMsg = [
                 'chat_id' => $chatId,
@@ -169,17 +169,19 @@ class RequestController extends Controller
 
             try {
                 $messageSent = $this->telegram->sendMessage($sendMsg);
+                $messageSentId = $messageSent->getMessageId();
             } catch (\Exception $exception) {
                 if ($exception->getCode() === 400) {
                     $sendMsg['text'] = $this->removeMarkdown($messageText);
                     unset($sendMsg['Markdown']);
                     $messageSent = $this->telegram->sendMessage($sendMsg);
+                    $messageSentId = $messageSent->getMessageId();
                 }
-                Log::error('FALHA_AO_ENVIAR_MENSAGEM', [$sendMsg]);
+                Log::error('FALHA_AO_ENVIAR_MENSAGEM', [$sendMsg, $exception]);
             }
         }
 
-        Storage::append('vagasEnviadas.txt', json_encode(['id' => $messageSent->getMessageId(), 'subject' => $opportunity->getTitle()]));
+        Storage::append('vagasEnviadas.txt', json_encode(['id' => $messageSentId, 'subject' => $opportunity->getTitle()]));
     }
 
     private function removeMarkdown(string $message): string
