@@ -200,6 +200,7 @@ class RequestController extends Controller
             $delimiters = [
                 'You are receiving this because you are subscribed to this thread',
                 'Você recebeu esta mensagem porque está inscrito para o Google',
+                'Você recebeu essa mensagem porque',
                 'Você está recebendo esta mensagem porque',
                 'Esta mensagem pode conter informa',
                 'Você recebeu esta mensagem porque',
@@ -273,7 +274,7 @@ class RequestController extends Controller
     {
         return str_split(
             sprintf(
-                "*%s*\n\n[*Descrição*]\n%s\n\n*PHPDF*\n✅ *Canal:* @phpdfvagas\n✅ *Grupo:* @phpdf",
+                "*%s*\n\n*Descrição*\n%s\n\n*PHPDF*\n✅ *Canal:* @phpdfvagas\n✅ *Grupo:* @phpdf",
                 $opportunity->getTitle(),
                 $opportunity->getDescription()
             ),
