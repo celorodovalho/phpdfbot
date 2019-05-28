@@ -45,11 +45,9 @@ class RequestController extends Controller
                 $attachments = $message->getAttachments();
                 /** @var \Dacastro4\LaravelGmail\Services\Message\Attachment $attachment */
                 foreach ($attachments as $attachment) {
-                    if ($attachment->getSize() > 50000) {
-                        $filePath = $attachment->saveAttachmentTo($message->getId() . '/', null, 'uploads');
-                        $fileUrl = Storage::disk('uploads')->url($filePath);
-                        $opportunity->addFile($fileUrl);
-                    }
+                    $filePath = $attachment->saveAttachmentTo($message->getId() . '/', null, 'uploads');
+                    $fileUrl = Storage::disk('uploads')->url($filePath);
+                    $opportunity->addFile($fileUrl);
                 }
             }
             $this->sendOpportunityToChannel($opportunity);
@@ -124,8 +122,6 @@ class RequestController extends Controller
 
     private function sendOpportunityToChannel(OpportunityInterface $opportunity): void
     {
-        dump($opportunity);
-
         $messageId = null;
         $chatId = env('TELEGRAM_OWNER_ID');
 
@@ -172,7 +168,7 @@ class RequestController extends Controller
             try {
                 $messageSent = $this->telegram->sendMessage($sendMsg);
             } catch (\Exception $exception) {
-                if ($exception->getCode() == 400) {
+                if ($exception->getCode() === 400) {
                     $sendMsg['text'] = $this->removeMarkdown($messageText);
                     unset($sendMsg['Markdown']);
                     $messageSent = $this->telegram->sendMessage($sendMsg);
