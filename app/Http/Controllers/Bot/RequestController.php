@@ -55,6 +55,8 @@ class RequestController extends Controller
                 $teste->getPayload()->getParts(),
                 $teste->getPayload()->getParts()[0]->getBody(),
                 $teste->getPayload()->getParts()[0]->getBody()->getData(),
+                $teste->getPayload()->getParts()[1]->getBody(),
+                $teste->getPayload()->getParts()[1]->getBody()->getData(),
             ]);
             $body = $this->sanitizeBody($message->getHtmlBody());
             $subject = $this->sanitizeSubject($message->getSubject());
