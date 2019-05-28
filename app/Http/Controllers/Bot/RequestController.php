@@ -108,6 +108,7 @@ class RequestController extends Controller
             $message = $messageArray[0];
             dump($message);
 
+            $message = $this->removeTagsAttributes($message);
             $message = $this->removeEptyTagsRecursive($message);
             $message = $this->closeOpenTags($message);
 
@@ -123,6 +124,11 @@ class RequestController extends Controller
             $message = preg_replace("/[\r\n]+/", "\n", $message);
         }
         return trim($message);
+    }
+
+    private function removeTagsAttributes($message)
+    {
+        return preg_replace("/<([a-z][a-z0-9]*)[^>]*?(\/?)>/i", '<$1$2>', $message);
     }
 
     private function closeOpenTags($message)
