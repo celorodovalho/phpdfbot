@@ -45,7 +45,7 @@ class RequestController extends Controller
                 'getRawHtmlBody' => $message->getRawHtmlBody(),
                 'getBody' => $message->getBody(),
                 'getRawPlainTextBody' => $message->getRawPlainTextBody(),
-                'getDecodedBody' => $message->getDecodedBody(),
+//                'getDecodedBody' => $message->getDecodedBody(),
                 'getPlainTextBody' => $message->getPlainTextBody(),
             ]);
             $body = $this->sanitizeBody($message->getHtmlBody());
