@@ -21,12 +21,18 @@ class RequestController extends Controller
     private $telegram;
 
     /**
+     * @var \Dacastro4\LaravelGmail\Services\Message
+     */
+    private $messageService;
+
+    /**
      * RequestController constructor.
      * @param BotsManager $botsManager
      */
     public function __construct(BotsManager $botsManager)
     {
         $this->telegram = $botsManager->bot();
+        $this->messageService = LaravelGmail::message();
     }
 
     public function process(): string
@@ -54,6 +60,7 @@ class RequestController extends Controller
             }
             $this->sendOpportunityToChannel($opportunity);
             dump($message);
+            dump($this->messageService->service->users_labels->listUsersLabels('me'));
 //            $message->markAsRead();
 //            $message->addLabel('ENVIADO_PRO_BOT');
 //            $message->removeLabel('STILL_UNREAD');
@@ -64,7 +71,6 @@ class RequestController extends Controller
 
     private function getMessages(): \Illuminate\Support\Collection
     {
-        /** @var \Dacastro4\LaravelGmail\Services\Message $messageService */
         $mustIncludeWords = [
             'desenvolvedor',
             'desenvolvimento',
@@ -113,8 +119,7 @@ class RequestController extends Controller
         $fromTo = '{' . implode(' ', $fromTo) . '}';
 
         $query = "$fromTo $mustIncludeWords is:unread";
-        $messageService = LaravelGmail::message();
-        $threads = $messageService->service->users_messages->listUsersMessages('me', [
+        $threads = $this->messageService->service->users_messages->listUsersMessages('me', [
             'q' => $query,
             'maxResults' => 5
         ]);
