@@ -20,6 +20,11 @@ class Opportunity implements OpportunityInterface
     /** @var Collection */
     private $files;
 
+    public function __construct()
+    {
+        $this->files = new Collection();
+    }
+
     /**
      * @return string
      */
@@ -114,9 +119,6 @@ class Opportunity implements OpportunityInterface
 
     public function addFile(string $file): OpportunityInterface
     {
-        if (!$this->files instanceof Collection) {
-            $this->files = new Collection($this->files);
-        }
         $this->files->add($file);
         return $this;
     }
