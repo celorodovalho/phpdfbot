@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use LaravelGmail;
 use Telegram\Bot\BotsManager;
+use Telegram\Bot\FileUpload\InputFile;
 
 class RequestController extends Controller
 {
@@ -134,7 +135,7 @@ class RequestController extends Controller
                 try {
                     $photoSent = $this->telegram->sendPhoto([
                         'chat_id' => $chatId,
-                        'photo' => $file,
+                        'photo' => InputFile::create($file),
                         'caption' => $opportunity->getTitle(),
                         'parse_mode' => 'Markdown'
                     ]);
@@ -144,7 +145,7 @@ class RequestController extends Controller
                     try {
                         $documentSent = $this->telegram->sendDocument([
                             'chat_id' => $chatId,
-                            'document' => $file,
+                            'document' => InputFile::create($file),
                             'caption' => $opportunity->getTitle(),
                             'parse_mode' => 'Markdown'
                         ]);
