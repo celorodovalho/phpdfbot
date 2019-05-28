@@ -47,6 +47,7 @@ class RequestController extends Controller
                 'getRawPlainTextBody' => $message->getRawPlainTextBody(),
 //                'getDecodedBody' => $message->getDecodedBody(),
                 'getPlainTextBody' => $message->getPlainTextBody(),
+                'teste' => $this->messageService->service->users_messages->get('me', $message->getId())
             ]);
             $body = $this->sanitizeBody($message->getHtmlBody());
             $subject = $this->sanitizeSubject($message->getSubject());
@@ -137,9 +138,6 @@ class RequestController extends Controller
         $messages = [];
         $allMessages = $threads->getMessages();
         foreach ($allMessages as $message) {
-            dump($message);
-            dump($message->getPayload());
-            dump($message->getRaw());
             $messages[] = new Mail($message, true);
         }
         return collect($messages);
