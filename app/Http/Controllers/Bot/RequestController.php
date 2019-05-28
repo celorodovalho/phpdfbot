@@ -69,8 +69,8 @@ class RequestController extends Controller
             'devops',
             'dev-ops',
             'teste',
-            '"banco de dados"',
-            '"segurança da informação"',
+            '"banco dados"',
+            '"segurança informação"',
             'designer',
             'front-end',
             'frontend',
@@ -78,15 +78,17 @@ class RequestController extends Controller
             'backend',
             'scrum',
             'tecnologia',
-            '"de projetos"',
-            '"de dados"',
+            '"gerenten projetos"',
+            '"analista dados"',
+            '"administrador dados"',
             'infra',
             'software',
             'oportunidade',
             'hardware',
             'java',
             'javascript',
-            'python'
+            'python',
+            'informática'
         ];
         $mustIncludeWords = '{' . implode(' ', $mustIncludeWords) . '}';
         $fromTo = [
