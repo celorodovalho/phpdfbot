@@ -212,7 +212,7 @@ class RequestController extends Controller
      * @param string $repto
      * @return string
      */
-    private function removeEmptyTagsRecursive(string $str, string $repto): string
+    private function removeEmptyTagsRecursive(string $str, string $repto = ''): string
     {
         return trim($str) === '' ? $str : preg_replace('/<([^<\/>]*)>([\s]*?|(?R))<\/\1>/imsU', $repto, $str);
     }
