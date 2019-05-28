@@ -56,11 +56,44 @@ class RequestController extends Controller
     private function getMessages(): \Illuminate\Support\Collection
     {
         /** @var \Dacastro4\LaravelGmail\Services\Message $messageService */
+        $mustIncludeWords = [
+            'desenvolvedor',
+            'desenvolvimento',
+            'programador',
+            'developer',
+            'analista',
+            'php',
+            'web',
+            'arquiteto',
+            'dba',
+            'suporte',
+            'devops',
+            'dev-ops',
+            'teste',
+            'banco de dados',
+            'segurança da informação',
+            'designer',
+            'front-end',
+            'frontend',
+            'back-end',
+            'backend',
+            'scrum',
+            'tecnologia',
+            '"de projetos"',
+            '"de dados"',
+            'infra',
+            'software',
+            'oportunidade',
+            'hardware',
+        ];
+        $mustIncludeWords = implode(' OR ', $mustIncludeWords);
+        $query = '(list:nvagas@googlegroups.com OR list:leonardoti@googlegroups.com ' .
+            'OR list:clubinfobsb@googlegroups.com OR to:nvagas@googlegroups.com OR to:vagas@noreply.github.com ' .
+            'OR to:clubinfobsb@googlegroups.com OR to:leonardoti@googlegroups.com) is:unread (' . $mustIncludeWords . ')';
+        dump($query);
         $messageService = LaravelGmail::message();
         $threads = $messageService->service->users_messages->listUsersMessages('me', [
-            'q' => '(list:nvagas@googlegroups.com OR list:leonardoti@googlegroups.com ' .
-                'OR list:clubinfobsb@googlegroups.com OR to:nvagas@googlegroups.com OR to:vagas@noreply.github.com ' .
-                'OR to:clubinfobsb@googlegroups.com OR to:leonardoti@googlegroups.com) is:unread',
+            'q' => $query,
             'maxResults' => 5
         ]);
 
@@ -77,6 +110,7 @@ class RequestController extends Controller
         $this->telegram->sendMessage([
             'parse_mode' => 'Markdown',
             'chat_id' => env('TELEGRAM_OWNER_ID'),
+            /* TODO: Format this */
             'text' => implode("\r\n", [
                 $opportunity->getTitle(),
                 $opportunity->getDescription()
