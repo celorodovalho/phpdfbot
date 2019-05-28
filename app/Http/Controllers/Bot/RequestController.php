@@ -36,6 +36,8 @@ class RequestController extends Controller
         foreach ($messages as $message) {
             $body = $this->sanitizeBody($message->getHtmlBody());
             $subject = $this->sanitizeSubject($message->getSubject());
+            dump($message);
+            dump($message->payload);
             /** TODO: Format message here */
             $opportunity = new Opportunity();
             $opportunity
@@ -111,7 +113,7 @@ class RequestController extends Controller
         $messageService = LaravelGmail::message();
         $threads = $messageService->service->users_messages->listUsersMessages('me', [
             'q' => $query,
-//            'maxResults' => 5
+            'maxResults' => 5
         ]);
 
         $messages = [];
