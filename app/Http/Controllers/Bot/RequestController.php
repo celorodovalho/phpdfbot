@@ -326,6 +326,7 @@ class RequestController extends Controller
                         'url' => 'https://t.me/phpdfvagas/' . $content['id']
                     ]];
                 }
+                Log::info('IMAGE', [str_replace('/index.php', '', $appUrl) . 'img/phpdf.webp']);
                 $photo = $this->telegram->sendPhoto([
                     'parse_mode' => 'Markdown',
                     'chat_id' => '@phpdf',
