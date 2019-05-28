@@ -106,6 +106,7 @@ class RequestController extends Controller
             $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
 
             $message = $messageArray[0];
+            dump($message);
 
             $message = $this->removeEptyTagsRecursive($message);
             $message = $this->closeOpenTags($message);
