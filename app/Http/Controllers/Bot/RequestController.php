@@ -88,6 +88,7 @@ class RequestController extends Controller
     {
         if ($message) {
             $delimiters = [
+                'Receba vagas no whatsapp',
                 'You are receiving this because you are subscribed to this thread',
                 'Você recebeu esta mensagem porque está inscrito para o Google',
                 'Você está recebendo esta mensagem porque',
@@ -121,6 +122,7 @@ class RequestController extends Controller
                 '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
             ], '`', $message);
             $message = strip_tags($message);
+            $message = str_replace(['**', '__', '``'], '', $message);
             $message = preg_replace("/[\r\n]+/", "\n", $message);
         }
         return trim($message);
