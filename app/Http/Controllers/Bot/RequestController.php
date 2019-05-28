@@ -53,10 +53,11 @@ class RequestController extends Controller
                 }
             }
             $this->sendOpportunityToChannel($opportunity);
-            $message->markAsRead();
-            $message->addLabel('ENVIADO_PRO_BOT');
-            $message->removeLabel('STILL_UNREAD');
-            $message->sendToTrash();
+            dump($message);
+//            $message->markAsRead();
+//            $message->addLabel('ENVIADO_PRO_BOT');
+//            $message->removeLabel('STILL_UNREAD');
+//            $message->sendToTrash();
         }
         return 'ok';
     }
