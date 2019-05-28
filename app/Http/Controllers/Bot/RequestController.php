@@ -42,8 +42,11 @@ class RequestController extends Controller
         foreach ($messages as $message) {
             dump($message);
             $body = $this->sanitizeBody($message->getHtmlBody());
-            dump($body);
             $subject = $this->sanitizeSubject($message->getSubject());
+            dump([
+                $subject,
+                $body,
+            ]);
             /** TODO: Format message here */
             $opportunity = new Opportunity();
             $opportunity
@@ -61,10 +64,10 @@ class RequestController extends Controller
                 }
             }
             $this->sendOpportunityToChannel($opportunity);
-            $message->markAsRead();
-            $message->addLabel('Label_5517839157714334708'); //ENVIADO_PRO_BOT
-            $message->removeLabel('Label_7'); //STILL_UNREAD
-            $message->sendToTrash();
+//            $message->markAsRead();
+//            $message->addLabel('Label_5517839157714334708'); //ENVIADO_PRO_BOT
+//            $message->removeLabel('Label_7'); //STILL_UNREAD
+//            $message->sendToTrash();
         }
         return 'ok';
     }
@@ -230,9 +233,13 @@ class RequestController extends Controller
 
             $message = $messageArray[0];
 
+            dump([1 => $message]);
+
             $message = $this->removeTagsAttributes($message);
             $message = $this->removeEmptyTagsRecursive($message);
             $message = $this->closeOpenTags($message);
+
+            dump([2 => $message]);
 
             $message = $this->removeMarkdown($message);
 
