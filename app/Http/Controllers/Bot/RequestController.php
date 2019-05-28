@@ -36,8 +36,6 @@ class RequestController extends Controller
         foreach ($messages as $message) {
             $body = $this->sanitizeBody($message->getHtmlBody());
             $subject = $this->sanitizeSubject($message->getSubject());
-            dump($message);
-            dump($message->payload);
             /** TODO: Format message here */
             $opportunity = new Opportunity();
             $opportunity
@@ -55,6 +53,10 @@ class RequestController extends Controller
                 }
             }
             $this->sendOpportunityToChannel($opportunity);
+            $message->markAsRead();
+            $message->addLabel('ENVIADO_PRO_BOT');
+            $message->removeLabel('STILL_UNREAD');
+            $message->sendToTrash();
         }
         return 'ok';
     }
