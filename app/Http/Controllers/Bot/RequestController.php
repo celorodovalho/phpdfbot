@@ -110,7 +110,7 @@ class RequestController extends Controller
             $opportunity->getTitle(),
             $opportunity->getDescription()
         ]));
-        return null;
+        return;
         $this->telegram->sendMessage([
             'parse_mode' => 'Markdown',
             'chat_id' => env('TELEGRAM_OWNER_ID'),
