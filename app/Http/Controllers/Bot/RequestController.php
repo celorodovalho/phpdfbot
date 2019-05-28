@@ -84,6 +84,9 @@ class RequestController extends Controller
             'software',
             'oportunidade',
             'hardware',
+            'java',
+            'javascript',
+            'python'
         ];
         $mustIncludeWords = '{' . implode(' ', $mustIncludeWords) . '}';
         $fromTo = [
