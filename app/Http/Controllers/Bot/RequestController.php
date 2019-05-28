@@ -329,7 +329,7 @@ class RequestController extends Controller
                 $photo = $this->telegram->sendPhoto([
                     'parse_mode' => 'Markdown',
                     'chat_id' => '@phpdf',
-                    'photo' => str_replace('/index.php', '', $appUrl) . 'img/phpdf.webp',
+                    'photo' => InputFile::create(str_replace('/index.php', '', $appUrl) . 'img/phpdf.webp'),
                     'caption' => "Há novas vagas no canal! \r\nConfira: $channel 😉",
                     'reply_markup' => json_encode([
                         'inline_keyboard' => $vagas
