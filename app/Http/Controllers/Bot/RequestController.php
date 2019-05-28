@@ -303,6 +303,7 @@ class RequestController extends Controller
     private function getMessageBody(Mail $message)
     {
         $htmlBody = $message->getHtmlBody();
+        dump($htmlBody);
         if (null === $htmlBody) {
             $htmlBody = $message->getDecodedBody(
                 $message->payload->getParts()[0]->getParts()[1]->getBody()->getData()
