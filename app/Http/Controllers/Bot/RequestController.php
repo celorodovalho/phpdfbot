@@ -43,6 +43,15 @@ class RequestController extends Controller
         /** @var Mail $message */
         foreach ($messages as $message) {
             $body = $this->sanitizeBody($message->getHtmlBody());
+            if ($message->hasAttachments()) {
+                $attachments = $message->getAttachments();
+                /** @var \Dacastro4\LaravelGmail\Services\Message\Attachment $attachment */
+                foreach ($attachments as $attachment) {
+                    $filePath = $attachment->saveAttachmentTo();
+                    dump($filePath);
+                }
+            }
+
             /** TODO: Format message here */
             $opportunity = new Opportunity();
             $opportunity->setTitle($message->getSubject())
@@ -102,7 +111,7 @@ class RequestController extends Controller
         ];
         $fromTo = '{' . implode(' ', $fromTo) . '}';
 
-        $query = "$fromTo $mustIncludeWords () is:unread";
+        $query = "$fromTo $mustIncludeWords is:unread";
         dump($query);
         $messageService = LaravelGmail::message();
         $threads = $messageService->service->users_messages->listUsersMessages('me', [
@@ -161,7 +170,7 @@ class RequestController extends Controller
             $message = $messageArray[0];
 
             $message = $this->removeTagsAttributes($message);
-            $message = $this->removeEptyTagsRecursive($message);
+            $message = $this->removeEmptyTagsRecursive($message);
             $message = $this->closeOpenTags($message);
 
             $message = str_replace(['*', '_', '`'], '', $message);
@@ -181,12 +190,12 @@ class RequestController extends Controller
         return trim($message);
     }
 
-    private function removeTagsAttributes($message)
+    private function removeTagsAttributes(string $message): string
     {
         return preg_replace("/<([a-z][a-z0-9]*)[^>]*?(\/?)>/i", '<$1$2>', $message);
     }
 
-    private function closeOpenTags($message)
+    private function closeOpenTags(string $message): string
     {
         $dom = new \DOMDocument;
         @$dom->loadHTML(mb_convert_encoding($message, 'HTML-ENTITIES', 'UTF-8'));
@@ -195,37 +204,16 @@ class RequestController extends Controller
         foreach ($body->childNodes as $child) {
             $mock->appendChild($mock->importNode($child, true));
         }
-        return trim((html_entity_decode($mock->saveHTML())));
+        return trim(html_entity_decode($mock->saveHTML()));
     }
 
     /**
-     * remove_empty_tags_recursive ()
-     * Remove the nested HTML empty tags from the string.
-     *
-     * @author    Junaid Atari <mj.atari@gmail.com>
-     * @version    1.0
-     * @param    string $str String to remove tags.
-     * @param    string $repto Replace empty string with.
-     * @return    string    Cleaned string.
+     * @param string $str
+     * @param string $repto
+     * @return string
      */
-    private function removeEptyTagsRecursive($str, $repto = NULL)
+    private function removeEmptyTagsRecursive(string $str, string $repto): string
     {
-        //** Return if string not given or empty.
-        if (!is_string($str)
-            || trim($str) == '')
-            return $str;
-
-        //** Recursive empty HTML tags.
-        return preg_replace(
-
-        //** Pattern written by Junaid Atari.
-            '/<([^<\/>]*)>([\s]*?|(?R))<\/\1>/imsU',
-
-            //** Replace with nothing if string empty.
-            !is_string($repto) ? '' : $repto,
-
-            //** Source string
-            $str
-        );
+        return trim($str) === '' ? $str : preg_replace('/<([^<\/>]*)>([\s]*?|(?R))<\/\1>/imsU', $repto, $str);
     }
 }

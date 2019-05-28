@@ -2,6 +2,8 @@
 
 namespace App\Contracts\Interfaces;
 
+use Illuminate\Support\Collection;
+
 interface OpportunityInterface
 {
     public function getTitle(): string;
@@ -16,6 +18,8 @@ interface OpportunityInterface
 
     public function getPosition(): string;
 
+    public function getFiles(): Collection;
+
     public function setTitle(string $title): self;
 
     public function setDescription(string $description): self;
@@ -27,4 +31,6 @@ interface OpportunityInterface
     public function setLocation(string $location): self;
 
     public function setPosition(string $position): self;
+
+    public function addFile(string $file): self;
 }

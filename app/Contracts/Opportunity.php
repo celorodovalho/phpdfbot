@@ -3,7 +3,12 @@
 namespace App\Contracts;
 
 use App\Contracts\Interfaces\OpportunityInterface;
+use Illuminate\Support\Collection;
 
+/**
+ * Class Opportunity
+ * @package App\Contracts
+ */
 class Opportunity implements OpportunityInterface
 {
     private $title;
@@ -12,6 +17,7 @@ class Opportunity implements OpportunityInterface
     private $salary;
     private $company;
     private $location;
+    private $files;
 
     /**
      * @return string
@@ -94,6 +100,23 @@ class Opportunity implements OpportunityInterface
     public function setPosition(string $position): OpportunityInterface
     {
         $this->position = $position;
+        return $this;
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getFiles(): Collection
+    {
+        return $this->files;
+    }
+
+    public function addFile(string $file): OpportunityInterface
+    {
+        if (!$this->files instanceof Collection) {
+            $this->files = new Collection($this->files);
+        }
+        $this->files->add($file);
         return $this;
     }
 }
