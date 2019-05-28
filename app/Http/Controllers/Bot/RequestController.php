@@ -139,7 +139,8 @@ class RequestController extends Controller
                         'parse_mode' => 'Markdown'
                     ]);
                     $messageId = $photoSent->getMessageId();
-                } catch (\Exception $ex) {
+                } catch (\Exception $exception) {
+                    Log::error('FALHA_AO_ENVIAR_IMAGEM', [$file, $exception]);
                     try {
                         $documentSent = $this->telegram->sendDocument([
                             'chat_id' => $chatId,
@@ -149,7 +150,7 @@ class RequestController extends Controller
                         ]);
                         $messageId = $documentSent->getMessageId();
                     } catch (\Exception $exception) {
-                        Log::error('FALHA_AO_ENVIAR_IMAGEM', [$exception]);
+                        Log::error('FALHA_AO_ENVIAR_DOCUMENTO', [$file, $exception]);
                     }
                 }
             }
@@ -234,7 +235,7 @@ class RequestController extends Controller
             $message = strip_tags($message);
 
             $message = str_replace(['**', '__', '``'], '', $message);
-            $message = str_replace(['* *', '_ _', '` `'], '', $message);
+            $message = str_replace(['* *', '_ _', '` `', '*  *', '_  _', '`  `'], '', $message);
             $message = preg_replace("/[\r\n]+/", "\n", $message);
             $message = trim($message, " \t\n\r\0\x0B--");
         }
