@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Bot;
 use App\Contracts\Interfaces\OpportunityInterface;
 use App\Contracts\Opportunity;
 use App\Http\Controllers\Controller;
-use Dacastro4\LaravelGmail\Services\Message\Attachment;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -43,10 +42,7 @@ class RequestController extends Controller
 
             $body = $this->sanitizeBody($this->getMessageBody($message));
             $subject = $this->sanitizeSubject($message->getSubject());
-            dump([
-                $subject,
-                $body,
-            ]);
+
             /** TODO: Format message here */
             $opportunity = new Opportunity();
             $opportunity
@@ -64,10 +60,10 @@ class RequestController extends Controller
                 }
             }
             $this->sendOpportunityToChannel($opportunity);
-//            $message->markAsRead();
-//            $message->addLabel('Label_5517839157714334708'); //ENVIADO_PRO_BOT
-//            $message->removeLabel('Label_7'); //STILL_UNREAD
-//            $message->sendToTrash();
+            $message->markAsRead();
+            $message->addLabel('Label_5517839157714334708'); //ENVIADO_PRO_BOT
+            $message->removeLabel('Label_7'); //STILL_UNREAD
+            $message->sendToTrash();
         }
         return 'ok';
     }
@@ -124,7 +120,7 @@ class RequestController extends Controller
         $query = "$fromTo $mustIncludeWords is:unread";
         $threads = $this->messageService->service->users_messages->listUsersMessages('me', [
             'q' => $query,
-            'maxResults' => 5
+            //'maxResults' => 5
         ]);
 
         $messages = [];
@@ -138,7 +134,7 @@ class RequestController extends Controller
     private function sendOpportunityToChannel(OpportunityInterface $opportunity): void
     {
         $messageId = null;
-        $chatId = env('TELEGRAM_OWNER_ID');
+        $chatId = env('TELEGRAM_CHANNEL');
 
         if ($opportunity->hasFile()) {
             $files = $opportunity->getFiles();
@@ -233,13 +229,9 @@ class RequestController extends Controller
 
             $message = $messageArray[0];
 
-            dump([1 => $message]);
-
             $message = $this->removeTagsAttributes($message);
             $message = $this->removeEmptyTagsRecursive($message);
             $message = $this->closeOpenTags($message);
-
-            dump([2 => $message]);
 
             $message = $this->removeMarkdown($message);
 
@@ -309,5 +301,52 @@ class RequestController extends Controller
             );
         }
         return $htmlBody;
+    }
+
+    /**
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function notifyGroup(): \Illuminate\Http\JsonResponse
+    {
+        try {
+            $vagasEnviadas = 'vagasEnviadas.txt';
+            $lastSentMsg = 'lastSentMsg.txt';
+            $appUrl = env("APP_URL");
+            $channel = env("TELEGRAM_CHANNEL");
+            $group = env("TELEGRAM_GROUP");
+            if (strlen($contents = Storage::get($vagasEnviadas)) > 0) {
+                $lastSentMsgId = Storage::get($lastSentMsg);
+                $contents = trim($contents);
+                $contents = explode("\n", $contents);
+                $vagas = [];
+                foreach ($contents as $content) {
+                    $content = json_decode($content, true);
+                    $vagas[] = [[
+                        'text' => $content['subject'],
+                        'url' => 'https://t.me/phpdfvagas/' . $content['id']
+                    ]];
+                }
+                $photo = $this->telegram->sendPhoto([
+                    'parse_mode' => 'Markdown',
+                    'chat_id' => '@phpdf',
+                    'photo' => str_replace('/index.php', '', $appUrl) . 'img/phpdf.webp',
+                    'caption' => "Há novas vagas no canal! \r\nConfira: $channel 😉",
+                    'reply_markup' => json_encode([
+                        'inline_keyboard' => $vagas
+                    ])
+                ]);
+                $this->telegram->deleteMessage([
+                    'chat_id' => $group,
+                    'message_id' => trim($lastSentMsgId)
+                ]);
+
+
+                Storage::put($lastSentMsg, $photo->getMessageId());
+                Storage::put($vagasEnviadas, '');
+            }
+        } catch (\Exception $exception) {
+            Log::error('ERRO_AO_NOTIFICAR_GRUPO', [$exception]);
+        }
+        return response()->json(['status' => 'success', 'results' => 'ok']);
     }
 }

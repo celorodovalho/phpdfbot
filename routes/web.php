@@ -13,6 +13,7 @@
 Route::get('/setWebhook/{bot}', 'Bot\DefaultController@setWebhook');
 Route::any('/webhook/{token}/{bot}', 'Bot\DefaultController@webhook');
 Route::any('/process', 'Bot\RequestController@process');
+Route::any('/notify', 'Bot\RequestController@notifyGroup');
 //Route::get('/getMe', 'Bot\DefaultController@getMe');
 
 Route::get('/oauth/gmail', function (){
