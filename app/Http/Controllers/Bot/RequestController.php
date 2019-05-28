@@ -62,7 +62,7 @@ class RequestController extends Controller
             'developer',
             'analista',
             'php',
-            'web',
+            //'web',
             'arquiteto',
             'dba',
             'suporte',
@@ -85,10 +85,10 @@ class RequestController extends Controller
             'oportunidade',
             'hardware',
         ];
-        $mustIncludeWords = implode(' OR ', $mustIncludeWords);
-        $query = '(list:nvagas@googlegroups.com OR list:leonardoti@googlegroups.com ' .
+        $mustIncludeWords = '{' . implode(' ', $mustIncludeWords) . '}';
+        $query = "$mustIncludeWords (list:nvagas@googlegroups.com OR list:leonardoti@googlegroups.com ' .
             'OR list:clubinfobsb@googlegroups.com OR to:nvagas@googlegroups.com OR to:vagas@noreply.github.com ' .
-            'OR to:clubinfobsb@googlegroups.com OR to:leonardoti@googlegroups.com) is:unread (' . $mustIncludeWords . ')';
+            'OR to:clubinfobsb@googlegroups.com OR to:leonardoti@googlegroups.com) is:unread";
         dump($query);
         $messageService = LaravelGmail::message();
         $threads = $messageService->service->users_messages->listUsersMessages('me', [
