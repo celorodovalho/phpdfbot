@@ -45,9 +45,11 @@ class RequestController extends Controller
                 $attachments = $message->getAttachments();
                 /** @var \Dacastro4\LaravelGmail\Services\Message\Attachment $attachment */
                 foreach ($attachments as $attachment) {
-                    $filePath = $attachment->saveAttachmentTo($message->getId() . '/', null, 'uploads');
-                    $fileUrl = Storage::disk('uploads')->url($filePath);
-                    $opportunity->addFile($fileUrl);
+                    if ($attachment->getSize() > 9000) {
+                        $filePath = $attachment->saveAttachmentTo($message->getId() . '/', null, 'uploads');
+                        $fileUrl = Storage::disk('uploads')->url($filePath);
+                        $opportunity->addFile($fileUrl);
+                    }
                 }
             }
             $this->sendOpportunityToChannel($opportunity);
