@@ -135,6 +135,7 @@ class RequestController extends Controller
 
     private function closeOpenTags($message)
     {
+        libxml_use_internal_errors(false);
         $dom = new \DOMDocument;
         $dom->loadHTML(mb_convert_encoding($message, 'HTML-ENTITIES', 'UTF-8'));
         $mock = new \DOMDocument;
