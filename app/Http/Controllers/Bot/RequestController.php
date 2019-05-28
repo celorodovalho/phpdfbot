@@ -122,6 +122,8 @@ class RequestController extends Controller
                 '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
             ], '`', $message);
             $message = preg_replace('/<br(\s+)?\/?>/i', "\n", $message);
+            $message = preg_replace("/<p[^>]*?>/", '', $message);
+            $message = str_replace("</p>", "\r\n", $message);
             $message = strip_tags($message);
 
             dump($message);
