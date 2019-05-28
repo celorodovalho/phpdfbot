@@ -46,7 +46,7 @@ class RequestController extends Controller
                 /** @var \Dacastro4\LaravelGmail\Services\Message\Attachment $attachment */
                 foreach ($attachments as $attachment) {
                     $filePath = $attachment->saveAttachmentTo($message->getId() . '/', null, 'uploads');
-                    $fileUrl = Storage::disk('uploads')->get($filePath);
+                    $fileUrl = Storage::disk('uploads')->url($filePath);
                     $opportunity->addFile($fileUrl);
                 }
             }
