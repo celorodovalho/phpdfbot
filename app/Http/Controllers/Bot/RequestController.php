@@ -88,7 +88,6 @@ class RequestController extends Controller
     {
         if ($message) {
             $delimiters = [
-                'Receba vagas no whatsapp',
                 'You are receiving this because you are subscribed to this thread',
                 'Você recebeu esta mensagem porque está inscrito para o Google',
                 'Você está recebendo esta mensagem porque',
@@ -102,6 +101,7 @@ class RequestController extends Controller
                 'Att.',
                 'Att,',
                 'AVISO DE CONFIDENCIALIDADE',
+                'Receba vagas no whatsapp',
             ];
 
             $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
