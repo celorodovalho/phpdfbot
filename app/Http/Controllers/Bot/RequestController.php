@@ -40,7 +40,9 @@ class RequestController extends Controller
         $messages = $this->getMessages();
         /** @var Mail $message */
         foreach ($messages as $message) {
+            dump($message);
             $body = $this->sanitizeBody($message->getHtmlBody());
+            dump($body);
             $subject = $this->sanitizeSubject($message->getSubject());
             /** TODO: Format message here */
             $opportunity = new Opportunity();
@@ -59,12 +61,10 @@ class RequestController extends Controller
                 }
             }
             $this->sendOpportunityToChannel($opportunity);
-            dump($message);
-            dump($this->messageService->service->users_labels->listUsersLabels('me'));
-//            $message->markAsRead();
-//            $message->addLabel('ENVIADO_PRO_BOT');
-//            $message->removeLabel('STILL_UNREAD');
-//            $message->sendToTrash();
+            $message->markAsRead();
+            $message->addLabel('Label_5517839157714334708'); //ENVIADO_PRO_BOT
+            $message->removeLabel('Label_7'); //STILL_UNREAD
+            $message->sendToTrash();
         }
         return 'ok';
     }
