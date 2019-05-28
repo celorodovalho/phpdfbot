@@ -137,6 +137,8 @@ class RequestController extends Controller
         $messages = [];
         $allMessages = $threads->getMessages();
         foreach ($allMessages as $message) {
+            dump($message->getPayload());
+            dump($message->getRaw());
             $messages[] = new Mail($message, true);
         }
         return collect($messages);
