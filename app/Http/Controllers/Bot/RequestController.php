@@ -40,6 +40,7 @@ class RequestController extends Controller
         $messages = $this->getMessages();
         /** @var Mail $message */
         foreach ($messages as $message) {
+            $teste = $this->messageService->service->users_messages->get('me', $message->getId());
             dump([
                 'getHtmlBody' => $message->getHtmlBody(),
                 'getRawHtmlBody' => $message->getRawHtmlBody(),
@@ -47,7 +48,13 @@ class RequestController extends Controller
                 'getRawPlainTextBody' => $message->getRawPlainTextBody(),
 //                'getDecodedBody' => $message->getDecodedBody(),
                 'getPlainTextBody' => $message->getPlainTextBody(),
-                'teste' => $this->messageService->service->users_messages->get('me', $message->getId())
+                'teste' => $teste,
+                $teste->getSnippet(),
+                $teste->getPayload(),
+                $teste->getPayload()->getBody(),
+                $teste->getPayload()->getParts(),
+                $teste->getPayload()->getParts()->getBody(),
+                $teste->getPayload()->getParts()->getBody()->getData(),
             ]);
             $body = $this->sanitizeBody($message->getHtmlBody());
             $subject = $this->sanitizeSubject($message->getSubject());
