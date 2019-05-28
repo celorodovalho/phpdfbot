@@ -40,26 +40,15 @@ class RequestController extends Controller
         $messages = $this->getMessages();
         /** @var Mail $message */
         foreach ($messages as $message) {
-            $teste = $this->messageService->service->users_messages->get('me', $message->getId());
             dump([
+                'size' => $message->getSize(),
                 'getHtmlBody' => $message->getHtmlBody(),
                 'getRawHtmlBody' => $message->getRawHtmlBody(),
                 'getBody' => $message->getBody(),
                 'getRawPlainTextBody' => $message->getRawPlainTextBody(),
-//                'getDecodedBody' => $message->getDecodedBody(),
                 'getPlainTextBody' => $message->getPlainTextBody(),
-                'teste' => $teste,
-                $teste->getSnippet(),
-                $teste->getPayload(),
-                $teste->getPayload()->getBody(),
-                $teste->getPayload()->getParts(),
-//                $message->getDecodedBody($teste->getPayload()->getParts()[0]->getParts()[0]->getBody()->getData()),
-//                $message->getDecodedBody($teste->getPayload()->getParts()[0]->getParts()[1]->getBody()->getData()),
-                $message->payload->getParts()[0],
-                $message->payload->getParts()[0]->getParts()
-//                $teste->getPayload()->getParts()[0]->getBody()->getData(),
-//                $teste->getPayload()->getParts()[1]->getBody(),
-//                $teste->getPayload()->getParts()[1]->getBody()->getData(),
+                $message->getDecodedBody($message->payload->getParts()[0]->getParts()[0]->getBody()->getData()),
+                $message->getDecodedBody($message->payload->getParts()[0]->getParts()[1]->getBody()->getData()),
             ]);
             $body = $this->sanitizeBody($message->getHtmlBody());
             $subject = $this->sanitizeSubject($message->getSubject());
@@ -318,5 +307,10 @@ class RequestController extends Controller
             ),
             4096
         );
+    }
+
+    private function getMessageBody(Mail $message)
+    {
+//        if($message)
     }
 }
