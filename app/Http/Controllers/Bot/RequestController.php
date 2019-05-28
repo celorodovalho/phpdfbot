@@ -111,6 +111,8 @@ class RequestController extends Controller
             $message = $this->removeEptyTagsRecursive($message);
             $message = $this->closeOpenTags($message);
 
+            dump($message);
+
             $message = str_replace(['*', '_', '`'], '', $message);
             $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
             $message = str_ireplace(['<i>', '</i>', '<em>', '</em>'], '_', $message);
