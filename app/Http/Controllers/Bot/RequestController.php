@@ -329,9 +329,9 @@ class RequestController extends Controller
                 }
                 $photo = $this->telegram->sendPhoto([
                     'parse_mode' => 'Markdown',
-                    'chat_id' => '@phpdf',
+                    'chat_id' => $group,
                     'photo' => InputFile::create(str_replace('/index.php', '', $appUrl) . '/img/phpdf.webp'),
-                    'caption' => "Há novas vagas no canal! \r\n@phpdf @phpdfvagas\r\nConfira: $channel 😉",
+                    'caption' => "Há novas vagas no canal!\r\nConfira: $channel $group 😉",
                     'reply_markup' => json_encode([
                         'inline_keyboard' => $vagas
                     ])
