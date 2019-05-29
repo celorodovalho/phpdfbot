@@ -208,6 +208,7 @@ class RequestController extends Controller
     {
         if ($message) {
             $delimiters = [
+                'As informações contidas neste',
                 'You are receiving this because you are subscribed to this thread',
                 'Você recebeu esta mensagem porque está inscrito para o Google',
                 'Você recebeu essa mensagem porque',
