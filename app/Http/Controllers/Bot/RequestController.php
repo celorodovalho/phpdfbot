@@ -43,7 +43,6 @@ class RequestController extends Controller
             $body = $this->sanitizeBody($this->getMessageBody($message));
             $subject = $this->sanitizeSubject($message->getSubject());
 
-            /** TODO: Format message here */
             $opportunity = new Opportunity();
             $opportunity
                 ->setTitle($subject)
@@ -139,11 +138,12 @@ class RequestController extends Controller
         if ($opportunity->hasFile()) {
             $files = $opportunity->getFiles();
             foreach ($files as $file) {
+                $text = $opportunity->getTitle() . $this->getGroupSign();
                 try {
                     $photoSent = $this->telegram->sendPhoto([
                         'chat_id' => $chatId,
                         'photo' => InputFile::create($file),
-                        'caption' => $opportunity->getTitle(),
+                        'caption' => $text,
                         'parse_mode' => 'Markdown'
                     ]);
                     $messageId = $photoSent->getMessageId();
@@ -153,7 +153,7 @@ class RequestController extends Controller
                         $documentSent = $this->telegram->sendDocument([
                             'chat_id' => $chatId,
                             'document' => InputFile::create($file),
-                            'caption' => $opportunity->getTitle(),
+                            'caption' => $text,
                             'parse_mode' => 'Markdown'
                         ]);
                         $messageId = $documentSent->getMessageId();
@@ -283,11 +283,15 @@ class RequestController extends Controller
 
     private function formatTextOpportunity(OpportunityInterface $opportunity): array
     {
+        $description = $opportunity->getDescription();
+        if (strlen($description) < 200) {
+            return [];
+        }
         return str_split(
             sprintf(
-                "*%s*\n\n*Descrição*\n%s\n\n*PHPDF*\n✅ *Canal:* @phpdfvagas\n✅ *Grupo:* @phpdf",
+                "*%s*\n\n*Descrição*\n%s" . $this->getGroupSign(),
                 $opportunity->getTitle(),
-                $opportunity->getDescription()
+                $description
             ),
             4096
         );
@@ -331,7 +335,7 @@ class RequestController extends Controller
                     'parse_mode' => 'Markdown',
                     'chat_id' => $group,
                     'photo' => InputFile::create(str_replace('/index.php', '', $appUrl) . '/img/phpdf.webp'),
-                    'caption' => "Há novas vagas no canal!\r\nConfira: $channel $group 😉",
+                    'caption' => "Há novas vagas no canal!\nConfira: $channel $group 😉",
                     'reply_markup' => json_encode([
                         'inline_keyboard' => $vagas
                     ])
@@ -350,5 +354,10 @@ class RequestController extends Controller
             Log::error('ERRO_AO_NOTIFICAR_GRUPO', [$exception]);
         }
         return response()->json(['status' => 'success', 'results' => 'ok']);
+    }
+
+    protected function getGroupSign(): string
+    {
+        return "\n\n*PHPDF*\n✅ *Canal:* @phpdfvagas\n✅ *Grupo:* @phpdf";
     }
 }
