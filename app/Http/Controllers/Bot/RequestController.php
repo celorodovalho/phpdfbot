@@ -426,12 +426,12 @@ class RequestController extends Controller
         ]);
     }
 
-    private function getComoequetala()
+    private function getComoequetala($skipDataCheck = false)
     {
         $opportunities = [];
         $client = new Client();
         $crawler = $client->request('GET', 'https://comoequetala.com.br/vagas-e-jobs?start=180');
-        $crawler->filter('.uk-list.uk-list-space > li')->each(function ($node) {
+        $crawler->filter('.uk-list.uk-list-space > li')->each(function ($node) use ($skipDataCheck) {
             $client = new Client();
             $pattern = '#(' . implode('|', $this->mustIncludeWords) . ')#i';
             $pattern = str_replace('"', '', $pattern);
@@ -439,7 +439,7 @@ class RequestController extends Controller
                 $data = $node->filter('[itemprop="datePosted"]')->attr('content');
                 $data = new \DateTime($data);
                 $today = new \DateTime('now', new \DateTimeZone('America/Sao_Paulo'));
-                if ($data->format('Ymd') === $today->format('Ymd')) {
+                if ($skipDataCheck || $data->format('Ymd') === $today->format('Ymd')) {
                     $link = $node->filter('[itemprop="url"]')->attr('content');
                     $crawler2 = $client->request('GET', $link);
                     $title = $crawler2->filter('[itemprop="title"],h3')->text();
@@ -470,12 +470,12 @@ class RequestController extends Controller
         return collect($opportunities);
     }
 
-    private function getQueroworkar()
+    private function getQueroworkar($skipDataCheck = false)
     {
         $opportunities = [];
         $client = new Client();
         $crawler = $client->request('GET', 'http://queroworkar.com.br/blog/jobs/');
-        $crawler->filter('.loadmore-item')->each(function ($node) {
+        $crawler->filter('.loadmore-item')->each(function ($node) use ($skipDataCheck) {
             /** @var \Symfony\Component\DomCrawler\Crawler $node */
             $client = new Client();
             $jobsPlace = $node->filter('.job-location');
@@ -487,7 +487,7 @@ class RequestController extends Controller
                     $data = trim($data[0]);
                     $data = new \DateTime($data);
                     $today = new \DateTime('now', new \DateTimeZone('America/Sao_Paulo'));
-                    if ($data->format('Ymd') === $today->format('Ymd')) {
+                    if ($skipDataCheck || $data->format('Ymd') === $today->format('Ymd')) {
                         $link = $node->filter('a')->first()->attr('href');
                         $crawler2 = $client->request('GET', $link);
                         $title = $crawler2->filter('.page-title')->text();
