@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use LaravelGmail;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\FileUpload\InputFile;
+use Goutte\Client;
 
 class RequestController extends Controller
 {
@@ -23,6 +24,48 @@ class RequestController extends Controller
      * @var \Dacastro4\LaravelGmail\Services\Message
      */
     private $messageService;
+
+    private $mustIncludeWords = [
+        'desenvolvedor',
+        'desenvolvimento',
+        'programador',
+        'developer',
+        'analista',
+        'php',
+        //'web',
+        'arquiteto',
+        //'dba',
+        'suporte',
+        'devops',
+        'dev-ops',
+        'teste',
+        '"banco dados"',
+        '"segurança informação"',
+        'designer',
+        'front-end',
+        'frontend',
+        'back-end',
+        'backend',
+        'scrum',
+        'tecnologia',
+        '"gerenten projetos"',
+        '"analista dados"',
+        '"administrador dados"',
+        'infra',
+        'software',
+        'oportunidade',
+        'hardware',
+        'java',
+        'javascript',
+        'python',
+        'informática',
+        // crawler
+        'wordpress',
+        'sistemas',
+        'full-stack',
+        '"full stack"',
+        'fullstack'
+    ];
 
     /**
      * RequestController constructor.
@@ -69,42 +112,7 @@ class RequestController extends Controller
 
     private function getMessages(): \Illuminate\Support\Collection
     {
-        $mustIncludeWords = [
-            'desenvolvedor',
-            'desenvolvimento',
-            'programador',
-            'developer',
-            'analista',
-            'php',
-            //'web',
-            'arquiteto',
-            //'dba',
-            'suporte',
-            'devops',
-            'dev-ops',
-            'teste',
-            '"banco dados"',
-            '"segurança informação"',
-            'designer',
-            'front-end',
-            'frontend',
-            'back-end',
-            'backend',
-            'scrum',
-            'tecnologia',
-            '"gerenten projetos"',
-            '"analista dados"',
-            '"administrador dados"',
-            'infra',
-            'software',
-            'oportunidade',
-            'hardware',
-            'java',
-            'javascript',
-            'python',
-            'informática'
-        ];
-        $mustIncludeWords = '{' . implode(' ', $mustIncludeWords) . '}';
+        $words = '{' . implode(' ', $this->mustIncludeWords) . '}';
         $fromTo = [
             'list:nvagas@googlegroups.com',
             'list:leonardoti@googlegroups.com',
@@ -116,7 +124,7 @@ class RequestController extends Controller
         ];
         $fromTo = '{' . implode(' ', $fromTo) . '}';
 
-        $query = "$fromTo $mustIncludeWords is:unread";
+        $query = "$fromTo $words is:unread";
         $threads = $this->messageService->service->users_messages->listUsersMessages('me', [
             'q' => $query,
             //'maxResults' => 5
@@ -148,7 +156,7 @@ class RequestController extends Controller
                     ]);
                     $messageId = $photoSent->getMessageId();
                 } catch (\Exception $exception) {
-                    Log::error('FALHA_AO_ENVIAR_IMAGEM', [$file, $exception]);
+                    $this->log($exception, 'FALHA_AO_ENVIAR_IMAGEM', [$file]);
                     try {
                         $documentSent = $this->telegram->sendDocument([
                             'chat_id' => $chatId,
@@ -158,7 +166,7 @@ class RequestController extends Controller
                         ]);
                         $messageId = $documentSent->getMessageId();
                     } catch (\Exception $exception) {
-                        Log::error('FALHA_AO_ENVIAR_DOCUMENTO', [$file, $exception]);
+                        $this->log($exception, 'FALHA_AO_ENVIAR_DOCUMENTO', [$file]);
                     }
                 }
             }
@@ -186,7 +194,7 @@ class RequestController extends Controller
                     $messageSent = $this->telegram->sendMessage($sendMsg);
                     $messageSentId = $messageSent->getMessageId();
                 }
-                Log::error('FALHA_AO_ENVIAR_MENSAGEM', [$sendMsg, $exception]);
+                $this->log($exception, 'FALHA_AO_ENVIAR_MENSAGEM', [$sendMsg]);
             }
         }
 
@@ -287,12 +295,36 @@ class RequestController extends Controller
         if (strlen($description) < 200) {
             return [];
         }
+        $template = sprintf(
+            "*%s*\n\n*Descrição*\n%s",
+            $opportunity->getTitle(),
+            $description
+        );
+
+        if (!empty($opportunity->getLocation())) {
+            $template .= sprintf(
+                "\n\n*Localização*\n%s",
+                $opportunity->getLocation()
+            );
+        }
+
+        if (!empty($opportunity->getCompany())) {
+            $template .= sprintf(
+                "\n\n*Empresa*\n%s",
+                $opportunity->getCompany()
+            );
+        }
+
+        if (!empty($opportunity->getSalary())) {
+            $template .= sprintf(
+                "\n\n*Salario*\n%s",
+                $opportunity->getSalary()
+            );
+        }
+
+        $template .= $this->getGroupSign();
         return str_split(
-            sprintf(
-                "*%s*\n\n*Descrição*\n%s" . $this->getGroupSign(),
-                $opportunity->getTitle(),
-                $description
-            ),
+            $template,
             4096
         );
     }
@@ -351,7 +383,7 @@ class RequestController extends Controller
                 Storage::put($vagasEnviadas, '');
             }
         } catch (\Exception $exception) {
-            Log::error('ERRO_AO_NOTIFICAR_GRUPO', [$exception]);
+            $this->log($exception, 'ERRO_AO_NOTIFICAR_GRUPO');
         }
         return response()->json(['status' => 'success', 'results' => 'ok']);
     }
@@ -359,5 +391,126 @@ class RequestController extends Controller
     protected function getGroupSign(): string
     {
         return "\n\n*PHPDF*\n✅ *Canal:* @phpdfvagas\n✅ *Grupo:* @phpdf";
+    }
+
+    public function crawler()
+    {
+        try {
+            $opportunities = $this->getComoequetala();
+            $opportunities->merge($this->getQueroworkar());
+            foreach ($opportunities as $opportunity) {
+                $this->sendOpportunityToChannel($opportunity);
+            }
+
+            return response()->json(['status' => 'success', 'results' => 'ok']);
+        } catch (\Exception $e) {
+            $this->log($e);
+            return response()->json([
+                'results' => $e->getMessage()
+            ]);
+        }
+    }
+
+    private function log(\Exception $exception, $message = '', $context = null): void
+    {
+        Log::error($message, [$exception->getLine(), $exception, $context]);
+        $this->telegram->sendMessage([
+            'parse_mode' => 'Markdown',
+            'chat_id' => env('TELEGRAM_OWNER_ID'),
+            'text' => json_encode([
+                'message' => $message,
+                'exceptionMessage' => $exception->getMessage(),
+                'line' => $exception->getLine(),
+                'context' => $context
+            ])
+        ]);
+    }
+
+    private function getComoequetala()
+    {
+        $opportunities = [];
+        $client = new Client();
+        $crawler = $client->request('GET', 'https://comoequetala.com.br/vagas-e-jobs?start=180');
+        $crawler->filter('.uk-list.uk-list-space > li')->each(function ($node) {
+            $client = new Client();
+            $pattern = '#(' . implode('|', $this->mustIncludeWords) . ')#i';
+            $pattern = str_replace('"', '', $pattern);
+            if (preg_match_all($pattern, $node->text(), $matches)) {
+                $data = $node->filter('[itemprop="datePosted"]')->attr('content');
+                $data = new \DateTime($data);
+                $today = new \DateTime('now', new \DateTimeZone('America/Sao_Paulo'));
+                if ($data->format('Ymd') === $today->format('Ymd')) {
+                    $link = $node->filter('[itemprop="url"]')->attr('content');
+                    $crawler2 = $client->request('GET', $link);
+                    $title = $crawler2->filter('[itemprop="title"],h3')->text();
+                    $description = [
+                        $crawler2->filter('[itemprop="description"] p')->count() ? $crawler2->filter('[itemprop="description"] p')->text() : '',
+                        $crawler2->filter('.uk-width-1-1.uk-width-1-4@m')->count() ? $crawler2->filter('.uk-width-1-1.uk-width-1-4@m')->text() : '',
+                        $node->filter('[itemprop="description"]')->count() ? trim($node->filter('[itemprop="description"]')->text()) : '',
+                        '*Como se candidatar:* ' . $link
+                    ];
+                    //$link = $node->filter('.uk-link')->text();
+                    $company = $node->filter('.vaga_empresa')->count() ? $node->filter('.vaga_empresa')->text() : '';
+                    $location = trim($node->filter('[itemprop="addressLocality"]')->text()) . '/'
+                        . trim($node->filter('[itemprop="addressRegion"]')->text());
+
+                    $description = $this->sanitizeBody(implode("\n\n", $description));
+                    $title = $this->sanitizeSubject($title);
+
+                    $opportunity = new Opportunity();
+                    $opportunity->setTitle($title)
+                        ->setDescription($description)
+                        ->setCompany($company)
+                        ->setLocation($location);
+
+                    $opportunities[] = $opportunity;
+                }
+            }
+        });
+        return collect($opportunities);
+    }
+
+    private function getQueroworkar()
+    {
+        $opportunities = [];
+        $client = new Client();
+        $crawler = $client->request('GET', 'http://queroworkar.com.br/blog/jobs/');
+        $crawler->filter('.loadmore-item')->each(function ($node) {
+            /** @var \Symfony\Component\DomCrawler\Crawler $node */
+            $client = new Client();
+            $jobsPlace = $node->filter('.job-location');
+            if ($jobsPlace->count()) {
+                $jobsPlace = $jobsPlace->text();
+                if (preg_match_all('#(Em qualquer lugar|Brasil)#i', $jobsPlace, $matches)) {
+                    $data = $node->filter('.job-date .entry-date')->attr('datetime');
+                    $data = explode('T', $data);
+                    $data = trim($data[0]);
+                    $data = new \DateTime($data);
+                    $today = new \DateTime('now', new \DateTimeZone('America/Sao_Paulo'));
+                    if ($data->format('Ymd') === $today->format('Ymd')) {
+                        $link = $node->filter('a')->first()->attr('href');
+                        $crawler2 = $client->request('GET', $link);
+                        $title = $crawler2->filter('.page-title')->text();
+                        $description = $crawler2->filter('.job-desc')->html();
+                        $description = str_ireplace('(adsbygoogle = window.adsbygoogle || []).push({});', '', $description);
+
+                        $company = $crawler2->filter('.company-title')->text();
+                        $location = $crawler2->filter('.job-location')->text();
+
+                        $description = $this->sanitizeBody($description);
+                        $title = $this->sanitizeSubject($title);
+
+                        $opportunity = new Opportunity();
+                        $opportunity->setTitle($title)
+                            ->setDescription(implode("\n\n", $description))
+                            ->setCompany($company)
+                            ->setLocation($location);
+
+                        $opportunities[] = $opportunity;
+                    }
+                }
+            }
+        });
+        return collect($opportunities);
     }
 }
