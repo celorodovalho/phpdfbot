@@ -397,9 +397,9 @@ class RequestController extends Controller
     public function crawler()
     {
         try {
-            $opportunities = $this->getComoequetala(true);
+            $opportunities = $this->getComoequetala();
             dump($opportunities);
-            $opportunities2 = $this->getQueroworkar(true);
+            $opportunities2 = $this->getQueroworkar();
             dump($opportunities2);
             $opportunities2->merge($opportunities);
             dump($opportunities2);
@@ -431,12 +431,13 @@ class RequestController extends Controller
         ]);
     }
 
-    private function getComoequetala($skipDataCheck = false)
+    private function getComoequetala()
     {
         $opportunities = new Collection();
         $client = new Client();
         $crawler = $client->request('GET', 'https://comoequetala.com.br/vagas-e-jobs?start=180');
-        $crawler->filter('.uk-list.uk-list-space > li')->each(function ($node) use ($skipDataCheck, &$opportunities) {
+        $crawler->filter('.uk-list.uk-list-space > li')->each(function ($node) use (&$opportunities) {
+            $skipDataCheck = env('CRAWLER_SKIP_DATA_CHECK');
             $client = new Client();
             $pattern = '#(' . implode('|', $this->mustIncludeWords) . ')#i';
             $pattern = str_replace('"', '', $pattern);
@@ -449,7 +450,7 @@ class RequestController extends Controller
                     $crawler2 = $client->request('GET', $link);
                     $title = $crawler2->filter('[itemprop="title"],h3')->text();
                     $description = [
-                        $node->filter('[itemprop="description"] *')->count() ? trim($node->filter('[itemprop="description"] *')->html()) : '',
+                        $crawler2->filter('[itemprop="description"]')->count() ? $crawler2->filter('[itemprop="description"]')->html() : '',
                         $crawler2->filter('.uk-container > .uk-grid-divider > .uk-width-1-1:last-child')->count()
                             ? $crawler2->filter('.uk-container > .uk-grid-divider > .uk-width-1-1:last-child')->html() : '',
                         '*Como se candidatar:* ' . $link
@@ -475,12 +476,13 @@ class RequestController extends Controller
         return collect($opportunities);
     }
 
-    private function getQueroworkar($skipDataCheck = false)
+    private function getQueroworkar()
     {
         $opportunities = new Collection();
         $client = new Client();
         $crawler = $client->request('GET', 'http://queroworkar.com.br/blog/jobs/');
-        $crawler->filter('.loadmore-item')->each(function ($node) use ($skipDataCheck, &$opportunities) {
+        $crawler->filter('.loadmore-item')->each(function ($node) use (&$opportunities) {
+            $skipDataCheck = env('CRAWLER_SKIP_DATA_CHECK');
             /** @var \Symfony\Component\DomCrawler\Crawler $node */
             $client = new Client();
             $jobsPlace = $node->filter('.job-location');
