@@ -502,7 +502,7 @@ class RequestController extends Controller
 
                         $opportunity = new Opportunity();
                         $opportunity->setTitle($title)
-                            ->setDescription(implode("\n\n", $description))
+                            ->setDescription($description)
                             ->setCompany($company)
                             ->setLocation($location);
 
