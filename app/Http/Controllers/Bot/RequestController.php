@@ -496,6 +496,7 @@ class RequestController extends Controller
                         $title = $crawler2->filter('.page-title')->text();
                         $description = $crawler2->filter('.job-desc')->html();
                         $description = str_ireplace('(adsbygoogle = window.adsbygoogle || []).push({});', '', $description);
+                        $description .= "\n\n*Como se candidatar:* " . $link;
 
                         $company = $crawler2->filter('.company-title')->text();
                         $location = $crawler2->filter('.job-location')->text();
