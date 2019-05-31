@@ -444,8 +444,8 @@ class RequestController extends Controller
                     $crawler2 = $client->request('GET', $link);
                     $title = $crawler2->filter('[itemprop="title"],h3')->text();
                     $description = [
-                        $crawler2->filter('.uk-container > .uk-grid-divider > .uk-width-1-1:eq(1)')->count()
-                            ? $crawler2->filter('.uk-container > .uk-grid-divider > .uk-width-1-1:eq(1)')->html() : '',
+                        $crawler2->filter('.uk-container > .uk-grid-divider > .uk-width-1-1:last-child')->count()
+                            ? $crawler2->filter('.uk-container > .uk-grid-divider > .uk-width-1-1:last-child')->html() : '',
                         $node->filter('[itemprop="description"]')->count() ? trim($node->filter('[itemprop="description"]')->text()) : '',
                         '*Como se candidatar:* ' . $link
                     ];
