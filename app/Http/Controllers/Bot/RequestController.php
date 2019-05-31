@@ -399,10 +399,12 @@ class RequestController extends Controller
         try {
             $opportunities = $this->getComoequetala(true);
             dump($opportunities);
-            $opportunities->merge($this->getQueroworkar(true));
-            dump($opportunities);
+            $opportunities2 = $this->getQueroworkar(true);
+            dump($opportunities2);
+            $opportunities2->merge($opportunities);
+            dump($opportunities2);
             foreach ($opportunities as $opportunity) {
-                $this->sendOpportunityToChannel($opportunity);
+//                $this->sendOpportunityToChannel($opportunity);
             }
 
             return response()->json(['status' => 'success', 'results' => 'ok']);
