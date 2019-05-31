@@ -445,7 +445,7 @@ class RequestController extends Controller
                     $title = $crawler2->filter('[itemprop="title"],h3')->text();
                     $description = [
                         $crawler2->filter('[itemprop="description"] p')->count() ? $crawler2->filter('[itemprop="description"] p')->text() : '',
-                        $crawler2->filter('.uk-width-1-1.uk-width-1-4@m')->count() ? $crawler2->filter('.uk-width-1-1.uk-width-1-4@m')->text() : '',
+                        $crawler2->filter('.uk-container > .uk-grid-divider > .uk-width-1-1')->count() ? $crawler2->filter('.uk-container > .uk-grid-divider > .uk-width-1-1')->eq(1)->text() : '',
                         $node->filter('[itemprop="description"]')->count() ? trim($node->filter('[itemprop="description"]')->text()) : '',
                         '*Como se candidatar:* ' . $link
                     ];
