@@ -401,7 +401,7 @@ class RequestController extends Controller
             dump($opportunities);
             $opportunities2 = $this->getQueroworkar();
             dump($opportunities2);
-            $opportunities3 = $opportunities2->union($opportunities);
+            $opportunities3 = $opportunities2->concat($opportunities);
             dump($opportunities2);
             dump($opportunities3);
             foreach ($opportunities as $opportunity) {
