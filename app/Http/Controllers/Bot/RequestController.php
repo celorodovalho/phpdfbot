@@ -401,8 +401,9 @@ class RequestController extends Controller
             dump($opportunities);
             $opportunities2 = $this->getQueroworkar();
             dump($opportunities2);
-            $opportunities2->merge($opportunities);
+            $opportunities3 = $opportunities2->union($opportunities);
             dump($opportunities2);
+            dump($opportunities3);
             foreach ($opportunities as $opportunity) {
 //                $this->sendOpportunityToChannel($opportunity);
             }
