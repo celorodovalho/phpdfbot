@@ -11,12 +11,12 @@ use Illuminate\Support\Collection;
  */
 class Opportunity implements OpportunityInterface
 {
-    private $title;
-    private $position;
-    private $description;
-    private $salary;
-    private $company;
-    private $location;
+    private $title = '';
+    private $position = '';
+    private $description = '';
+    private $salary = '';
+    private $company = '';
+    private $location = '';
     /** @var Collection */
     private $files;
 

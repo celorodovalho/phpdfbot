@@ -12,6 +12,7 @@ use LaravelGmail;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\FileUpload\InputFile;
 use Goutte\Client;
+use Illuminate\Support\Collection;
 
 class RequestController extends Controller
 {
@@ -396,8 +397,10 @@ class RequestController extends Controller
     public function crawler()
     {
         try {
-            $opportunities = $this->getComoequetala();
-            $opportunities->merge($this->getQueroworkar());
+            $opportunities = $this->getComoequetala(true);
+            dump($opportunities);
+            $opportunities->merge($this->getQueroworkar(true));
+            dump($opportunities);
             foreach ($opportunities as $opportunity) {
                 $this->sendOpportunityToChannel($opportunity);
             }
@@ -428,10 +431,10 @@ class RequestController extends Controller
 
     private function getComoequetala($skipDataCheck = false)
     {
-        $opportunities = [];
+        $opportunities = new Collection();
         $client = new Client();
         $crawler = $client->request('GET', 'https://comoequetala.com.br/vagas-e-jobs?start=180');
-        $crawler->filter('.uk-list.uk-list-space > li')->each(function ($node) use ($skipDataCheck) {
+        $crawler->filter('.uk-list.uk-list-space > li')->each(function ($node) use ($skipDataCheck, &$opportunities) {
             $client = new Client();
             $pattern = '#(' . implode('|', $this->mustIncludeWords) . ')#i';
             $pattern = str_replace('"', '', $pattern);
@@ -446,7 +449,7 @@ class RequestController extends Controller
                     $description = [
                         $crawler2->filter('.uk-container > .uk-grid-divider > .uk-width-1-1:last-child')->count()
                             ? $crawler2->filter('.uk-container > .uk-grid-divider > .uk-width-1-1:last-child')->html() : '',
-                        $node->filter('[itemprop="description"]')->count() ? trim($node->filter('[itemprop="description"]')->text()) : '',
+                        $node->filter('[itemprop="description"]')->count() ? trim($node->filter('[itemprop="description"]')->html()) : '',
                         '*Como se candidatar:* ' . $link
                     ];
                     //$link = $node->filter('.uk-link')->text();
@@ -463,7 +466,7 @@ class RequestController extends Controller
                         ->setCompany($company)
                         ->setLocation($location);
 
-                    $opportunities[] = $opportunity;
+                    $opportunities->add($opportunity);
                 }
             }
         });
@@ -472,10 +475,10 @@ class RequestController extends Controller
 
     private function getQueroworkar($skipDataCheck = false)
     {
-        $opportunities = [];
+        $opportunities = new Collection();
         $client = new Client();
         $crawler = $client->request('GET', 'http://queroworkar.com.br/blog/jobs/');
-        $crawler->filter('.loadmore-item')->each(function ($node) use ($skipDataCheck) {
+        $crawler->filter('.loadmore-item')->each(function ($node) use ($skipDataCheck, &$opportunities) {
             /** @var \Symfony\Component\DomCrawler\Crawler $node */
             $client = new Client();
             $jobsPlace = $node->filter('.job-location');
@@ -506,7 +509,7 @@ class RequestController extends Controller
                             ->setCompany($company)
                             ->setLocation($location);
 
-                        $opportunities[] = $opportunity;
+                        $opportunities->add($opportunity);
                     }
                 }
             }
