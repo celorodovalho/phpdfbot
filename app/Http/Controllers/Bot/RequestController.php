@@ -210,6 +210,8 @@ class RequestController extends Controller
 
     private function sanitizeSubject(string $message): string
     {
+        $message = preg_replace('/(\d{0,999} views)/', '', $message);
+        $message = preg_replace('/(\d{0,999} applications)/', '', $message);
         return trim(preg_replace('/\[.+?\]/', '', $message));
     }
 
@@ -250,14 +252,16 @@ class RequestController extends Controller
             $message = str_ireplace([
                 '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
             ], '`', $message);
-            $message = preg_replace('/<br(\s+)?\/?>/i', "\r\n", $message);
-            $message = preg_replace("/<p[^>]*?>/", "\r\n", $message);
-            $message = str_replace("</p>", "\r\n", $message);
+            $message = preg_replace('/<br(\s+)?\/?>/i', "\n", $message);
+            $message = preg_replace("/<p[^>]*?>/", "\n", $message);
+            $message = str_replace("</p>", "\n", $message);
             $message = strip_tags($message);
 
             $message = str_replace(['**', '__', '``'], '', $message);
             $message = str_replace(['* *', '_ _', '` `', '*  *', '_  _', '`  `'], '', $message);
-            $message = preg_replace("/[\r\n]+/", "\n", $message);
+            $message = preg_replace("/([\r\n])+/m", "\n", $message);
+            $message = preg_replace("/\n{2,}/m", "\n", $message);
+            $message = preg_replace("/\s{2,}/m", ' ', $message);
             $message = trim($message, " \t\n\r\0\x0B--");
         }
         return trim($message);
