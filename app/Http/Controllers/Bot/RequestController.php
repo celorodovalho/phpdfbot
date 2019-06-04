@@ -42,7 +42,7 @@ class RequestController extends Controller
         'teste',
         '"banco dados"',
         '"segurança informação"',
-        'designer',
+        'design',
         'front-end',
         'frontend',
         'back-end',
