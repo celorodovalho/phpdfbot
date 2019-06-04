@@ -435,7 +435,7 @@ class RequestController extends Controller
     {
         $opportunities = new Collection();
         $client = new Client();
-        $crawler = $client->request('GET', 'https://comoequetala.com.br/vagas-e-jobs?start=180');
+        $crawler = $client->request('GET', 'https://comoequetala.com.br/vagas-e-jobs');
         $crawler->filter('.uk-list.uk-list-space > li')->each(function ($node) use (&$opportunities) {
             $skipDataCheck = env('CRAWLER_SKIP_DATA_CHECK');
             $client = new Client();
