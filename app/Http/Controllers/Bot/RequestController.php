@@ -210,6 +210,7 @@ class RequestController extends Controller
 
     private function sanitizeSubject(string $message): string
     {
+        $message = preg_replace('/#^(RE|RE|FWD|VAGA|Oportunidade)S?:?$#i/', '', $message);
         $message = preg_replace('/(\d{0,999} (view|application)s?)/', '', $message);
         return trim(preg_replace('/\[.+?\]/', '', $message));
     }
