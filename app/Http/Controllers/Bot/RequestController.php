@@ -210,8 +210,7 @@ class RequestController extends Controller
 
     private function sanitizeSubject(string $message): string
     {
-        $message = preg_replace('/(\d{0,999} views)/', '', $message);
-        $message = preg_replace('/(\d{0,999} applications)/', '', $message);
+        $message = preg_replace('/(\d{0,999} (view|application)s?)/', '', $message);
         return trim(preg_replace('/\[.+?\]/', '', $message));
     }
 
