@@ -80,35 +80,45 @@ class RequestController extends Controller
 
     public function process(): string
     {
-        $messages = $this->getMessages();
-        /** @var Mail $message */
-        foreach ($messages as $message) {
+        try {
+            $messages = $this->getMessages();
+            /** @var Mail $message */
+            foreach ($messages as $message) {
 
-            $body = $this->sanitizeBody($this->getMessageBody($message));
-            $subject = $this->sanitizeSubject($message->getSubject());
+                $body = $this->sanitizeBody($this->getMessageBody($message));
+                $subject = $this->sanitizeSubject($message->getSubject());
 
-            $opportunity = new Opportunity();
-            $opportunity
-                ->setTitle($subject)
-                ->setDescription($body);
-            if ($message->hasAttachments()) {
-                $attachments = $message->getAttachments();
-                /** @var \Dacastro4\LaravelGmail\Services\Message\Attachment $attachment */
-                foreach ($attachments as $attachment) {
-                    if (!(strpos($attachment->getMimeType(), 'image') !== false && $attachment->getSize() < 50000)) {
-                        $filePath = $attachment->saveAttachmentTo($message->getId() . '/', null, 'uploads');
-                        $fileUrl = Storage::disk('uploads')->url($filePath);
-                        $opportunity->addFile($fileUrl);
+                $opportunity = new Opportunity();
+                $opportunity
+                    ->setTitle($subject)
+                    ->setDescription($body);
+                if ($message->hasAttachments()) {
+                    $attachments = $message->getAttachments();
+                    /** @var \Dacastro4\LaravelGmail\Services\Message\Attachment $attachment */
+                    foreach ($attachments as $attachment) {
+                        if (!(strpos($attachment->getMimeType(), 'image') !== false && $attachment->getSize() < 50000)) {
+                            $filePath = $attachment->saveAttachmentTo($message->getId() . '/', null, 'uploads');
+                            $fileUrl = Storage::disk('uploads')->url($filePath);
+                            $opportunity->addFile($fileUrl);
+                        }
                     }
                 }
+                $this->sendOpportunityToChannel($opportunity);
+                $message->markAsRead();
+                $message->addLabel('Label_5517839157714334708'); //ENVIADO_PRO_BOT
+                $message->removeLabel('Label_7'); //STILL_UNREAD
+                $message->sendToTrash();
             }
-            $this->sendOpportunityToChannel($opportunity);
-            $message->markAsRead();
-            $message->addLabel('Label_5517839157714334708'); //ENVIADO_PRO_BOT
-            $message->removeLabel('Label_7'); //STILL_UNREAD
-            $message->sendToTrash();
+        } catch (\Exception $exception) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $exception->getMessage(),
+            ]);
         }
-        return 'ok';
+        return response()->json([
+            'status' => 'success',
+            'message' => 'The process is done!',
+        ]);
     }
 
     private function getMessages(): \Illuminate\Support\Collection
@@ -394,8 +404,15 @@ class RequestController extends Controller
             }
         } catch (\Exception $exception) {
             $this->log($exception, 'ERRO_AO_NOTIFICAR_GRUPO');
+            return response()->json([
+                'status' => 'error',
+                'message' => $exception->getMessage(),
+            ]);
         }
-        return response()->json(['status' => 'success', 'results' => 'ok']);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'The group was notified!',
+        ]);
     }
 
     protected function getGroupSign(): string
@@ -412,11 +429,15 @@ class RequestController extends Controller
                 $this->sendOpportunityToChannel($opportunity);
             }
 
-            return response()->json(['status' => 'success', 'results' => 'ok']);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'The crawler was done!',
+            ]);
         } catch (\Exception $exception) {
             $this->log($exception);
             return response()->json([
-                'results' => $exception->getMessage()
+                'status' => 'error',
+                'message' => $exception->getMessage(),
             ]);
         }
     }
