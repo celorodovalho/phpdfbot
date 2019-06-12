@@ -444,20 +444,27 @@ class RequestController extends Controller
 
     private function log(\Exception $exception, $message = '', $context = null): void
     {
-        $referenceLog = $message . time() . '.log';
+        $referenceLog = 'logs/' . $message . time() . '.log';
         Log::error($message, [$exception->getLine(), $exception, $context]);
         Storage::put($referenceLog, $context);
-        $this->telegram->sendMessage([
-//            'parse_mode' => 'Markdown',
-            'chat_id' => env('TELEGRAM_OWNER_ID'),
-            'text' => json_encode([
-                'message' => $message,
-                'exceptionMessage' => $exception->getMessage(),
-                'line' => $exception->getLine(),
-                'context' => $context,
-                'referenceLog' => $referenceLog,
-            ])
-        ]);
+        try {
+            $this->telegram->sendMessage([
+                'parse_mode' => 'Markdown',
+                'chat_id' => env('TELEGRAM_OWNER_ID'),
+                'text' => sprintf("```\n%s\n```", json_encode([
+                    'message' => $message,
+                    'exceptionMessage' => $exception->getMessage(),
+                    'line' => $exception->getLine(),
+                    'context' => $context,
+                    'referenceLog' => $referenceLog,
+                ]))
+            ]);
+        } catch (\Exception $exception2) {
+            $this->telegram->sendMessage([
+                'chat_id' => env('TELEGRAM_OWNER_ID'),
+                'text' => $referenceLog
+            ]);
+        }
     }
 
     private function getComoequetala()
