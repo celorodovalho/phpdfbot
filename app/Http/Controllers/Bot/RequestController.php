@@ -166,8 +166,8 @@ class RequestController extends Controller
                             'parse_mode' => 'Markdown'
                         ]);
                         $messageId = $documentSent->getMessageId();
-                    } catch (\Exception $exception) {
-                        $this->log($exception, 'FALHA_AO_ENVIAR_DOCUMENTO', [$file]);
+                    } catch (\Exception $exception2) {
+                        $this->log($exception2, 'FALHA_AO_ENVIAR_DOCUMENTO', [$file]);
                     }
                 }
             }
@@ -190,16 +190,21 @@ class RequestController extends Controller
                 $messageSentId = $messageSent->getMessageId();
             } catch (\Exception $exception) {
                 if ($exception->getCode() === 400) {
-                    $sendMsg['text'] = $this->removeMarkdown($messageText);
-                    unset($sendMsg['Markdown']);
-                    $messageSent = $this->telegram->sendMessage($sendMsg);
-                    $messageSentId = $messageSent->getMessageId();
+                    try {
+                        $sendMsg['text'] = $this->removeMarkdown($messageText);
+                        unset($sendMsg['Markdown']);
+                        $messageSent = $this->telegram->sendMessage($sendMsg);
+                        $messageSentId = $messageSent->getMessageId();
+                    } catch (\Exception $exception2) {
+                        $this->log($exception, 'FALHA_AO_ENVIAR_TEXTPLAIN', [$sendMsg]);
+                    }
                 }
-                $this->log($exception, 'FALHA_AO_ENVIAR_MENSAGEM', [$sendMsg]);
+                $this->log($exception, 'FALHA_AO_ENVIAR_MARKDOWN', [$sendMsg]);
             }
         }
-
-        Storage::append('vagasEnviadas.txt', json_encode(['id' => $messageSentId, 'subject' => $opportunity->getTitle()]));
+        if ($messageSentId) {
+            Storage::append('vagasEnviadas.txt', json_encode(['id' => $messageSentId, 'subject' => $opportunity->getTitle()]));
+        }
     }
 
     private function removeMarkdown(string $message): string
@@ -210,7 +215,7 @@ class RequestController extends Controller
 
     private function sanitizeSubject(string $message): string
     {
-        $message = preg_replace('/#^(RE|RE|FWD|VAGA|Oportunidade)S?:?$#i/', '', $message);
+        $message = preg_replace('/#^(RE|FW|FWD|ENC|VAGA|Oportunidade)S?:?#i/', '', $message);
         $message = preg_replace('/(\d{0,999} (view|application)s?)/', '', $message);
         return trim(preg_replace('/\[.+?\]/', '', $message));
     }
@@ -408,25 +413,28 @@ class RequestController extends Controller
             }
 
             return response()->json(['status' => 'success', 'results' => 'ok']);
-        } catch (\Exception $e) {
-            $this->log($e);
+        } catch (\Exception $exception) {
+            $this->log($exception);
             return response()->json([
-                'results' => $e->getMessage()
+                'results' => $exception->getMessage()
             ]);
         }
     }
 
     private function log(\Exception $exception, $message = '', $context = null): void
     {
+        $referenceLog = $message . mktime() . '.log';
         Log::error($message, [$exception->getLine(), $exception, $context]);
+        Storage::put($referenceLog, $context);
         $this->telegram->sendMessage([
-            'parse_mode' => 'Markdown',
+//            'parse_mode' => 'Markdown',
             'chat_id' => env('TELEGRAM_OWNER_ID'),
             'text' => json_encode([
                 'message' => $message,
                 'exceptionMessage' => $exception->getMessage(),
                 'line' => $exception->getLine(),
-                'context' => $context
+                'context' => $context,
+                'referenceLog' => $referenceLog,
             ])
         ]);
     }
