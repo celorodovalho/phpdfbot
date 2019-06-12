@@ -444,7 +444,7 @@ class RequestController extends Controller
 
     private function log(\Exception $exception, $message = '', $context = null): void
     {
-        $referenceLog = $message . mktime() . '.log';
+        $referenceLog = $message . time() . '.log';
         Log::error($message, [$exception->getLine(), $exception, $context]);
         Storage::put($referenceLog, $context);
         $this->telegram->sendMessage([
