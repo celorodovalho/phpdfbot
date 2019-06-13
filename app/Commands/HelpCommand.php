@@ -37,5 +37,12 @@ class HelpCommand extends Command
         }
 
         $this->replyWithMessage(compact('text'));
+
+        $this->telegram->sendMessage([
+            'chat_id' => env('TELEGRAM_OWNER_ID'),
+            'text' => json_encode($this->getUpdate())
+        ]);
+
+
     }
 }
