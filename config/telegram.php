@@ -124,7 +124,7 @@ return [
     |
     */
     'commands'                     => [
-        App\Commands\HelpCommand::class,
+//        App\Commands\HelpCommand::class,
         App\Commands\StartCommand::class,
     ],
 
