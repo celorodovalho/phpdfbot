@@ -64,7 +64,10 @@ class ConcurseirosManager extends Command
             $name = $node->filter('a:first-child')->text();
             $link = $node->filter('a:first-child')->attr('href');
             $uf = $node->filter('.cc')->text();
-            $descricao = $node->filter('.cd')->text();
+            $descricao = $node->filter('.cd')->html();
+            $descricao = preg_replace('/<br(\s+)?\/?>/i', "\n", $descricao);
+            $descricao = strip_tags($descricao);
+
             $data = $node->filter('.ce')->text();
 
             $template = sprintf("*$name - $uf*\n\n$descricao\n\n*Inscrição até:* $data\n\n*Mais detalhes:*\n$link");
@@ -76,12 +79,12 @@ class ConcurseirosManager extends Command
                 'parse_mode' => 'Markdown',
                 'text' => $template,
             ];
-//
+
             $message = $self->telegram->sendMessage($sendMsg);
 
             dump($message->getMessageId());
 
-//            dump($node->text());
+//            dump($template);
 //            $pattern = '#(' . implode('|', $this->mustIncludeWords) . ')#i';
 //            $pattern = str_replace('"', '', $pattern);
 //            if (preg_match_all($pattern, $node->text(), $matches)) {
