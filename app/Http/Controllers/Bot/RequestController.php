@@ -78,7 +78,7 @@ class RequestController extends Controller
         $this->messageService = LaravelGmail::message();
     }
 
-    public function process(): string
+    public function process(): \Illuminate\Http\JsonResponse
     {
         try {
             $messages = $this->getMessages();
