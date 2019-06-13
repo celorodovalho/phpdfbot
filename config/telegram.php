@@ -46,7 +46,7 @@ return [
             'token'               => env('TELEGRAM_BOT_TOKEN2', ''),
             'webhook_url' => env('TELEGRAM_WEBHOOK_URL', env('APP_URL') . '/webhook/' . env('TELEGRAM_BOT_TOKEN2') . '/ConcurseirosBot'),
             'commands'            => [
-                App\Commands\HelpCommand::class,
+//                App\Commands\HelpCommand::class,
             ],
         ],
 
