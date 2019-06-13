@@ -209,5 +209,6 @@ return [
         // 'start' => Acme\Project\Commands\StartCommand::class,
         // 'stop' => Acme\Project\Commands\StopCommand::class,
         // 'status' => Acme\Project\Commands\StatusCommand::class,
+        'help' => App\Commands\HelpCommand::class,
     ],
 ];
