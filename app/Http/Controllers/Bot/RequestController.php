@@ -269,9 +269,11 @@ class RequestController extends Controller
             $message = str_ireplace([
                 '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
             ], '`', $message);
+            $message = str_replace(['<ul>', '<ol>', '</ul>', '</ol>'], '', $message);
+            $message = str_replace('<li>', '•', $message);
             $message = preg_replace('/<br(\s+)?\/?>/i', "\n", $message);
             $message = preg_replace("/<p[^>]*?>/", "\n", $message);
-            $message = str_replace("</p>", "\n", $message);
+            $message = str_replace(["</p>", '</li>'], "\n", $message);
             $message = strip_tags($message);
 
             $message = str_replace(['**', '__', '``'], '', $message);
@@ -427,6 +429,12 @@ class RequestController extends Controller
         try {
             $opportunities = $this->getComoequetala();
             $opportunities = $opportunities->concat($this->getQueroworkar());
+            $opportunities = $opportunities->concat($this->getFromGithub('https://github.com/frontendbr/vagas/issues'));
+            $opportunities = $opportunities->concat($this->getFromGithub('https://github.com/androiddevbr/vagas/issues'));
+            $opportunities = $opportunities->concat($this->getFromGithub('https://github.com/CangaceirosDevels/vagas_de_emprego/issues'));
+            $opportunities = $opportunities->concat($this->getFromGithub('https://github.com/CocoaHeadsBrasil/vagas/issues'));
+            $opportunities = $opportunities->concat($this->getFromGithub('https://github.com/phpdevbr/vagas/issues'));
+            $opportunities = $opportunities->concat($this->getFromGithub('https://github.com/vuejs-br/vagas/issues'));
             foreach ($opportunities as $opportunity) {
                 $this->sendOpportunityToChannel($opportunity);
             }
@@ -555,6 +563,42 @@ class RequestController extends Controller
                         $opportunities->add($opportunity);
                     }
                 }
+            }
+        });
+        return collect($opportunities);
+    }
+
+    private function getFromGithub(string $url = '')
+    {
+        $opportunities = new Collection();
+        $client = new Client();
+        $crawler = $client->request('GET', $url);
+        $crawler->filter('[aria-label="Issues"] .Box-row')->each(function ($node) use (&$opportunities) {
+            $skipDataCheck = env('CRAWLER_SKIP_DATA_CHECK');
+            /** @var \Symfony\Component\DomCrawler\Crawler $node */
+            $client = new Client();
+
+            $data = $node->filter('relative-time')->attr('datetime');
+            $data = new \DateTime($data);
+            $today = new \DateTime('now', new \DateTimeZone('America/Sao_Paulo'));
+
+            //relative-time datetime="2019-06-13T21:06:53Z"
+            if ($skipDataCheck || $data->format('Ymd') === $today->format('Ymd')) {
+                $link = $node->filter('a')->first()->attr('href');
+                $link = 'https://github.com'.$link;
+                $title = $node->filter('a')->first()->text();
+                //d-block comment-body
+                $crawler2 = $client->request('GET', $link);
+                $description = $crawler2->filter('.d-block.comment-body')->html();
+
+                $description = $this->sanitizeBody($description);
+                $title = $this->sanitizeSubject($title);
+
+                $opportunity = new Opportunity();
+                $opportunity->setTitle($title)
+                    ->setDescription($description);
+
+                $opportunities->add($opportunity);
             }
         });
         return collect($opportunities);
