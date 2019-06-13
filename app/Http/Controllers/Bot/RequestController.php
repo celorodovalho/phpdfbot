@@ -65,7 +65,9 @@ class RequestController extends Controller
         'sistemas',
         'full-stack',
         '"full stack"',
-        'fullstack'
+        'fullstack',
+        'computação',
+        'gerente negócios',
     ];
 
     /**
