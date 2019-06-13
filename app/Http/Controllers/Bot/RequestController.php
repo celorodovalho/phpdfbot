@@ -265,6 +265,7 @@ class RequestController extends Controller
 
             $message = $this->removeMarkdown($message);
 
+            $message = str_ireplace(['<3'], '❤️', $message);
             $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
             $message = str_ireplace(['<i>', '</i>', '<em>', '</em>'], '_', $message);
             $message = str_ireplace([
