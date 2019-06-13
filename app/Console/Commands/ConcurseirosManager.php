@@ -56,19 +56,27 @@ class ConcurseirosManager extends Command
         $client = new Client();
         $crawler = $client->request('GET', 'https://www.pciconcursos.com.br/concursos/');
         $self = $this;
-        $crawler->filter('#concursos div ~ .ua')->each(function ($node) use (&$concursos, $self) {
+        $crawler->filter('#concursos div .ca')->each(function ($node) use (&$concursos, $self) {
             $skipDataCheck = env('CRAWLER_SKIP_DATA_CHECK');
-            $client = new Client();
-            $concursos->add($node->text());
+//            $client = new Client();
+//            $concursos->add($node->text());
+
+            $name = $node->filter('a:first-child')->text();
+            $link = $node->filter('a:first-child')->attr('href');
+            $uf = $node->filter('.cc')->text();
+            $descricao = $node->filter('.cd')->text();
+            $data = $node->filter('.ce')->text();
+
+            $template = sprintf("*$name - $uf*\n\n$descricao\n\n*Inscrição até:* $data\n\n*Mais detalhes:*\n$link");
 
             $chatId = env('TELEGRAM_CHANNEL2');
 
             $sendMsg = [
                 'chat_id' => $chatId,
                 'parse_mode' => 'Markdown',
-                'text' => $node->text(),
+                'text' => $template,
             ];
-
+//
             $message = $self->telegram->sendMessage($sendMsg);
 
             dump($message->getMessageId());
