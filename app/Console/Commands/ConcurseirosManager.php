@@ -61,7 +61,7 @@ class ConcurseirosManager extends Command
             $client = new Client();
             $concursos->add($node->text());
 
-            $chatId = env('TELEGRAM_CHANNEL');
+            $chatId = env('TELEGRAM_CHANNEL2');
 
             $sendMsg = [
                 'chat_id' => $chatId,
