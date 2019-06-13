@@ -1,25 +1,35 @@
 <?php
 
-namespace App\Http\Controllers\Bot;
+namespace App\Console\Commands;
 
 use App\Contracts\Interfaces\OpportunityInterface;
 use App\Contracts\Opportunity;
-use App\Http\Controllers\Controller;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
+use Goutte\Client;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use LaravelGmail;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\FileUpload\InputFile;
-use Goutte\Client;
-use Illuminate\Support\Collection;
 
-class RequestController extends Controller
+class BotPopulateChannel extends AbstractCommand
 {
     /**
-     * @var \Telegram\Bot\Api
+     * The name and signature of the console command.
+     *
+     * @var string
      */
-    private $telegram;
+    protected $signature = 'bot:populate:channel {process}';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Command to populate the channel with new content';
+
+    protected $botName = 'phpdfbot';
 
     /**
      * @var \Dacastro4\LaravelGmail\Services\Message
@@ -76,11 +86,35 @@ class RequestController extends Controller
      */
     public function __construct(BotsManager $botsManager)
     {
-        $this->telegram = $botsManager->bot();
         $this->messageService = LaravelGmail::message();
+        parent::__construct($botsManager);
     }
 
-    public function process(): \Illuminate\Http\JsonResponse
+    /**
+     * Execute the console command.
+     *
+     * @return mixed
+     */
+    public function handle()
+    {
+        switch ($this->argument('process')) {
+            case 'gmail':
+                $this->populateByGmail();
+                break;
+            case 'crawler':
+                $this->crawler();
+                break;
+            case 'notify':
+                $this->notifyGroup();
+                break;
+            default;
+        }
+    }
+
+    /**
+     *
+     */
+    public function populateByGmail()
     {
         try {
             $messages = $this->getMessages();
@@ -98,7 +132,7 @@ class RequestController extends Controller
                     $attachments = $message->getAttachments();
                     /** @var \Dacastro4\LaravelGmail\Services\Message\Attachment $attachment */
                     foreach ($attachments as $attachment) {
-                        if (!(strpos($attachment->getMimeType(), 'image') !== false && $attachment->getSize() < 50000)) {
+                        if (!($attachment->getSize() < 50000 && strpos($attachment->getMimeType(), 'image') !== false)) {
                             $filePath = $attachment->saveAttachmentTo($message->getId() . '/', null, 'uploads');
                             $fileUrl = Storage::disk('uploads')->url($filePath);
                             $opportunity->addFile($fileUrl);
@@ -112,15 +146,11 @@ class RequestController extends Controller
                 $message->sendToTrash();
             }
         } catch (\Exception $exception) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $exception->getMessage(),
-            ]);
+            $this->error($exception->getMessage());
+            return false;
         }
-        return response()->json([
-            'status' => 'success',
-            'message' => 'The process is done!',
-        ]);
+        $this->info('The process is done!');
+        return true;
     }
 
     private function getMessages(): \Illuminate\Support\Collection
@@ -366,10 +396,7 @@ class RequestController extends Controller
         return $htmlBody;
     }
 
-    /**
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function notifyGroup(): \Illuminate\Http\JsonResponse
+    public function notifyGroup()
     {
         try {
             $vagasEnviadas = 'vagasEnviadas.txt';
@@ -410,15 +437,11 @@ class RequestController extends Controller
             }
         } catch (\Exception $exception) {
             $this->log($exception, 'ERRO_AO_NOTIFICAR_GRUPO');
-            return response()->json([
-                'status' => 'error',
-                'message' => $exception->getMessage(),
-            ]);
+            $this->error($exception->getMessage());
+            return false;
         }
-        return response()->json([
-            'status' => 'success',
-            'message' => 'The group was notified!',
-        ]);
+        $this->info('The group was notified!');
+        return true;
     }
 
     protected function getGroupSign(): string
@@ -441,16 +464,12 @@ class RequestController extends Controller
                 $this->sendOpportunityToChannel($opportunity);
             }
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'The crawler was done!',
-            ]);
+            $this->info('The crawler was done!');
+            return true;
         } catch (\Exception $exception) {
             $this->log($exception);
-            return response()->json([
-                'status' => 'error',
-                'message' => $exception->getMessage(),
-            ]);
+            $this->error($exception->getMessage());
+            return false;
         }
     }
 

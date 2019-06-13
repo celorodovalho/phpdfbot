@@ -3,18 +3,16 @@
 namespace App\Console\Commands;
 
 use Goutte\Client;
-use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
-use Telegram\Bot\BotsManager;
 
-class ConcurseirosManager extends Command
+class ConcurseirosManager extends AbstractCommand
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'bot:populate:channel';
+    protected $signature = 'bot:populate:concurseiros';
 
     /**
      * The console command description.
@@ -23,21 +21,7 @@ class ConcurseirosManager extends Command
      */
     protected $description = 'Command to populate the channel with new content';
 
-    /**
-     * @var \Telegram\Bot\Api
-     */
-    protected $telegram;
-
-    /**
-     * Create a new command instance.
-     * @param BotsManager $botsManager
-     * @return void
-     */
-    public function __construct(BotsManager $botsManager)
-    {
-        $this->telegram = $botsManager->bot('ConcurseirosBot');
-        parent::__construct();
-    }
+    protected $botName = 'ConcurseirosBot';
 
     /**
      * Execute the console command.
