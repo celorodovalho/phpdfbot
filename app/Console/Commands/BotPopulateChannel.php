@@ -431,11 +431,12 @@ class BotPopulateChannel extends AbstractCommand
                     if ($key < 1) {
                         $notificationMessage['photo'] = InputFile::create(str_replace('/index.php', '', $appUrl) . '/img/phpdf.webp');
                         $notificationMessage['caption'] = "Há novas vagas no canal!\nConfira: $channel $group 😉";
+                        $photo = $this->telegram->sendPhoto($notificationMessage);
+                    } else {
+                        $photo = $this->telegram->sendMessage($notificationMessage);
                     }
 
-                    Log::debug('MESSAGE', [$notificationMessage]);
 
-                    $photo = $this->telegram->sendPhoto($notificationMessage);
                     Storage::append($lastSentMsg, $photo->getMessageId());
                 }
 
