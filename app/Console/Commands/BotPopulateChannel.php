@@ -408,20 +408,16 @@ class BotPopulateChannel extends AbstractCommand
                 $lastSentMsgIds = Storage::get($lastSentMsg);
                 $lastSentMsgIds = explode("\n", $lastSentMsgIds);
                 $contents = trim($contents);
-
-                $contents = str_split(
-                    $contents,
-                    4096
-                );
+                $contents = explode("\n", $contents);
+                $contents = array_chunk($contents, 10);
 
                 foreach ($contents as $key => $content) {
-                    $lines = explode("\n", $content);
                     $vagas = [];
-                    foreach ($lines as $line) {
+                    foreach ($content as $line) {
                         $line = json_decode($line, true);
                         $vagas[] = [[
                             'text' => $line['subject'],
-                            'url' => 'https://t.me/phpdfvagas/' . $line['id']
+                            'url' => 'https://t.me/VagasBrasil_TI/' . $line['id']
                         ]];
                     }
 
@@ -463,7 +459,7 @@ class BotPopulateChannel extends AbstractCommand
 
     protected function getGroupSign(): string
     {
-        return "\n\n*PHPDF*\n✅ *Canal:* @phpdfvagas\n✅ *Grupo:* @phpdf";
+        return "\n\n*PHPDF*\n✅ *Canal:* @VagasBrasil_TI\n✅ *Grupo:* @phpdf";
     }
 
     public function crawler()
