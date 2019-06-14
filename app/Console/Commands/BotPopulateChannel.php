@@ -255,10 +255,18 @@ class BotPopulateChannel extends AbstractCommand
         return trim($message, '[]');
     }
 
+    private function escapeMarkdown(string $message): string
+    {
+
+        $message = str_replace(['*', '_', '`', '['], ["\\*", "\\_", "\\`", "\\["], $message);
+        return trim($message);
+    }
+
     private function sanitizeSubject(string $message): string
     {
         $message = preg_replace('/#^(RE|FW|FWD|ENC|VAGA|Oportunidade)S?:?#i/', '', $message);
         $message = preg_replace('/(\d{0,999} (view|application)s?)/', '', $message);
+        $message = $this->escapeMarkdown($message);
         return trim($message);
 //        return trim(preg_replace('/\[.+?\]/', '', $message));
     }
@@ -463,7 +471,7 @@ class BotPopulateChannel extends AbstractCommand
 
     protected function getGroupSign(): string
     {
-        return "\n\n*PHPDF*\n✅ *Canal:* @VagasBrasil_TI\n✅ *Grupo:* @phpdf";
+        return "\n\n*PHPDF*\n✅ *Canal:* @VagasBrasil\\_TI\n✅ *Grupo:* @phpdf";
     }
 
     public function crawler()
