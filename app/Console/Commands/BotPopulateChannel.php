@@ -433,6 +433,7 @@ class BotPopulateChannel extends AbstractCommand
                         $notificationMessage['caption'] = "Há novas vagas no canal!\nConfira: $channel $group 😉";
                         $photo = $this->telegram->sendPhoto($notificationMessage);
                     } else {
+                        $notificationMessage['text'] = "$channel $group - Parte " . ($key + 1);
                         $photo = $this->telegram->sendMessage($notificationMessage);
                     }
 
