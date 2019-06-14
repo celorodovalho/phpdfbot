@@ -398,15 +398,15 @@ class BotPopulateChannel extends AbstractCommand
 
     public function notifyGroup()
     {
+        $lastSentMsg = 'lastSentMsg.txt';
+        $lastSentMsgs = Storage::get($lastSentMsg);
         try {
             $vagasEnviadas = 'vagasEnviadas.txt';
-            $lastSentMsg = 'lastSentMsg.txt';
             $appUrl = env("APP_URL");
             $channel = env("TELEGRAM_CHANNEL");
             $group = env("TELEGRAM_GROUP");
             if (strlen($contents = Storage::get($vagasEnviadas)) > 0) {
-                $lastSentMsgIds = Storage::get($lastSentMsg);
-                $lastSentMsgIds = explode("\n", $lastSentMsgIds);
+                $lastSentMsgIds = explode("\n", $lastSentMsgs);
                 $contents = trim($contents);
                 $contents = explode("\n", $contents);
                 $contents = array_chunk($contents, 10);
@@ -452,6 +452,7 @@ class BotPopulateChannel extends AbstractCommand
                 Storage::put($vagasEnviadas, '');
             }
         } catch (\Exception $exception) {
+            Storage::put($lastSentMsg, $lastSentMsgs);
             $this->log($exception, 'ERRO_AO_NOTIFICAR_GRUPO');
             $this->error($exception->getMessage());
             return false;
