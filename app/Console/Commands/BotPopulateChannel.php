@@ -422,7 +422,6 @@ class BotPopulateChannel extends AbstractCommand
                     }
 
                     $notificationMessage = [
-                        'parse_mode' => 'Markdown',
                         'chat_id' => $group,
                         'reply_markup' => json_encode([
                             'inline_keyboard' => $vagas
