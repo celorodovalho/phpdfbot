@@ -405,33 +405,50 @@ class BotPopulateChannel extends AbstractCommand
             $channel = env("TELEGRAM_CHANNEL");
             $group = env("TELEGRAM_GROUP");
             if (strlen($contents = Storage::get($vagasEnviadas)) > 0) {
-                $lastSentMsgId = Storage::get($lastSentMsg);
+                $lastSentMsgIds = Storage::get($lastSentMsg);
+                $lastSentMsgIds = explode("\n", $lastSentMsgIds);
                 $contents = trim($contents);
-                $contents = explode("\n", $contents);
-                $vagas = [];
-                foreach ($contents as $content) {
-                    $content = json_decode($content, true);
-                    $vagas[] = [[
-                        'text' => $content['subject'],
-                        'url' => 'https://t.me/phpdfvagas/' . $content['id']
-                    ]];
+
+                $contents = str_split(
+                    $contents,
+                    4096
+                );
+
+                foreach ($contents as $key => $content) {
+                    $lines = explode("\n", $content);
+                    $vagas = [];
+                    foreach ($lines as $line) {
+                        $line = json_decode($line, true);
+                        $vagas[] = [[
+                            'text' => $line['subject'],
+                            'url' => 'https://t.me/phpdfvagas/' . $line['id']
+                        ]];
+                    }
+
+                    $notificationMessage = [
+                        'parse_mode' => 'Markdown',
+                        'chat_id' => $group,
+                        'reply_markup' => json_encode([
+                            'inline_keyboard' => $vagas
+                        ])
+                    ];
+
+                    if ($key < 1) {
+                        $notificationMessage['photo'] = InputFile::create(str_replace('/index.php', '', $appUrl) . '/img/phpdf.webp');
+                        $notificationMessage['caption'] = "Há novas vagas no canal!\nConfira: $channel $group 😉";
+                    }
+
+                    $photo = $this->telegram->sendPhoto($notificationMessage);
+                    Storage::append($lastSentMsg, $photo->getMessageId());
                 }
-                $photo = $this->telegram->sendPhoto([
-                    'parse_mode' => 'Markdown',
-                    'chat_id' => $group,
-                    'photo' => InputFile::create(str_replace('/index.php', '', $appUrl) . '/img/phpdf.webp'),
-                    'caption' => "Há novas vagas no canal!\nConfira: $channel $group 😉",
-                    'reply_markup' => json_encode([
-                        'inline_keyboard' => $vagas
-                    ])
-                ]);
-                $this->telegram->deleteMessage([
-                    'chat_id' => $group,
-                    'message_id' => trim($lastSentMsgId)
-                ]);
 
+                foreach ($lastSentMsgIds as $lastSentMsgId) {
+                    $this->telegram->deleteMessage([
+                        'chat_id' => $group,
+                        'message_id' => trim($lastSentMsgId)
+                    ]);
+                }
 
-                Storage::put($lastSentMsg, $photo->getMessageId());
                 Storage::delete($vagasEnviadas);
                 Storage::put($vagasEnviadas, '');
             }
@@ -606,7 +623,7 @@ class BotPopulateChannel extends AbstractCommand
             //relative-time datetime="2019-06-13T21:06:53Z"
             if ($skipDataCheck || $data->format('Ymd') === $today->format('Ymd')) {
                 $link = $node->filter('a')->first()->attr('href');
-                $link = 'https://github.com'.$link;
+                $link = 'https://github.com' . $link;
                 $title = $node->filter('a')->first()->text();
                 //d-block comment-body
                 $crawler2 = $client->request('GET', $link);
