@@ -494,7 +494,7 @@ class BotPopulateChannel extends AbstractCommand
     {
         $referenceLog = 'logs/' . $message . time() . '.log';
         Log::error($message, [$exception->getLine(), $exception, $context]);
-        Storage::put($referenceLog, [$context, $exception]);
+        Storage::put($referenceLog, json_encode([$context, $exception]));
         try {
             $this->telegram->sendMessage([
                 'parse_mode' => 'Markdown',
