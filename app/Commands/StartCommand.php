@@ -36,8 +36,8 @@ class StartCommand extends Command
                         'url' => 'https://t.me/phpdf/8726'
                     ],
                     [
-                        'text' => 'Vagas',
-                        'url' => 'https://t.me/phpdfvagas'
+                        'text' => 'Vagas de TI',
+                        'url' => 'https://t.me/VagasBrasil_TI'
                     ],
                 ]]
             ])
