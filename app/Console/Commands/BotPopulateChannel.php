@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Notification;
 use App\Models\Opportunity;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
 use Goutte\Client;
@@ -108,9 +109,8 @@ class BotPopulateChannel extends AbstractCommand
                 $subject = $this->sanitizeSubject($message->getSubject());
 
                 $opportunity = new Opportunity();
-                $opportunity
-                    ->setTitle($subject)
-                    ->setDescription($body);
+                $opportunity->title = $subject;
+                $opportunity->description = $body;
                 if ($message->hasAttachments()) {
                     $attachments = $message->getAttachments();
                     /** @var \Dacastro4\LaravelGmail\Services\Message\Attachment $attachment */
@@ -228,8 +228,8 @@ class BotPopulateChannel extends AbstractCommand
             }
         }
         if ($messageSentId) {
-            $opportunity->title
-            //Storage::append('vagasEnviadas.txt', json_encode(['id' => $messageSentId, 'subject' => $opportunity->title]));
+            $opportunity->telegram_id = $messageSentId;
+            $opportunity->save();
         }
     }
 
@@ -241,7 +241,6 @@ class BotPopulateChannel extends AbstractCommand
 
     private function escapeMarkdown(string $message): string
     {
-
         $message = str_replace(['*', '_', '`', '['], ["\\*", "\\_", "\\`", "\\["], $message);
         return trim($message);
     }
@@ -297,7 +296,7 @@ class BotPopulateChannel extends AbstractCommand
             $message = str_replace(['<ul>', '<ol>', '</ul>', '</ol>'], '', $message);
             $message = str_replace('<li>', '•', $message);
             $message = preg_replace('/<br(\s+)?\/?>/i', "\n", $message);
-            $message = preg_replace("/<p[^>]*?>/", "\n", $message);
+            $message = preg_replace('/<p[^>]*?>/', "\n", $message);
             $message = str_replace(["</p>", '</li>'], "\n", $message);
             $message = strip_tags($message);
 
@@ -391,26 +390,21 @@ class BotPopulateChannel extends AbstractCommand
 
     public function notifyGroup()
     {
-        $lastSentMsg = 'lastSentMsg.txt';
-        $lastSentMsgs = Storage::get($lastSentMsg);
         try {
-            $vagasEnviadas = 'vagasEnviadas.txt';
             $appUrl = env("APP_URL");
             $channel = env("TELEGRAM_CHANNEL");
             $group = env("TELEGRAM_GROUP");
-            if (strlen($contents = Storage::get($vagasEnviadas)) > 0) {
-                $lastSentMsgIds = explode("\n", $lastSentMsgs);
-                $contents = trim($contents);
-                $contents = explode("\n", $contents);
-                $contents = array_chunk($contents, 10);
+            $vagasEnviadas = Opportunity::all();
+            if ($vagasEnviadas->isNotEmpty()) {
+                $lastNotifications = Notification::all();
+                $vagasEnviadasChunk = array_chunk($vagasEnviadas, 10);
 
-                foreach ($contents as $key => $content) {
+                foreach ($vagasEnviadasChunk as $key => $vagasEnviadasArr) {
                     $vagas = [];
-                    foreach ($content as $line) {
-                        $line = json_decode($line, true);
+                    foreach ($vagasEnviadasArr as $vagaEnviada) {
                         $vagas[] = [[
-                            'text' => $line['subject'],
-                            'url' => 'https://t.me/VagasBrasil_TI/' . $line['id']
+                            'text' => $vagaEnviada->title,
+                            'url' => 'https://t.me/VagasBrasil_TI/' . $vagaEnviada->telegram_id
                         ]];
                     }
 
@@ -430,22 +424,22 @@ class BotPopulateChannel extends AbstractCommand
                         $photo = $this->telegram->sendMessage($notificationMessage);
                     }
 
-
-                    Storage::append($lastSentMsg, $photo->getMessageId());
+                    $notification = new Notification();
+                    $notification->telegram_id = $photo->getMessageId();
+                    $notification->body = json_encode($notificationMessage);
+                    $notification->save();
                 }
 
-                foreach ($lastSentMsgIds as $lastSentMsgId) {
+                foreach ($lastNotifications as $lastNotification) {
                     $this->telegram->deleteMessage([
                         'chat_id' => $group,
-                        'message_id' => trim($lastSentMsgId)
+                        'message_id' => $lastNotification->telegram_id
                     ]);
+                    $lastNotification->delete();
                 }
-
-                Storage::delete($vagasEnviadas);
-                Storage::put($vagasEnviadas, '');
+                Opportunity::whereNotNull('id')->delete();
             }
         } catch (\Exception $exception) {
-            Storage::put($lastSentMsg, $lastSentMsgs);
             $this->log($exception, 'ERRO_AO_NOTIFICAR_GRUPO');
             $this->error($exception->getMessage());
             return false;
