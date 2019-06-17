@@ -53,7 +53,7 @@ class Opportunity extends Model
 
     public function hasFile(): bool
     {
-        return $this->files->isNotEmpty();
+        return $this->files ? $this->files->isNotEmpty() : false;
     }
 
     public static function boot()
