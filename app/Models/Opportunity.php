@@ -38,6 +38,12 @@ class Opportunity extends Model
 
     protected $guarded = ['id'];
 
+    public function __construct(array $attributes = [])
+    {
+        $this->files = new Collection();
+        parent::__construct($attributes);
+    }
+
     /**
      * @return Collection
      */
