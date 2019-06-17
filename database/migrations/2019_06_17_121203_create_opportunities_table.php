@@ -17,7 +17,7 @@ class CreateOpportunitiesTable extends Migration
             $table->bigIncrements('id');
             $table->string('title', 100);
             $table->string('position', 50)->nullable();
-            $table->string('description', 1000);
+            $table->text('description');
             $table->string('salary', 50)->nullable();
             $table->string('company', 50)->nullable();
             $table->string('location', 50)->nullable();
@@ -25,7 +25,6 @@ class CreateOpportunitiesTable extends Migration
             $table->text('files')->nullable();
             $table->softDeletes();
             $table->timestamps();
-            $table->unique(['title', 'description']);
         });
     }
 
