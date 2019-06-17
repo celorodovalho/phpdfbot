@@ -22,7 +22,7 @@ class CreateOpportunitiesTable extends Migration
             $table->string('company', 50)->nullable();
             $table->string('location', 50)->nullable();
             $table->integer('telegram_id')->nullable();
-            $table->json('files')->nullable();
+            $table->text('files')->nullable();
             $table->softDeletes();
             $table->timestamps();
             $table->unique(['title', 'description']);
