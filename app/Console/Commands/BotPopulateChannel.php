@@ -2,15 +2,13 @@
 
 namespace App\Console\Commands;
 
-use App\Contracts\Interfaces\OpportunityInterface;
-use App\Contracts\Opportunity;
+use App\Models\Opportunity;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
 use Goutte\Client;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use LaravelGmail;
-use Telegram\Bot\BotsManager;
 use Telegram\Bot\FileUpload\InputFile;
 
 class BotPopulateChannel extends AbstractCommand
@@ -30,11 +28,6 @@ class BotPopulateChannel extends AbstractCommand
     protected $description = 'Command to populate the channel with new content';
 
     protected $botName = 'phpdfbot';
-
-    /**
-     * @var \Dacastro4\LaravelGmail\Services\Message
-     */
-    private $messageService;
 
     private $mustIncludeWords = [
         'desenvolvedor',
@@ -79,16 +72,6 @@ class BotPopulateChannel extends AbstractCommand
         'computação',
         'gerente negócios',
     ];
-
-    /**
-     * RequestController constructor.
-     * @param BotsManager $botsManager
-     */
-    public function __construct(BotsManager $botsManager)
-    {
-        $this->messageService = LaravelGmail::message();
-        parent::__construct($botsManager);
-    }
 
     /**
      * Execute the console command.
@@ -168,7 +151,7 @@ class BotPopulateChannel extends AbstractCommand
         $fromTo = '{' . implode(' ', $fromTo) . '}';
 
         $query = "$fromTo $words is:unread";
-        $threads = $this->messageService->service->users_messages->listUsersMessages('me', [
+        $threads = LaravelGmail::message()->service->users_messages->listUsersMessages('me', [
             'q' => $query,
             //'maxResults' => 5
         ]);
@@ -181,7 +164,7 @@ class BotPopulateChannel extends AbstractCommand
         return collect($messages);
     }
 
-    private function sendOpportunityToChannel(OpportunityInterface $opportunity): void
+    private function sendOpportunityToChannel(Opportunity $opportunity): void
     {
         $messageId = null;
         $chatId = env('TELEGRAM_CHANNEL');
@@ -189,7 +172,7 @@ class BotPopulateChannel extends AbstractCommand
         if ($opportunity->hasFile()) {
             $files = $opportunity->getFiles();
             foreach ($files as $file) {
-                $text = $opportunity->getTitle() . $this->getGroupSign();
+                $text = $opportunity->title . $this->getGroupSign();
                 try {
                     $photoSent = $this->telegram->sendPhoto([
                         'chat_id' => $chatId,
@@ -245,7 +228,8 @@ class BotPopulateChannel extends AbstractCommand
             }
         }
         if ($messageSentId) {
-            Storage::append('vagasEnviadas.txt', json_encode(['id' => $messageSentId, 'subject' => $opportunity->getTitle()]));
+            $opportunity->title
+            //Storage::append('vagasEnviadas.txt', json_encode(['id' => $messageSentId, 'subject' => $opportunity->title]));
         }
     }
 
@@ -354,36 +338,36 @@ class BotPopulateChannel extends AbstractCommand
         return trim($str) === '' ? $str : preg_replace('/<([^<\/>]*)>([\s]*?|(?R))<\/\1>/imsU', $repto, $str);
     }
 
-    private function formatTextOpportunity(OpportunityInterface $opportunity): array
+    private function formatTextOpportunity(Opportunity $opportunity): array
     {
-        $description = $opportunity->getDescription();
+        $description = $opportunity->description;
         if (strlen($description) < 200) {
             return [];
         }
         $template = sprintf(
             "*%s*\n\n*Descrição*\n%s",
-            $opportunity->getTitle(),
+            $opportunity->title,
             $description
         );
 
-        if (!empty($opportunity->getLocation())) {
+        if (filled($opportunity->location)) {
             $template .= sprintf(
                 "\n\n*Localização*\n%s",
-                $opportunity->getLocation()
+                $opportunity->location
             );
         }
 
-        if (!empty($opportunity->getCompany())) {
+        if (filled($opportunity->company)) {
             $template .= sprintf(
                 "\n\n*Empresa*\n%s",
-                $opportunity->getCompany()
+                $opportunity->company
             );
         }
 
-        if (!empty($opportunity->getSalary())) {
+        if (filled($opportunity->salary)) {
             $template .= sprintf(
                 "\n\n*Salario*\n%s",
-                $opportunity->getSalary()
+                $opportunity->salary
             );
         }
 
@@ -557,10 +541,10 @@ class BotPopulateChannel extends AbstractCommand
                     $title = $this->sanitizeSubject($title);
 
                     $opportunity = new Opportunity();
-                    $opportunity->setTitle($title)
-                        ->setDescription($description)
-                        ->setCompany($company)
-                        ->setLocation($location);
+                    $opportunity->title = $title;
+                    $opportunity->description = $description;
+                    $opportunity->company = $company;
+                    $opportunity->location = $location;
 
                     $opportunities->add($opportunity);
                 }
@@ -602,10 +586,10 @@ class BotPopulateChannel extends AbstractCommand
                         $title = $this->sanitizeSubject($title);
 
                         $opportunity = new Opportunity();
-                        $opportunity->setTitle($title)
-                            ->setDescription($description)
-                            ->setCompany($company)
-                            ->setLocation($location);
+                        $opportunity->title = $title;
+                        $opportunity->description = $description;
+                        $opportunity->company = $company;
+                        $opportunity->location = $location;
 
                         $opportunities->add($opportunity);
                     }
@@ -642,8 +626,8 @@ class BotPopulateChannel extends AbstractCommand
                 $title = $this->sanitizeSubject($title);
 
                 $opportunity = new Opportunity();
-                $opportunity->setTitle($title)
-                    ->setDescription($description);
+                $opportunity->title = $title;
+                $opportunity->description = $description;
 
                 $opportunities->add($opportunity);
             }
