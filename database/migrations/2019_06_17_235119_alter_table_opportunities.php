@@ -14,10 +14,10 @@ class AlterTableOpportunities extends Migration
     public function up()
     {
         Schema::table('opportunities', function (Blueprint $table) {
-            $table->string('position', 250)->nullable();
-            $table->string('salary', 250)->nullable();
-            $table->string('company', 250)->nullable();
-            $table->string('location', 250)->nullable();
+            $table->string('position', 250)->nullable()->change();
+            $table->string('salary', 250)->nullable()->change();
+            $table->string('company', 250)->nullable()->change();
+            $table->string('location', 250)->nullable()->change();
         });
     }
 
@@ -29,10 +29,10 @@ class AlterTableOpportunities extends Migration
     public function down()
     {
         Schema::table('opportunities', function (Blueprint $table) {
-            $table->string('position', 50)->nullable();
-            $table->string('salary', 50)->nullable();
-            $table->string('company', 50)->nullable();
-            $table->string('location', 50)->nullable();
+            $table->string('position', 50)->nullable()->change();
+            $table->string('salary', 50)->nullable()->change();
+            $table->string('company', 50)->nullable()->change();
+            $table->string('location', 50)->nullable()->change();
         });
     }
 }
