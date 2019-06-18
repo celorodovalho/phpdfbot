@@ -537,8 +537,8 @@ class BotPopulateChannel extends AbstractCommand
                     $opportunity = new Opportunity();
                     $opportunity->title = $title;
                     $opportunity->description = $description;
-                    $opportunity->company = $company;
-                    $opportunity->location = $location;
+                    $opportunity->company = trim($company);
+                    $opportunity->location = trim($location);
 
                     $opportunities->add($opportunity);
                 }
@@ -582,8 +582,8 @@ class BotPopulateChannel extends AbstractCommand
                         $opportunity = new Opportunity();
                         $opportunity->title = $title;
                         $opportunity->description = $description;
-                        $opportunity->company = $company;
-                        $opportunity->location = $location;
+                        $opportunity->company = trim($company);
+                        $opportunity->location = trim($location);
 
                         $opportunities->add($opportunity);
                     }
