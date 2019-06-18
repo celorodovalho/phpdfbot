@@ -397,7 +397,7 @@ class BotPopulateChannel extends AbstractCommand
             $vagasEnviadas = Opportunity::all();
             if ($vagasEnviadas->isNotEmpty()) {
                 $lastNotifications = Notification::all();
-                $vagasEnviadasChunk = array_chunk($vagasEnviadas, 10);
+                $vagasEnviadasChunk = $vagasEnviadas->chunk(10);
 
                 foreach ($vagasEnviadasChunk as $key => $vagasEnviadasArr) {
                     $vagas = [];
