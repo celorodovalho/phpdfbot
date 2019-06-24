@@ -2,11 +2,13 @@
 
 namespace App\Console\Commands;
 
+use App\Helpers\Helper;
 use App\Models\Notification;
 use App\Models\Opportunity;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
 use Goutte\Client;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use LaravelGmail;
@@ -116,7 +118,9 @@ class BotPopulateChannel extends AbstractCommand
                     /** @var \Dacastro4\LaravelGmail\Services\Message\Attachment $attachment */
                     foreach ($attachments as $attachment) {
                         if (!($attachment->getSize() < 50000 && strpos($attachment->getMimeType(), 'image') !== false)) {
-                            $filePath = $attachment->saveAttachmentTo($message->getId() . '/', null, 'uploads');
+                            $extension = File::extension($attachment->getFileName());
+                            $fileName = Helper::base64UrlEncode($attachment->getFileName()) . '.' . $extension;
+                            $filePath = $attachment->saveAttachmentTo($message->getId() . '/', $fileName, 'uploads');
                             $fileUrl = Storage::disk('uploads')->url($filePath);
                             $opportunity->addFile($fileUrl);
                         }
