@@ -251,9 +251,9 @@ class BotPopulateChannel extends AbstractCommand
 
     private function sanitizeSubject(string $message): string
     {
-        $message = preg_replace('/#^(RE|FW|FWD|ENC|VAGA|Oportunidade)S?:?#i/', '', $message);
+        $message = preg_replace('/^(RE|FW|FWD|ENC|VAGA|Oportunidade)S?:?/i', '', $message);
         $message = preg_replace('/(\d{0,999} (view|application)s?)/', '', $message);
-        $message = str_replace(['[ClubInfoBSB]', '[leonardoti]'], '', $message);
+        $message = str_replace(['[ClubInfoBSB]', '[leonardoti]', '[NVagas]'], '', $message);
 //        $message = $this->escapeMarkdown($message);
         return trim($message);
 //        return trim(preg_replace('/\[.+?\]/', '', $message));
