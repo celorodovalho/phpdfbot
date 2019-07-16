@@ -543,6 +543,7 @@ class BotPopulateChannel extends AbstractCommand
                     $opportunity->description = $description;
                     $opportunity->company = trim($company);
                     $opportunity->location = trim($location);
+                    $opportunity->save();
 
                     $opportunities->add($opportunity);
                 }
