@@ -38,34 +38,47 @@ class Opportunity extends Model
 
     protected $guarded = ['id'];
 
+    /**
+     * @var Collection
+     */
+    private $filesArray;
+
     public function __construct(array $attributes = [])
     {
-        $this->files = new Collection();
+        $this->initFiles();
         parent::__construct($attributes);
+    }
+
+    public function initFiles()
+    {
+        $this->filesArray = new Collection();
     }
 
     /**
      * @return Collection
      */
-    public function getFiles(): Collection
+    public function getFilesList(): Collection
     {
-        return collect(json_decode($this->files));
+        if (empty($this->filesArray) || !$this->filesArray->isNotEmpty()) {
+            $this->filesArray = $this->getFilesAttribute();
+        }
+        return $this->filesArray;
     }
 
     public function addFile(string $file)
     {
-        $this->files->add($file);
+        $this->filesArray->add($file);
     }
 
     public function hasFile(): bool
     {
-        return $this->files ? $this->files->isNotEmpty() : false;
+        return $this->filesArray ? $this->filesArray->isNotEmpty() : false;
     }
 
     public function getFilesAttribute(): Collection
     {
         if (is_string($this->files) && strlen($this->files) > 0) {
-            return $this->getFiles();
+            return collect(json_decode($this->files));
         }
         return $this->files;
     }
@@ -76,12 +89,12 @@ class Opportunity extends Model
 
         static::creating(function(Opportunity $opportunity)
         {
-            $opportunity->files = optional($opportunity->files)->toJson();
+            $opportunity->files = optional($opportunity->filesArray)->toJson();
         });
 
         static::updating(function(Opportunity $opportunity)
         {
-            $opportunity->files = optional($opportunity->files)->toJson();
+            $opportunity->files = optional($opportunity->filesArray)->toJson();
         });
     }
 }

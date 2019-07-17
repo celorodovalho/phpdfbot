@@ -174,7 +174,7 @@ class BotPopulateChannel extends AbstractCommand
         $chatId = env('TELEGRAM_CHANNEL');
 
         if ($opportunity->hasFile()) {
-            $files = $opportunity->getFiles();
+            $files = $opportunity->getFilesList();
             foreach ($files as $file) {
                 $text = $opportunity->title . $this->getGroupSign();
                 try {
