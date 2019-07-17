@@ -62,6 +62,14 @@ class Opportunity extends Model
         return $this->files ? $this->files->isNotEmpty() : false;
     }
 
+    public function getFilesAttribute(): Collection
+    {
+        if (is_string($this->files) && strlen($this->files) > 0) {
+            return $this->getFiles();
+        }
+        return $this->files;
+    }
+
     public static function boot()
     {
         parent::boot();

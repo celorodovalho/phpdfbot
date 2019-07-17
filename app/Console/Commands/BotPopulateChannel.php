@@ -178,6 +178,11 @@ class BotPopulateChannel extends AbstractCommand
             foreach ($files as $file) {
                 $text = $opportunity->title . $this->getGroupSign();
                 try {
+                    $allowedMimeTypes = ['image/jpeg', 'image/gif', 'image/png', 'image/bmp', 'image/svg+xml'];
+                    $contentType = mime_content_type($file);
+                    if (!in_array($contentType, $allowedMimeTypes)) {
+                        throw new \Exception('Is not a valid image!');
+                    }
                     $photoSent = $this->telegram->sendPhoto([
                         'chat_id' => $chatId,
                         'photo' => InputFile::create($file),
@@ -186,7 +191,7 @@ class BotPopulateChannel extends AbstractCommand
                     ]);
                     $messageId = $photoSent->getMessageId();
                 } catch (\Exception $exception) {
-                    $this->log($exception, 'FALHA_AO_ENVIAR_IMAGEM', [$file]);
+                    $this->log($exception, $exception->getMessage(), [$file]);
                     try {
                         $documentSent = $this->telegram->sendDocument([
                             'chat_id' => $chatId,
@@ -435,10 +440,15 @@ class BotPopulateChannel extends AbstractCommand
                 }
 
                 foreach ($lastNotifications as $lastNotification) {
-                    $this->telegram->deleteMessage([
-                        'chat_id' => $group,
-                        'message_id' => $lastNotification->telegram_id
-                    ]);
+                    try {
+                        $this->telegram->deleteMessage([
+                            'chat_id' => $group,
+                            'message_id' => $lastNotification->telegram_id
+                        ]);
+                    } catch (\Exception $exception) {
+                        $this->log($exception, 'ERRO_AO_DELETAR_NOTIFICACAO');
+                        $this->info($exception->getMessage());
+                    }
                     $lastNotification->delete();
                 }
                 Opportunity::whereNotNull('id')->delete();
