@@ -178,18 +178,26 @@ class BotPopulateChannel extends AbstractCommand
             foreach ($files as $file) {
                 $text = $opportunity->title . $this->getGroupSign();
                 try {
-                    $allowedMimeTypes = ['image/jpeg', 'image/gif', 'image/png', 'image/bmp', 'image/svg+xml'];
-                    $contentType = mime_content_type($file);
-                    if (!in_array($contentType, $allowedMimeTypes)) {
-                        throw new \Exception('Is not a valid image!');
+                    if (filled($file)) {
+                        $allowedMimeTypes = [
+                            IMAGETYPE_GIF,
+                            IMAGETYPE_JPEG,
+                            IMAGETYPE_PNG,
+                            IMAGETYPE_BMP,
+                            IMAGETYPE_WEBP,
+                        ];
+                        $contentType = exif_imagetype($file);
+                        if (!in_array($contentType, $allowedMimeTypes)) {
+                            throw new \Exception('Is not a valid image!');
+                        }
+                        $photoSent = $this->telegram->sendPhoto([
+                            'chat_id' => $chatId,
+                            'photo' => InputFile::create($file),
+                            'caption' => $text,
+                            'parse_mode' => 'Markdown'
+                        ]);
+                        $messageId = $photoSent->getMessageId();
                     }
-                    $photoSent = $this->telegram->sendPhoto([
-                        'chat_id' => $chatId,
-                        'photo' => InputFile::create($file),
-                        'caption' => $text,
-                        'parse_mode' => 'Markdown'
-                    ]);
-                    $messageId = $photoSent->getMessageId();
                 } catch (\Exception $exception) {
                     $this->log($exception, $exception->getMessage(), [$file]);
                     try {
