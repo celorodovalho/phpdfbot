@@ -486,6 +486,8 @@ class BotPopulateChannel extends AbstractCommand
             $opportunities = $opportunities->concat($this->getFromGithub('https://github.com/CocoaHeadsBrasil/vagas/issues'));
             $opportunities = $opportunities->concat($this->getFromGithub('https://github.com/phpdevbr/vagas/issues'));
             $opportunities = $opportunities->concat($this->getFromGithub('https://github.com/vuejs-br/vagas/issues'));
+            $opportunities = $opportunities->concat($this->getFromGithub('https://github.com/backend-br/vagas/issues'));
+            $opportunities = $opportunities->concat($this->getFromGithub('https://github.com/androiddevbr/vagas/issues'));
             foreach ($opportunities as $opportunity) {
                 $this->sendOpportunityToChannel($opportunity);
             }
