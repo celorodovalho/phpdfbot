@@ -126,6 +126,7 @@ return [
     'commands'                     => [
 //        App\Commands\HelpCommand::class,
         App\Commands\StartCommand::class,
+        App\Commands\NewOpportunityCommand::class,
     ],
 
     /*
