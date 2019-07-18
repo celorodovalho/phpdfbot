@@ -124,8 +124,9 @@ return [
     |
     */
     'commands'                     => [
-        App\Commands\HelpCommand::class,
         App\Commands\StartCommand::class,
+//        App\Commands\HelpCommand::class,
+//        App\Commands\RulesCommand::class,
         App\Commands\NewOpportunityCommand::class,
     ],
 
