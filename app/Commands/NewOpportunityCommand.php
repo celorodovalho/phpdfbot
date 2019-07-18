@@ -4,7 +4,7 @@ namespace App\Commands;
 
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
-use Telegram\Bot\Laravel\Facades\Telegram;
+use Telegram\Bot\Keyboard\Keyboard;
 
 class NewOpportunityCommand extends Command
 {
@@ -25,7 +25,7 @@ class NewOpportunityCommand extends Command
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
-        $reply_markup = Telegram::forceReply();
+        $reply_markup = Keyboard::forceReply();
 
         $this->replyWithMessage([
             'parse_mode' => 'Markdown',
