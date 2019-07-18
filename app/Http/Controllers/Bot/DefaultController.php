@@ -45,7 +45,8 @@ class DefaultController extends Controller
     public function webhook($token, $botName)
     {
         try {
-            Telegram::commandsHandler(true);
+            $update = Telegram::commandsHandler(true);
+            \Illuminate\Support\Facades\Log::info('UPDATE', [$update]);
         } catch (\Exception $exception) {
             return $exception->getMessage();
         }

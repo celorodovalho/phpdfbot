@@ -494,7 +494,7 @@ class BotPopulateChannel extends AbstractCommand
             $this->info('The crawler was done!');
             return true;
         } catch (\Exception $exception) {
-            $this->log($exception);
+            $this->log($exception, $exception->getMessage());
             $this->error($exception->getMessage());
             return false;
         }
