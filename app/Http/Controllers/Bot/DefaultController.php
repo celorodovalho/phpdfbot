@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Bot;
 use App\Http\Controllers\Controller;
 use Telegram\Bot\BotsManager;
 use Telegram;
+use Telegram\Bot\Objects\Update;
 
 class DefaultController extends Controller
 {
@@ -46,10 +47,24 @@ class DefaultController extends Controller
     {
         try {
             $update = Telegram::commandsHandler(true);
-            \Illuminate\Support\Facades\Log::info('UPDATE', [$update]);
+            $this->processUpdate($update);
         } catch (\Exception $exception) {
             return $exception->getMessage();
         }
         return 'ok';
+    }
+
+    private function processUpdate(Update $update)
+    {
+        /** @var Telegram\Bot\Objects\Message $message */
+        $message = $update->getMessage();
+        if (filled($message)) {
+            $reply = $message->getReplyToMessage();
+            if (filled($reply)) {
+                \Illuminate\Support\Facades\Log::info('UPDATE', [$message]);
+                \Illuminate\Support\Facades\Log::info('UPDATE', [$reply]);
+//                return Telegram::getCommandBus()->execute($command, $arguments, $update);
+            }
+        }
     }
 }
