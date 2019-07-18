@@ -57,12 +57,16 @@ class DefaultController extends Controller
     private function processUpdate(Update $update)
     {
         /** @var Telegram\Bot\Objects\Message $message */
+        /** @var Telegram\Bot\Objects\Message $reply */
         $message = $update->getMessage();
         if (filled($message)) {
             $reply = $message->getReplyToMessage();
             if (filled($reply)) {
-                \Illuminate\Support\Facades\Log::info('UPDATE', [$message]);
-                \Illuminate\Support\Facades\Log::info('UPDATE', [$reply]);
+                \Illuminate\Support\Facades\Log::info('MESSAGE', [$message]);
+                \Illuminate\Support\Facades\Log::info('REPLY', [$reply]);
+                if ($reply->from->isBot) {
+                    \Illuminate\Support\Facades\Log::info('TEXT', [$message->text]);
+                }
 //                return Telegram::getCommandBus()->execute($command, $arguments, $update);
             }
         }
