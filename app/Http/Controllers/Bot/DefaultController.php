@@ -61,16 +61,16 @@ class DefaultController extends Controller
 
     private function processUpdate(Update $update, Api $telegram)
     {
-        Log::info('UPDATE', [$update]);
         /** @var \Telegram\Bot\Objects\Message $message */
-        /** @var \Telegram\Bot\Objects\Message $reply */
         $message = $update->getMessage();
+        /** @var \Telegram\Bot\Objects\CallbackQuery $callbackQuery */
         $callbackQuery = $update->get('callback_query');
-        if (filled($message)) {
+        if (filled($callbackQuery)) {
+            $data = $callbackQuery->get('data');
+            Log::info('DATA', [$data]);
+        } elseif (filled($message)) {
+            /** @var \Telegram\Bot\Objects\Message $reply */
             $reply = $message->getReplyToMessage();
-            Log::info('CALLBACK', [$callbackQuery]);
-            Log::info('MESSAGE', [$message]);
-            Log::info('REPLY', [$reply]);
             if (filled($reply) && $reply->from->isBot) {
                 $opportunity = new Opportunity();
                 $opportunity->title = substr($message->text, 0, 100);
