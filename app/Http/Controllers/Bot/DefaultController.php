@@ -5,14 +5,13 @@ namespace App\Http\Controllers\Bot;
 use App\Http\Controllers\Controller;
 use App\Models\Opportunity;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Log;
+use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Keyboard\Keyboard;
 use Telegram\Bot\Laravel\Facades\Telegram;
 use Telegram\Bot\Objects\CallbackQuery;
 use Telegram\Bot\Objects\Message;
 use Telegram\Bot\Objects\Update;
-use Telegram\Bot\Api;
 
 class DefaultController extends Controller
 {
@@ -100,7 +99,6 @@ class DefaultController extends Controller
             default:
                 break;
         }
-        Log::info('CALLBACK', [$data, $callbackQuery]);
         $telegram->deleteMessage([
             'chat_id' => env('TELEGRAM_OWNER_ID'),
             'message_id' => $callbackQuery->message->messageId
