@@ -418,7 +418,7 @@ class BotPopulateChannel extends AbstractCommand
             $appUrl = env("APP_URL");
             $channel = env("TELEGRAM_CHANNEL");
             $group = env("TELEGRAM_GROUP");
-            $vagasEnviadas = Opportunity::where('status', 1);
+            $vagasEnviadas = Opportunity::where('status', 1)->get();
             if ($vagasEnviadas->isNotEmpty()) {
                 $lastNotifications = Notification::all();
                 $vagasEnviadasChunk = $vagasEnviadas->chunk(10);
