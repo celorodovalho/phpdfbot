@@ -59,9 +59,10 @@ class CommandsHandler
      * Process the update coming from bot interface
      *
      * @param Update $update
+     * @return mixed
      * @throws TelegramSDKException
      */
-    private function processUpdate(Update $update): void
+    private function processUpdate(Update $update)
     {
         /** @var Message $message */
         $message = $update->getMessage();
@@ -83,6 +84,7 @@ class CommandsHandler
         } elseif (filled($message)) {
             $this->processMessage($message);
         }
+        return null;
     }
 
     /**
