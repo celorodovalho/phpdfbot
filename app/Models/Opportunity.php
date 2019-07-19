@@ -18,12 +18,16 @@ use Illuminate\Support\Collection;
  * @property string $company
  * @property string $location
  * @property int $telegram_id
+ * @property int $status
  * @property Collection $files
  */
 class Opportunity extends Model
 {
 
     use SoftDeletes;
+
+    public const STATUS_INACTIVE = 0;
+    public const STATUS_ACTIVE = 1;
 
     protected $fillable = [
         'title',
@@ -34,6 +38,7 @@ class Opportunity extends Model
         'location',
         'files',
         'telegram_id',
+        'status',
     ];
 
     protected $guarded = ['id'];

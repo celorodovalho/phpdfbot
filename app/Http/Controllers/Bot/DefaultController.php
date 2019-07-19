@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Bot;
 
 use App\Http\Controllers\Controller;
+use App\Models\Opportunity;
+use Illuminate\Support\Facades\Log;
 use Telegram\Bot\BotsManager;
-use Telegram;
+use Telegram\Bot\Keyboard\Keyboard;
+use Telegram\Bot\Laravel\Facades\Telegram;
 use Telegram\Bot\Objects\Update;
+use Telegram\Bot\Api;
 
 class DefaultController extends Controller
 {
@@ -47,28 +51,51 @@ class DefaultController extends Controller
     {
         try {
             $update = Telegram::commandsHandler(true);
-            $this->processUpdate($update);
+            $telegram = $this->botsManager->bot($botName);
+            $this->processUpdate($update, $telegram);
         } catch (\Exception $exception) {
             return $exception->getMessage();
         }
         return 'ok';
     }
 
-    private function processUpdate(Update $update)
+    private function processUpdate(Update $update, Api $telegram)
     {
-        /** @var Telegram\Bot\Objects\Message $message */
-        /** @var Telegram\Bot\Objects\Message $reply */
+        Log::info('UPDATE', [$update]);
+        /** @var \Telegram\Bot\Objects\Message $message */
+        /** @var \Telegram\Bot\Objects\Message $reply */
         $message = $update->getMessage();
         if (filled($message)) {
             $reply = $message->getReplyToMessage();
-            if (filled($reply)) {
-                \Illuminate\Support\Facades\Log::info('MESSAGE', [$message]);
-                \Illuminate\Support\Facades\Log::info('REPLY', [$reply]);
-                if ($reply->from->isBot) {
-                    \Illuminate\Support\Facades\Log::info('TEXT', [$message->text]);
-                }
+            Log::info('MESSAGE', [$message]);
+            Log::info('REPLY', [$reply]);
+            if (filled($reply) && $reply->from->isBot) {
+                $opportunity = new Opportunity();
+                $opportunity->title = substr($reply->text, 0, 100);
+                $opportunity->description = $reply->text;
+                $opportunity->status = Opportunity::STATUS_INACTIVE;
+                $opportunity->save();
+                $this->sendOpportunityToApproval($opportunity, $telegram);
 //                return Telegram::getCommandBus()->execute($command, $arguments, $update);
             }
         }
+    }
+
+    private function sendOpportunityToApproval(Opportunity $opportunity, Api $telegram)
+    {
+        //Artisan::call("infyom:scaffold", ['name' => $request['name'], '--fieldsFile' => 'public/Product.json']);
+        $keyboard = Keyboard::make()
+            ->inline()
+            ->row(
+                Keyboard::inlineButton(['text' => 'Aprovar', 'callback_data' => 'aprove']),
+                Keyboard::inlineButton(['text' => 'Remover', 'callback_data' => 'remove'])
+            );
+
+        $telegram->sendMessage([
+            'parse_mode' => 'Markdown',
+            'chat_id' => env('TELEGRAM_OWNER_ID'),
+            'text' => $opportunity->description,
+            'reply_markup' => $keyboard
+        ]);
     }
 }

@@ -21,7 +21,7 @@ class BotPopulateChannel extends AbstractCommand
      *
      * @var string
      */
-    protected $signature = 'bot:populate:channel {process}';
+    protected $signature = 'bot:populate:channel {process} {opportunity?}';
 
     /**
      * The console command description.
@@ -93,6 +93,10 @@ class BotPopulateChannel extends AbstractCommand
             case 'notify':
                 $this->notifyGroup();
                 break;
+            case 'send':
+                $opportunity = Opportunity::find($this->argument('opportunity'));
+                $this->sendOpportunityToChannel($opportunity);
+                break;
             default;
         }
     }
@@ -113,6 +117,9 @@ class BotPopulateChannel extends AbstractCommand
                 $opportunity = new Opportunity();
                 $opportunity->title = $subject;
                 $opportunity->description = $body;
+                $opportunity->status = Opportunity::STATUS_ACTIVE;
+                $opportunity->save();
+
                 if ($message->hasAttachments()) {
                     $attachments = $message->getAttachments();
                     /** @var \Dacastro4\LaravelGmail\Services\Message\Attachment $attachment */
@@ -411,7 +418,7 @@ class BotPopulateChannel extends AbstractCommand
             $appUrl = env("APP_URL");
             $channel = env("TELEGRAM_CHANNEL");
             $group = env("TELEGRAM_GROUP");
-            $vagasEnviadas = Opportunity::all();
+            $vagasEnviadas = Opportunity::where('status', 1);
             if ($vagasEnviadas->isNotEmpty()) {
                 $lastNotifications = Notification::all();
                 $vagasEnviadasChunk = $vagasEnviadas->chunk(10);
@@ -562,6 +569,7 @@ class BotPopulateChannel extends AbstractCommand
                     $opportunity->description = $description;
                     $opportunity->company = trim($company);
                     $opportunity->location = trim($location);
+                    $opportunity->status = Opportunity::STATUS_ACTIVE;
                     $opportunity->save();
 
                     $opportunities->add($opportunity);
@@ -608,6 +616,8 @@ class BotPopulateChannel extends AbstractCommand
                         $opportunity->description = $description;
                         $opportunity->company = trim($company);
                         $opportunity->location = trim($location);
+                        $opportunity->status = Opportunity::STATUS_ACTIVE;
+                        $opportunity->save();
 
                         $opportunities->add($opportunity);
                     }
@@ -646,6 +656,8 @@ class BotPopulateChannel extends AbstractCommand
                 $opportunity = new Opportunity();
                 $opportunity->title = $title;
                 $opportunity->description = $description;
+                $opportunity->status = Opportunity::STATUS_ACTIVE;
+                $opportunity->save();
 
                 $opportunities->add($opportunity);
             }
