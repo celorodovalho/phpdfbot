@@ -100,11 +100,11 @@ class DefaultController extends Controller
             default:
                 break;
         }
-        Log::info('CALLBACK', [$callbackQuery]);
-//        $telegram->deleteMessage([
-//            'chat_id' => env('TELEGRAM_OWNER_ID'),
-//            'message_id' => $callbackQuery->id
-//        ]);
+        Log::info('CALLBACK', [$data, $callbackQuery]);
+        $telegram->deleteMessage([
+            'chat_id' => env('TELEGRAM_OWNER_ID'),
+            'message_id' => $callbackQuery->message->messageId
+        ]);
     }
 
     private function processMessage(Message $message, Api $telegram): void
