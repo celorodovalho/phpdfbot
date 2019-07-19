@@ -12,6 +12,7 @@ use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Keyboard\Keyboard;
+use Telegram\Bot\Laravel\Facades\Telegram;
 use Telegram\Bot\Objects\CallbackQuery;
 use Telegram\Bot\Objects\Message;
 use Telegram\Bot\Objects\Update;
@@ -139,6 +140,8 @@ class CommandsHandler
             $opportunity->status = Opportunity::STATUS_INACTIVE;
             $opportunity->save();
             $this->sendOpportunityToApproval($opportunity);
+        } else {
+            Telegram::processCommand($this->update);
         }
         $newMembers = $message->newChatMembers;
         Log::info('NEW_MEMBER', [$newMembers]);
