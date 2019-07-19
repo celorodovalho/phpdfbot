@@ -65,14 +65,16 @@ class DefaultController extends Controller
         /** @var \Telegram\Bot\Objects\Message $message */
         /** @var \Telegram\Bot\Objects\Message $reply */
         $message = $update->getMessage();
+        $callbackQuery = $update->get('callback_query');
         if (filled($message)) {
             $reply = $message->getReplyToMessage();
+            Log::info('CALLBACK', [$callbackQuery]);
             Log::info('MESSAGE', [$message]);
             Log::info('REPLY', [$reply]);
             if (filled($reply) && $reply->from->isBot) {
                 $opportunity = new Opportunity();
-                $opportunity->title = substr($reply->text, 0, 100);
-                $opportunity->description = $reply->text;
+                $opportunity->title = substr($message->text, 0, 100);
+                $opportunity->description = $message->text;
                 $opportunity->status = Opportunity::STATUS_INACTIVE;
                 $opportunity->save();
                 $this->sendOpportunityToApproval($opportunity, $telegram);
