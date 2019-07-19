@@ -77,7 +77,8 @@ class CommandsHandler
             $commands = $this->telegram->getCommands();
 
             if (array_key_exists($command, $commands)) {
-                return $this->telegram->getCommandBus()->execute($command, $update, $callbackQuery);
+//                return $this->telegram->getCommandBus()->execute($command, $update, $callbackQuery);
+                Telegram::processCommand($this->update);
             }
         }
         if (filled($callbackQuery)) {
@@ -140,8 +141,6 @@ class CommandsHandler
             $opportunity->status = Opportunity::STATUS_INACTIVE;
             $opportunity->save();
             $this->sendOpportunityToApproval($opportunity);
-        } else {
-            Telegram::processCommand($this->update);
         }
         $newMembers = $message->newChatMembers;
         Log::info('NEW_MEMBER', [$newMembers]);
