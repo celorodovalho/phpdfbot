@@ -28,7 +28,7 @@ class Opportunity extends Model
 
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE = 1;
-    public const CALLBACK_APROVE = 'aprove';
+    public const CALLBACK_APPROVE = 'approve';
     public const CALLBACK_REMOVE = 'remove';
 
     protected $fillable = [
@@ -56,6 +56,9 @@ class Opportunity extends Model
         parent::__construct($attributes);
     }
 
+    /**
+     * Initiate the file array
+     */
     public function initFiles()
     {
         $this->filesArray = new Collection();
@@ -72,16 +75,31 @@ class Opportunity extends Model
         return $this->filesArray;
     }
 
+    /**
+     * Add file to collection
+     *
+     * @param string $file
+     */
     public function addFile(string $file)
     {
         $this->filesArray->add($file);
     }
 
+    /**
+     * Check if there is file in collection
+     *
+     * @return bool
+     */
     public function hasFile(): bool
     {
         return $this->filesArray ? $this->filesArray->isNotEmpty() : false;
     }
 
+    /**
+     * Get the files property
+     *
+     * @return Collection
+     */
     public function getFilesAttribute(): Collection
     {
         if (is_string($this->files) && strlen($this->files) > 0) {
@@ -90,17 +108,18 @@ class Opportunity extends Model
         return $this->files;
     }
 
-    public static function boot()
+    /**
+     * Before save/update
+     */
+    public static function boot(): void
     {
         parent::boot();
 
-        static::creating(function(Opportunity $opportunity)
-        {
+        static::creating(function (Opportunity $opportunity) {
             $opportunity->files = optional($opportunity->filesArray)->toJson();
         });
 
-        static::updating(function(Opportunity $opportunity)
-        {
+        static::updating(function (Opportunity $opportunity) {
             $opportunity->files = optional($opportunity->filesArray)->toJson();
         });
     }

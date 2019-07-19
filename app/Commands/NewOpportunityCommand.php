@@ -27,12 +27,12 @@ class NewOpportunityCommand extends Command
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
-        $reply_markup = Keyboard::forceReply();
+        $replyMarkup = Keyboard::forceReply();
 
         $this->replyWithMessage([
             'parse_mode' => 'Markdown',
             'text' => self::TEXT,
-            'reply_markup' => $reply_markup
+            'reply_markup' => $replyMarkup
         ]);
     }
 }

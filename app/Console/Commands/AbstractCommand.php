@@ -5,6 +5,9 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Telegram\Bot\BotsManager;
 
+/**
+ * Class AbstractCommand
+ */
 abstract class AbstractCommand extends Command
 {
     /**
@@ -12,6 +15,9 @@ abstract class AbstractCommand extends Command
      */
     protected $telegram;
 
+    /**
+     * @var string
+     */
     protected $botName = '';
 
     /**

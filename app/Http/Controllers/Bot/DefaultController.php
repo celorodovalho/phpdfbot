@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers\Bot;
 
-use App\Commands\NewOpportunityCommand;
 use App\Http\Controllers\Controller;
-use App\Models\Opportunity;
-use Illuminate\Support\Facades\Artisan;
-use Telegram\Bot\Api;
-use Telegram\Bot\BotsManager;
-use Telegram\Bot\Keyboard\Keyboard;
-use Telegram\Bot\Laravel\Facades\Telegram;
-use Telegram\Bot\Objects\CallbackQuery;
-use Telegram\Bot\Objects\Message;
-use Telegram\Bot\Objects\Update;
+use App\Services\CommandsHandler;
 
+use Exception;
+
+use Telegram\Bot\BotsManager;
+use Telegram\Bot\Exceptions\TelegramSDKException;
+use Telegram\Bot\Laravel\Facades\Telegram;
+
+/**
+ * Class DefaultController
+ */
 class DefaultController extends Controller
 {
 
@@ -31,7 +31,14 @@ class DefaultController extends Controller
         $this->botsManager = $botsManager;
     }
 
-    public function setWebhook($botName)
+    /**
+     * Set the webhook to the bots
+     *
+     * @param $botName
+     * @return string
+     * @throws TelegramSDKException
+     */
+    public function setWebhook($botName): string
     {
         $telegram = $this->botsManager->bot($botName);
         $config = $this->botsManager->getBotConfig($botName);
@@ -51,94 +58,21 @@ class DefaultController extends Controller
         return 'Your webhook could not be set!';
     }
 
-    public function webhook($token, $botName)
+    /**
+     * Webhook to the bots commands
+     *
+     * @param $token
+     * @param $botName
+     * @return string
+     */
+    public function webhook($token, $botName): string
     {
         try {
             $update = Telegram::commandsHandler(true);
-            $telegram = $this->botsManager->bot($botName);
-            $this->processUpdate($update, $telegram);
-        } catch (\Exception $exception) {
+            new CommandsHandler($this->botsManager, $botName, $token, $update);
+        } catch (Exception $exception) {
             return $exception->getMessage();
         }
         return 'ok';
-    }
-
-    private function processUpdate(Update $update, Api $telegram): void
-    {
-        /** @var \Telegram\Bot\Objects\Message $message */
-        $message = $update->getMessage();
-        /** @var \Telegram\Bot\Objects\CallbackQuery $callbackQuery */
-        $callbackQuery = $update->get('callback_query');
-        if (filled($callbackQuery)) {
-            $this->processCallbackQuery($callbackQuery, $telegram);
-        } elseif (filled($message)) {
-            $this->processMessage($message, $telegram);
-        }
-    }
-
-    private function processCallbackQuery(CallbackQuery $callbackQuery, Api $telegram): void
-    {
-        $data = $callbackQuery->get('data');
-        $data = explode(' ', $data);
-        switch ($data[0]) {
-            case Opportunity::CALLBACK_APROVE:
-                $opportunity = Opportunity::find($data[1]);
-                $opportunity->status = Opportunity::STATUS_ACTIVE;
-                $opportunity->save();
-                Artisan::call(
-                    'bot:populate:channel',
-                    [
-                        'process' => 'send',
-                        'opportunity' => $opportunity->id
-                    ]
-                );
-                break;
-            case Opportunity::CALLBACK_REMOVE:
-                Opportunity::find($data[1])->delete();
-                break;
-            default:
-                break;
-        }
-        $telegram->deleteMessage([
-            'chat_id' => env('TELEGRAM_OWNER_ID'),
-            'message_id' => $callbackQuery->message->messageId
-        ]);
-    }
-
-    private function processMessage(Message $message, Api $telegram): void
-    {
-        /** @var \Telegram\Bot\Objects\Message $reply */
-        $reply = $message->getReplyToMessage();
-        if (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) {
-            $opportunity = new Opportunity();
-            $opportunity->title = substr($message->text, 0, 100);
-            $opportunity->description = $message->text;
-            $opportunity->status = Opportunity::STATUS_INACTIVE;
-            $opportunity->save();
-            $this->sendOpportunityToApproval($opportunity, $telegram);
-        }
-    }
-
-    private function sendOpportunityToApproval(Opportunity $opportunity, Api $telegram): void
-    {
-        $keyboard = Keyboard::make()
-            ->inline()
-            ->row(
-                Keyboard::inlineButton([
-                    'text' => 'Aprovar',
-                    'callback_data' => implode(' ', [Opportunity::CALLBACK_APROVE, $opportunity->id])
-                ]),
-                Keyboard::inlineButton([
-                    'text' => 'Remover',
-                    'callback_data' => implode(' ', [Opportunity::CALLBACK_REMOVE, $opportunity->id])
-                ])
-            );
-
-        $telegram->sendMessage([
-            'parse_mode' => 'Markdown',
-            'chat_id' => env('TELEGRAM_OWNER_ID'),
-            'text' => $opportunity->description,
-            'reply_markup' => $keyboard
-        ]);
     }
 }
