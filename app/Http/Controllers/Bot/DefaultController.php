@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Bot;
 
+use App\Commands\NewOpportunityCommand;
 use App\Http\Controllers\Controller;
 use App\Models\Opportunity;
 use Illuminate\Support\Facades\Artisan;
@@ -15,8 +16,7 @@ use Telegram\Bot\Objects\Update;
 
 class DefaultController extends Controller
 {
-    public const CALLBACK_APROVE = 'aprove';
-    public const CALLBACK_REMOVE = 'remove';
+
     /**
      * @var BotsManager
      */
@@ -81,7 +81,7 @@ class DefaultController extends Controller
         $data = $callbackQuery->get('data');
         $data = explode(' ', $data);
         switch ($data[0]) {
-            case self::CALLBACK_APROVE:
+            case Opportunity::CALLBACK_APROVE:
                 $opportunity = Opportunity::find($data[1]);
                 $opportunity->status = Opportunity::STATUS_ACTIVE;
                 $opportunity->save();
@@ -93,7 +93,7 @@ class DefaultController extends Controller
                     ]
                 );
                 break;
-            case self::CALLBACK_REMOVE:
+            case Opportunity::CALLBACK_REMOVE:
                 Opportunity::find($data[1])->delete();
                 break;
             default:
@@ -109,7 +109,7 @@ class DefaultController extends Controller
     {
         /** @var \Telegram\Bot\Objects\Message $reply */
         $reply = $message->getReplyToMessage();
-        if (filled($reply) && $reply->from->isBot) {
+        if (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) {
             $opportunity = new Opportunity();
             $opportunity->title = substr($message->text, 0, 100);
             $opportunity->description = $message->text;
@@ -126,11 +126,11 @@ class DefaultController extends Controller
             ->row(
                 Keyboard::inlineButton([
                     'text' => 'Aprovar',
-                    'callback_data' => implode(' ', [self::CALLBACK_APROVE, $opportunity->id])
+                    'callback_data' => implode(' ', [Opportunity::CALLBACK_APROVE, $opportunity->id])
                 ]),
                 Keyboard::inlineButton([
                     'text' => 'Remover',
-                    'callback_data' => implode(' ', [self::CALLBACK_REMOVE, $opportunity->id])
+                    'callback_data' => implode(' ', [Opportunity::CALLBACK_REMOVE, $opportunity->id])
                 ])
             );
 

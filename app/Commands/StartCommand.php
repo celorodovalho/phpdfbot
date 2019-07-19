@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
+use Telegram\Bot\Keyboard\Keyboard;
 
 class StartCommand extends Command
 {
@@ -26,21 +27,23 @@ class StartCommand extends Command
 
         $username = $this->update->getMessage()->from->username;
 
+        $keyboard = Keyboard::make()
+            ->inline()
+            ->row(
+                Keyboard::inlineButton([
+                    'text' => 'Leia as Regras',
+                    'url' => 'https://t.me/phpdf/8726'
+                ]),
+                Keyboard::inlineButton([
+                    'text' => 'Vagas de TI',
+                    'url' => 'https://t.me/VagasBrasil_TI'
+                ])
+            );
+
         $this->replyWithMessage([
             'parse_mode' => 'Markdown',
             'text' => "Olá @$username! Seja bem-vindo! Ao entrar, apresente-se e leia nossas regras:",
-            'reply_markup' => json_encode([
-                'inline_keyboard' => [[
-                    [
-                        'text' => 'Leia as Regras',
-                        'url' => 'https://t.me/phpdf/8726'
-                    ],
-                    [
-                        'text' => 'Vagas de TI',
-                        'url' => 'https://t.me/VagasBrasil_TI'
-                    ],
-                ]]
-            ])
+            'reply_markup' => $keyboard
         ]);
 
         $this->telegram->sendMessage([

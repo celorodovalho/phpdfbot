@@ -28,6 +28,8 @@ class Opportunity extends Model
 
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE = 1;
+    public const CALLBACK_APROVE = 'aprove';
+    public const CALLBACK_REMOVE = 'remove';
 
     protected $fillable = [
         'title',

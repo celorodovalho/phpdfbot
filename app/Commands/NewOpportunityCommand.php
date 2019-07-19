@@ -8,6 +8,8 @@ use Telegram\Bot\Keyboard\Keyboard;
 
 class NewOpportunityCommand extends Command
 {
+    public const TEXT = 'Envie o texto da vaga em resposta a essa mensagem!';
+
     /**
      * @var string Command Name
      */
@@ -29,7 +31,7 @@ class NewOpportunityCommand extends Command
 
         $this->replyWithMessage([
             'parse_mode' => 'Markdown',
-            'text' => "Envie o texto da vaga em resposta a essa mensagem!",
+            'text' => self::TEXT,
             'reply_markup' => $reply_markup
         ]);
     }
