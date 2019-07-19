@@ -70,18 +70,13 @@ class CommandsHandler
         /** @var CallbackQuery $callbackQuery */
         $callbackQuery = $update->get('callback_query');
 
-        Log::info('MESSAGE', [$message->text]);
-
         if (substr($message->text, 0, 1) === '/') {
             $command = explode(' ', $message->text);
             $command = str_replace('/', '', $command[0]);
 
             $commands = $this->telegram->getCommands();
 
-            Log::info('COMMANDS', [$command, $commands]);
-
             if (array_key_exists($command, $commands)) {
-//                return $this->telegram->getCommandBus()->execute($command, $update, $callbackQuery);
                 Telegram::processCommand($this->update);
             }
         }
