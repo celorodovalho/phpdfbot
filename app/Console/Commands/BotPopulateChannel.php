@@ -277,7 +277,7 @@ class BotPopulateChannel extends AbstractCommand
      * @return int
      * @throws TelegramSDKException
      */
-    private function sendOpportunityFilesToChannel(Opportunity $opportunity): int
+    private function sendOpportunityFilesToChannel(Opportunity $opportunity): ?int
     {
         $messageId = null;
         if ($opportunity->hasFile()) {

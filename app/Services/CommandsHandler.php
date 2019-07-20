@@ -57,6 +57,19 @@ class CommandsHandler
     }
 
     /**
+     * @param BotsManager $botsManager
+     * @param string $botName
+     * @param string $token
+     * @param Update $update
+     * @return CommandsHandler
+     * @throws TelegramSDKException
+     */
+    public static function make(BotsManager $botsManager, string $botName, string $token, Update $update)
+    {
+        return new static($botsManager, $botName, $token, $update);
+    }
+
+    /**
      * Process the update coming from bot interface
      *
      * @param Update $update
@@ -70,7 +83,7 @@ class CommandsHandler
         /** @var CallbackQuery $callbackQuery */
         $callbackQuery = $update->get('callback_query');
 
-        if (substr($message->text, 0, 1) === '/') {
+        if (strpos($message->text, '/') === 0) {
             $command = explode(' ', $message->text);
             $command = str_replace('/', '', $command[0]);
 
