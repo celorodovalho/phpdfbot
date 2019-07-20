@@ -388,7 +388,11 @@ class BotPopulateChannel extends AbstractCommand
                 'Att.',
                 'Att,',
                 'AVISO DE CONFIDENCIALIDADE',
+                // Remove
                 'Receba vagas no whatsapp',
+                '-- Linkedin: www.linkedin.com/company/clube-de-vagas/',
+                'www.linkedin.com/company/clube-de-vagas/',
+                'linkedin.com/company/clube-de-vagas/',
             ];
 
             $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
@@ -422,6 +426,10 @@ class BotPopulateChannel extends AbstractCommand
             $message = trim($message, " \t\n\r\0\x0B--");
 
             $message = preg_replace("/cid:image(.+)/m", '', $message);
+
+            $message = str_replace('GrupoClubedeVagas', 'phpdfvagas', $message);
+            $message = preg_replace('/(.+)(chat\.whatsapp\.com\/)(.+)/m', 'http://bit.ly/phpdf-official', $message);
+
         }
         return trim($message);
     }
