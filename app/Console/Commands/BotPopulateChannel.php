@@ -546,17 +546,13 @@ class BotPopulateChannel extends AbstractCommand
                 $vagasEnviadasChunk = $vagasEnviadas->chunk(10);
 
                 foreach ($vagasEnviadasChunk as $key => $vagasEnviadasArr) {
-                    $vagas = [];
+                    $keyboard = Keyboard::make()->inline();
                     foreach ($vagasEnviadasArr as $vagaEnviada) {
-                        $vagas[] = Keyboard::inlineButton([
+                        $keyboard->row(Keyboard::inlineButton([
                             'text' => $vagaEnviada->title,
                             'url' => 'https://t.me/VagasBrasil_TI/' . $vagaEnviada->telegram_id
-                        ]);
+                        ]));
                     }
-
-                    $keyboard = Keyboard::make()
-                        ->inline()
-                        ->row($vagas);
 
                     $notificationMessage = [
                         'chat_id' => $this->group,
