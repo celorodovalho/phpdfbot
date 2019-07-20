@@ -105,6 +105,10 @@ class BotPopulateChannel extends AbstractCommand
         'fullstack',
         'computação',
         'gerente negócios',
+        'tecnologias',
+        'iot',
+        'machine learning',
+        'big data',
     ];
 
     /**
@@ -208,10 +212,12 @@ class BotPopulateChannel extends AbstractCommand
             'to:vagas@noreply.github.com',
             'to:clubinfobsb@googlegroups.com',
             'to:leonardoti@googlegroups.com',
+            'bcc:leonardoti@googlegroups.com',
         ];
         $fromTo = '{' . implode(' ', $fromTo) . '}';
 
         $query = "$fromTo $words is:unread";
+        $this->info($query);
         $threads = LaravelGmail::message()->service->users_messages->listUsersMessages('me', [
             'q' => $query,
             //'maxResults' => 5
