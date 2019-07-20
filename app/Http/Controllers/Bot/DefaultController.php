@@ -3,11 +3,20 @@
 namespace App\Http\Controllers\Bot;
 
 use App\Http\Controllers\Controller;
-use Telegram\Bot\BotsManager;
-use Telegram;
+use App\Services\CommandsHandler;
 
+use Exception;
+
+use Telegram\Bot\BotsManager;
+use Telegram\Bot\Exceptions\TelegramSDKException;
+use Telegram\Bot\Laravel\Facades\Telegram;
+
+/**
+ * Class DefaultController
+ */
 class DefaultController extends Controller
 {
+
     /**
      * @var BotsManager
      */
@@ -22,7 +31,14 @@ class DefaultController extends Controller
         $this->botsManager = $botsManager;
     }
 
-    public function setWebhook($botName)
+    /**
+     * Set the webhook to the bots
+     *
+     * @param $botName
+     * @return string
+     * @throws TelegramSDKException
+     */
+    public function setWebhook($botName): string
     {
         $telegram = $this->botsManager->bot($botName);
         $config = $this->botsManager->getBotConfig($botName);
@@ -42,11 +58,19 @@ class DefaultController extends Controller
         return 'Your webhook could not be set!';
     }
 
-    public function webhook($token, $botName)
+    /**
+     * Webhook to the bots commands
+     *
+     * @param $token
+     * @param $botName
+     * @return string
+     */
+    public function webhook($token, $botName): string
     {
         try {
-            Telegram::commandsHandler(true);
-        } catch (\Exception $exception) {
+            $update = Telegram::getWebhookUpdate();
+            CommandsHandler::make($this->botsManager, $botName, $token, $update);
+        } catch (Exception $exception) {
             return $exception->getMessage();
         }
         return 'ok';

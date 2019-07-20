@@ -41,6 +41,14 @@ return [
                 //Acme\Project\Commands\MyTelegramBot\BotCommand::class
             ],
         ],
+        'ConcurseirosBot' => [
+            'username'            => 'ConcurseirosBot',
+            'token'               => env('TELEGRAM_BOT_TOKEN2', ''),
+            'webhook_url' => env('TELEGRAM_WEBHOOK_URL', env('APP_URL') . '/webhook/' . env('TELEGRAM_BOT_TOKEN2') . '/ConcurseirosBot'),
+            'commands'            => [
+//                App\Commands\HelpCommand::class,
+            ],
+        ],
 
 //        'mySecondBot' => [
 //            'username'  => 'AnotherTelegram_Bot',
@@ -116,8 +124,10 @@ return [
     |
     */
     'commands'                     => [
-        App\Commands\HelpCommand::class,
         App\Commands\StartCommand::class,
+//        App\Commands\HelpCommand::class,
+//        App\Commands\RulesCommand::class,
+        App\Commands\NewOpportunityCommand::class,
     ],
 
     /*
@@ -201,5 +211,6 @@ return [
         // 'start' => Acme\Project\Commands\StartCommand::class,
         // 'stop' => Acme\Project\Commands\StopCommand::class,
         // 'status' => Acme\Project\Commands\StatusCommand::class,
+//        'help' => App\Commands\HelpCommand::class,
     ],
 ];
