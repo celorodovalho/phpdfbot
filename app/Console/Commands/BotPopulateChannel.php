@@ -384,7 +384,6 @@ class BotPopulateChannel extends AbstractCommand
                 'Antes de imprimir',
                 'This message contains',
                 'NVagas Conectando',
-                'cid:image',
                 'Atenciosamente',
                 'Att.',
                 'Att,',
@@ -421,6 +420,8 @@ class BotPopulateChannel extends AbstractCommand
             $message = preg_replace("/\n{2,}/m", "\n", $message);
             $message = preg_replace("/\s{2,}/m", ' ', $message);
             $message = trim($message, " \t\n\r\0\x0B--");
+
+            $message = preg_replace("/cid:image(.+)/m", '', $message);
         }
         return trim($message);
     }
