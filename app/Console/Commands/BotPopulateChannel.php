@@ -165,6 +165,7 @@ class BotPopulateChannel extends AbstractCommand
             /** @var Mail $message */
             foreach ($messages as $message) {
                 $body = $this->sanitizeBody($this->getMessageBody($message));
+                $body = $this->addHashtagFilters($body);
                 $subject = $this->sanitizeSubject($message->getSubject());
 
                 $opportunity = new Opportunity();
@@ -223,7 +224,6 @@ class BotPopulateChannel extends AbstractCommand
         $fromTo = '{' . implode(' ', $fromTo) . '}';
 
         $query = "$fromTo $words is:unread";
-        $this->info($query);
         $threads = LaravelGmail::message()->service->users_messages->listUsersMessages('me', [
             'q' => $query,
             //'maxResults' => 5
@@ -738,6 +738,7 @@ class BotPopulateChannel extends AbstractCommand
                         . trim($node->filter('[itemprop="addressRegion"]')->text());
 
                     $description = $this->sanitizeBody(implode("\n\n", $description));
+                    $description = $this->addHashtagFilters($description);
                     $title = $this->sanitizeSubject($title);
 
                     $opportunity = new Opportunity();
@@ -794,6 +795,7 @@ class BotPopulateChannel extends AbstractCommand
                         $location = $crawler2->filter('.job-location')->text();
 
                         $description = $this->sanitizeBody($description);
+                        $description = $this->addHashtagFilters($description);
                         $title = $this->sanitizeSubject($title);
 
                         $opportunity = new Opportunity();
@@ -842,6 +844,7 @@ class BotPopulateChannel extends AbstractCommand
                 $description = $crawler2->filter('.d-block.comment-body')->html();
 
                 $description = $this->sanitizeBody($description);
+                $description = $this->addHashtagFilters($description);
                 $title = $this->sanitizeSubject($title);
 
                 $opportunity = new Opportunity();
@@ -854,5 +857,26 @@ class BotPopulateChannel extends AbstractCommand
             }
         });
         return collect($opportunities);
+    }
+
+    /**
+     * Append the hashtags relatives the to content
+     *
+     * @param string $message
+     * @return string
+     */
+    private function addHashtagFilters(string $message): string
+    {
+        $pattern = '#(' . implode('|', $this->mustIncludeWords) . ')#i';
+        $pattern = str_replace('"', '', $pattern);
+        if (preg_match_all($pattern, $message, $matches)) {
+            $tags = [];
+            array_walk($matches[0], function ($item, $key) use (&$tags) {
+                $tags[$key] = '#' . strtolower(str_replace(' ', '', $item));
+            });
+            $tags = array_unique($tags);
+            $message .= "\n\n" . implode(' ', $tags);
+        }
+        return $message;
     }
 }
