@@ -440,6 +440,7 @@ class BotPopulateChannel extends AbstractCommand
                 '-- Linkedin: www.linkedin.com/company/clube-de-vagas/',
                 'www.linkedin.com/company/clube-de-vagas/',
                 'linkedin.com/company/clube-de-vagas/',
+                'Cordialmente',
             ];
 
             $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
