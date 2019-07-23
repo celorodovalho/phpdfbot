@@ -872,7 +872,7 @@ class BotPopulateChannel extends AbstractCommand
         if (preg_match_all($pattern, $message, $matches)) {
             $tags = [];
             array_walk($matches[0], function ($item, $key) use (&$tags) {
-                $tags[$key] = '#' . strtolower(str_replace(' ', '', $item));
+                $tags[$key] = '#' . strtolower(str_replace([' ', '-'], '', $item));
             });
             $tags = array_unique($tags);
             $message .= "\n\n" . implode(' ', $tags);
