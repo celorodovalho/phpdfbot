@@ -14,7 +14,9 @@ use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Keyboard\Keyboard;
 use Telegram\Bot\Laravel\Facades\Telegram;
 use Telegram\Bot\Objects\CallbackQuery;
+use Telegram\Bot\Objects\Document;
 use Telegram\Bot\Objects\Message;
+use Telegram\Bot\Objects\PhotoSize;
 use Telegram\Bot\Objects\Update;
 
 /**
@@ -146,11 +148,25 @@ class CommandsHandler
     {
         /** @var Message $reply */
         $reply = $message->getReplyToMessage();
+        /** @var PhotoSize $photos */
+        $photos = $message->photo;
+        /** @var Document $document */
+        $document = $message->document;
+
+        \Log::info('reply', [$reply]);
+        \Log::info('photos', [$photos]);
+        \Log::info('document', [$document]);
+
         if (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) {
             $opportunity = new Opportunity();
             $opportunity->title = substr($message->text, 0, 100);
             $opportunity->description = $message->text;
             $opportunity->status = Opportunity::STATUS_INACTIVE;
+
+            if(filled($photos)) {
+                \Log::info('file', [$photos]);
+            }
+
             $opportunity->save();
             $this->sendOpportunityToApproval($opportunity);
         }

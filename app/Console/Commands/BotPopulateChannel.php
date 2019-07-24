@@ -903,7 +903,7 @@ class BotPopulateChannel extends AbstractCommand
      */
     private function addHashtagFilters(string $message): string
     {
-        $pattern = '#(' . implode('|', ($this->mustIncludeWords + $this->estadosBrasileiros)) . ')#i';
+        $pattern = '#(' . implode('|', array_merge($this->mustIncludeWords, $this->estadosBrasileiros)) . ')#i';
         $pattern = str_replace('"', '', $pattern);
         if (preg_match_all($pattern, $message, $matches)) {
             $tags = [];
