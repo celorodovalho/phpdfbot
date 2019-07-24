@@ -281,6 +281,7 @@ class BotPopulateChannel extends AbstractCommand
     private function sendOpportunityToChannel(Opportunity $opportunity): void
     {
         $messageId = $this->sendOpportunityFilesToChannel($opportunity);
+        Log::info('$messageId-photo', [$messageId]);
 
         $messageTexts = $this->formatTextOpportunity($opportunity);
         $messageSentId = null;
@@ -329,10 +330,12 @@ class BotPopulateChannel extends AbstractCommand
         $messageId = null;
         if ($opportunity->hasFile()) {
             $files = $opportunity->getFilesList();
+            Log::info('$files', [$files]);
             foreach ($files as $file) {
                 $text = $opportunity->title . $this->getGroupSign();
                 try {
                     if (filled($file)) {
+                        Log::info('$file', [$file]);
                         if(is_string($file)) {
                             $allowedMimeTypes = [
                                 IMAGETYPE_GIF,
@@ -350,6 +353,7 @@ class BotPopulateChannel extends AbstractCommand
                         if (in_array('file_id', $file, true)) {
                             $file = $file['file_id'];
                         }
+                        Log::info('$file2', [$file]);
 
                         $photoSent = $this->telegram->sendPhoto([
                             'chat_id' => $this->channel,
