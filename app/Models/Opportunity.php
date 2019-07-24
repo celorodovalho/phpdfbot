@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Telegram\Bot\Objects\PhotoSize;
 
 /**
  * Class Opportunity
@@ -78,9 +79,9 @@ class Opportunity extends Model
     /**
      * Add file to collection
      *
-     * @param string $file
+     * @param string|array|PhotoSize $file
      */
-    public function addFile(?string $file)
+    public function addFile($file = null)
     {
         $this->filesArray->add($file);
     }
