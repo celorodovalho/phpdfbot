@@ -181,6 +181,8 @@ class CommandsHandler
                 }
             }
 
+            Log::info('$hoos', [optional($opportunity->getFilesList())->toJson()]);
+
             $opportunity->save();
 
             $this->sendOpportunityToApproval($opportunity, $message);
