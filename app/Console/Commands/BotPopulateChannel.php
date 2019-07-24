@@ -333,20 +333,27 @@ class BotPopulateChannel extends AbstractCommand
                 $text = $opportunity->title . $this->getGroupSign();
                 try {
                     if (filled($file)) {
-                        $allowedMimeTypes = [
-                            IMAGETYPE_GIF,
-                            IMAGETYPE_JPEG,
-                            IMAGETYPE_PNG,
-                            IMAGETYPE_BMP,
-                            IMAGETYPE_WEBP,
-                        ];
-                        $contentType = exif_imagetype($file);
-                        if (!in_array($contentType, $allowedMimeTypes)) {
-                            throw new Exception('Is not a valid image!');
+                        if(is_string($file)) {
+                            $allowedMimeTypes = [
+                                IMAGETYPE_GIF,
+                                IMAGETYPE_JPEG,
+                                IMAGETYPE_PNG,
+                                IMAGETYPE_BMP,
+                                IMAGETYPE_WEBP,
+                            ];
+                            $contentType = exif_imagetype($file);
+                            $file = InputFile::create($file);
+                            if (!in_array($contentType, $allowedMimeTypes)) {
+                                throw new Exception('Is not a valid image!');
+                            }
                         }
+                        if (in_array('file_id', $file, true)) {
+                            $file = $file['file_id'];
+                        }
+
                         $photoSent = $this->telegram->sendPhoto([
                             'chat_id' => $this->channel,
-                            'photo' => InputFile::create($file),
+                            'photo' => $file,
                             'caption' => $text,
                             'parse_mode' => 'Markdown'
                         ]);
@@ -357,7 +364,7 @@ class BotPopulateChannel extends AbstractCommand
                     try {
                         $documentSent = $this->telegram->sendDocument([
                             'chat_id' => $this->channel,
-                            'document' => InputFile::create($file),
+                            'document' => $file,
                             'caption' => $text,
                             'parse_mode' => 'Markdown'
                         ]);

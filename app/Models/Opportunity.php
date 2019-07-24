@@ -80,7 +80,7 @@ class Opportunity extends Model
      *
      * @param string $file
      */
-    public function addFile(string $file)
+    public function addFile(?string $file)
     {
         $this->filesArray->add($file);
     }

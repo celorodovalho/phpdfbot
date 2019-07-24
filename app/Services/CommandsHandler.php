@@ -80,26 +80,31 @@ class CommandsHandler
      */
     private function processUpdate(Update $update)
     {
-        /** @var Message $message */
-        $message = $update->getMessage();
-        /** @var CallbackQuery $callbackQuery */
-        $callbackQuery = $update->get('callback_query');
+        try {
+            /** @var Message $message */
+            $message = $update->getMessage();
+            /** @var CallbackQuery $callbackQuery */
+            $callbackQuery = $update->get('callback_query');
 
-        if (strpos($message->text, '/') === 0) {
-            $command = explode(' ', $message->text);
-            $command = str_replace('/', '', $command[0]);
+            if (strpos($message->text, '/') === 0) {
+                $command = explode(' ', $message->text);
+                $command = str_replace('/', '', $command[0]);
 
-            $commands = $this->telegram->getCommands();
+                $commands = $this->telegram->getCommands();
 
-            if (array_key_exists($command, $commands)) {
-                Telegram::processCommand($this->update);
+                if (array_key_exists($command, $commands)) {
+                    Telegram::processCommand($this->update);
+                }
             }
+            if (filled($callbackQuery)) {
+                $this->processCallbackQuery($callbackQuery);
+            } elseif (filled($message)) {
+                $this->processMessage($message);
+            }
+        } catch (Exception $exception) {
+            $this->error($exception);
         }
-        if (filled($callbackQuery)) {
-            $this->processCallbackQuery($callbackQuery);
-        } elseif (filled($message)) {
-            $this->processMessage($message);
-        }
+
         return null;
     }
 
@@ -152,6 +157,8 @@ class CommandsHandler
         $photos = $message->photo;
         /** @var Document $document */
         $document = $message->document;
+        /** @var string $caption */
+        $caption = $message->caption;
 
         \Log::info('reply', [$reply]);
         \Log::info('photos', [$photos]);
@@ -159,16 +166,23 @@ class CommandsHandler
 
         if (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) {
             $opportunity = new Opportunity();
-            $opportunity->title = substr($message->text, 0, 100);
-            $opportunity->description = $message->text;
+            if (blank($message->text) && blank($caption)) {
+                throw new Exception('Envie um texto para a vaga, ou o nome da vaga na legenda da imagem/documento.');
+            }
+            $text = $message->text ?? $caption;
+            $opportunity->title = substr($text, 0, 100);
+            $opportunity->description = $text;
             $opportunity->status = Opportunity::STATUS_INACTIVE;
 
-            if(filled($photos)) {
-                \Log::info('file', [$photos]);
+            if (filled($photos)) {
+                foreach ($photos as $photo) {
+                    $opportunity->addFile($photo);
+                }
             }
 
             $opportunity->save();
-            $this->sendOpportunityToApproval($opportunity);
+
+            $this->sendOpportunityToApproval($opportunity, $message);
         }
         $newMembers = $message->newChatMembers;
         Log::info('NEW_MEMBER', [$newMembers]);
@@ -186,9 +200,10 @@ class CommandsHandler
      * Send opportunity to approval
      *
      * @param Opportunity $opportunity
+     * @param Message $message
      * @throws TelegramSDKException
      */
-    private function sendOpportunityToApproval(Opportunity $opportunity): void
+    private function sendOpportunityToApproval(Opportunity $opportunity, Message $message): void
     {
         $keyboard = Keyboard::make()
             ->inline()
@@ -203,11 +218,25 @@ class CommandsHandler
                 ])
             );
 
+        $this->telegram->forwardMessage([
+            'chat_id' => env('TELEGRAM_OWNER_ID'),
+            'from_chat_id' => $message->chat->id,
+            'message_id' => $message->messageId
+        ]);
+
         $this->telegram->sendMessage([
             'parse_mode' => 'Markdown',
             'chat_id' => env('TELEGRAM_OWNER_ID'),
             'text' => $opportunity->description,
             'reply_markup' => $keyboard
+        ]);
+    }
+
+    private function error(Exception $exception): void
+    {
+        $this->telegram->replyWithMessage([
+            'parse_mode' => 'Markdown',
+            'text' => $exception->getMessage()
         ]);
     }
 }
