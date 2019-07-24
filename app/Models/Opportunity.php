@@ -59,10 +59,11 @@ class Opportunity extends Model
 
     /**
      * Initiate the file array
+     * @param
      */
-    public function initFiles()
+    public function initFiles($files)
     {
-        $this->filesArray = new Collection($this->files);
+        $this->filesArray = new Collection($files);
     }
 
     /**
@@ -93,6 +94,9 @@ class Opportunity extends Model
      */
     public function hasFile(): bool
     {
+        if ((!$this->filesArray || $this->filesArray->isEmpty()) && filled($this->files)) {
+            $this->initFiles($this->files);
+        }
         return $this->filesArray ? $this->filesArray->isNotEmpty() : false;
     }
 
