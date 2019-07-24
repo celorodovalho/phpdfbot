@@ -117,11 +117,15 @@ class Opportunity extends Model
         parent::boot();
 
         static::creating(function (Opportunity $opportunity) {
-            $opportunity->files = optional($opportunity->filesArray)->toJson();
+            if (!$opportunity->filesArray->isNotEmpty()) {
+                $opportunity->files = optional($opportunity->filesArray)->toJson();
+            }
         });
 
         static::updating(function (Opportunity $opportunity) {
-            $opportunity->files = optional($opportunity->filesArray)->toJson();
+            if (!$opportunity->filesArray->isNotEmpty()) {
+                $opportunity->files = optional($opportunity->filesArray)->toJson();
+            }
         });
     }
 }
