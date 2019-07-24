@@ -53,8 +53,8 @@ class Opportunity extends Model
 
     public function __construct(array $attributes = [])
     {
-        $this->initFiles();
         parent::__construct($attributes);
+        $this->initFiles();
     }
 
     /**
