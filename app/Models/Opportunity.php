@@ -62,7 +62,7 @@ class Opportunity extends Model
      */
     public function initFiles()
     {
-        $this->filesArray = new Collection();
+        $this->filesArray = new Collection($this->files);
     }
 
     /**
