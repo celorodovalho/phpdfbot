@@ -61,7 +61,7 @@ class Opportunity extends Model
      * Initiate the file array
      * @param
      */
-    public function initFiles($files)
+    public function initFiles($files = null)
     {
         $this->filesArray = new Collection($files);
     }
