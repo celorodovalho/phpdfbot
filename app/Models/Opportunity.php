@@ -107,7 +107,7 @@ class Opportunity extends Model
      *
      * @return Collection
      */
-    public function getFilesAttribute(): Collection
+    public function getFilesAttribute(): ?Collection
     {
         if (is_string($this->files) && strlen($this->files) > 0) {
             return collect(json_decode($this->files));
