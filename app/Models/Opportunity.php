@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Objects\PhotoSize;
 
 /**
@@ -97,6 +98,7 @@ class Opportunity extends Model
         if ((!$this->filesArray || $this->filesArray->isEmpty()) && filled($this->files)) {
             $this->initFiles($this->files);
         }
+        Log::info('FILES', [$this->files, $this->filesArray]);
         return $this->filesArray ? $this->filesArray->isNotEmpty() : false;
     }
 

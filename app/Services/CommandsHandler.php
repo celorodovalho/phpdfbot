@@ -86,6 +86,8 @@ class CommandsHandler
             /** @var CallbackQuery $callbackQuery */
             $callbackQuery = $update->get('callback_query');
 
+            Log::info('$callbackQuery', [$callbackQuery]);
+
             if (strpos($message->text, '/') === 0) {
                 $command = explode(' ', $message->text);
                 $command = str_replace('/', '', $command[0]);
