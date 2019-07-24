@@ -176,6 +176,7 @@ class CommandsHandler
 
             if (filled($photos)) {
                 foreach ($photos as $photo) {
+                    \Log::info('$photo', [$photo]);
                     $opportunity->addFile($photo);
                 }
             }
