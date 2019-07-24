@@ -120,6 +120,7 @@ class CommandsHandler
     {
         $data = $callbackQuery->get('data');
         $data = explode(' ', $data);
+        Log::info('$data', [$data]);
         switch ($data[0]) {
             case Opportunity::CALLBACK_APPROVE:
                 $opportunity = Opportunity::find($data[1]);

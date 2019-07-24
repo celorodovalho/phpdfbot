@@ -182,6 +182,7 @@ class BotPopulateChannel extends AbstractCommand
                 break;
             case 'send':
                 $opportunity = Opportunity::find($this->argument('opportunity'));
+                Log::info('$opportunity', [$opportunity]);
                 $this->sendOpportunityToChannel($opportunity);
                 break;
             default:
