@@ -218,7 +218,7 @@ class CommandsHandler
                 ])
             );
 
-        $this->telegram->forwardMessage([
+        $fwdMessage = $this->telegram->forwardMessage([
             'chat_id' => env('TELEGRAM_OWNER_ID'),
             'from_chat_id' => $message->chat->id,
             'message_id' => $message->messageId
@@ -227,8 +227,9 @@ class CommandsHandler
         $this->telegram->sendMessage([
             'parse_mode' => 'Markdown',
             'chat_id' => env('TELEGRAM_OWNER_ID'),
-            'text' => $opportunity->description,
-            'reply_markup' => $keyboard
+            'text' => 'Aprovar?',
+            'reply_markup' => $keyboard,
+            'reply_to_message_id' => $fwdMessage->messageId
         ]);
     }
 

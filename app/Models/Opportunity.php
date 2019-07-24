@@ -118,10 +118,12 @@ class Opportunity extends Model
 
         static::creating(function (Opportunity $opportunity) {
             $opportunity->files = optional($opportunity->filesArray)->toJson();
+            \Log::info('filesArray', [$opportunity->files]);
         });
 
         static::updating(function (Opportunity $opportunity) {
             $opportunity->files = optional($opportunity->filesArray)->toJson();
+            \Log::info('filesArray', [$opportunity->files]);
         });
     }
 }

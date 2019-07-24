@@ -34,8 +34,8 @@ class BotPopulateChannel extends AbstractCommand
     /**
      * Gmail Labels
      */
-    const LABEL_ENVIADO_PRO_BOT = 'Label_5517839157714334708';
-    const LABEL_STILL_UNREAD = 'Label_7';
+    public const LABEL_ENVIADO_PRO_BOT = 'Label_5517839157714334708';
+    public const LABEL_STILL_UNREAD = 'Label_7';
 
     /**
      * The name and signature of the console command.
