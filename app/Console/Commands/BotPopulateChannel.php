@@ -352,6 +352,7 @@ class BotPopulateChannel extends AbstractCommand
                                 throw new Exception('Is not a valid image!');
                             }
                         }
+                        Log::info('TYPE', [gettype($file)]);
                         if (property_exists($file, 'file_id')) {
                             $file = $file['file_id'];
                         }
