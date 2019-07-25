@@ -187,7 +187,12 @@ class CommandsHandler
                 }
             }
 
-            Log::info('$hoos', [$opportunity->files, optional($opportunity->getFilesList())->toJson()]);
+            Log::info('$hoos', [
+                $opportunity->files->all(),
+                $opportunity->hasFile(),
+                $opportunity->files,
+                optional($opportunity->getFilesList())->toJson()
+            ]);
 
             $opportunity->save();
 
