@@ -51,11 +51,14 @@ class Opportunity extends Model
         'files' => 'collection',
     ];
 
+    protected $filesCollection = [];
+
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        if (null === $this->files) {
-            $this->files = new Collection();
+        $this->filesCollection = new Collection();
+        if (null !== $this->files) {
+            $this->filesCollection = new Collection($this->files);
         }
     }
 
@@ -74,7 +77,7 @@ class Opportunity extends Model
      */
     public function addFile($file = null)
     {
-        $this->files->add($file);
+        $this->filesCollection->add($file);
     }
 
     /**
@@ -85,5 +88,19 @@ class Opportunity extends Model
     public function hasFile(): bool
     {
         return $this->files ? $this->files->isNotEmpty() : false;
+    }
+
+    /**
+     * Before save/update
+     */
+    public static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (Opportunity $opportunity) {
+            if ($opportunity->filesCollection->isNotEmpty()) {
+                $opportunity->files = $opportunity->filesCollection;
+            }
+        });
     }
 }
