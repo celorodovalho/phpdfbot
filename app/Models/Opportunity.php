@@ -56,7 +56,7 @@ class Opportunity extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        if (null !== $this->attributes['files']) {
+        if (null === $this->attributes['files']) {
             $this->attributes['files'] = new Collection();
         }
     }
