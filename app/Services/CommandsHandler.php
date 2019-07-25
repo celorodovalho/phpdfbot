@@ -180,7 +180,7 @@ class CommandsHandler
 
             if (filled($photos)) {
                 foreach ($photos as $photo) {
-                    \Log::info('$photo', [$photo]);
+                    \Log::info('$photo', [json_decode(json_encode($photo), true)]);
                     $opportunity->addFile(json_decode(json_encode($photo), true));
                 }
             }
