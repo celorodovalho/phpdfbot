@@ -175,9 +175,10 @@ class CommandsHandler
             $opportunity->files = collect();
 
             if (filled($photos)) {
-                foreach ($photos as $photo) {
-                    $opportunity->addFile($photo);
-                }
+                $opportunity->addFile($photos->first());
+            }
+            if (filled($document)) {
+                $opportunity->addFile($document->first());
             }
 
             $opportunity->save();
