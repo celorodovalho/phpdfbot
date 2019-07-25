@@ -53,7 +53,6 @@ class Opportunity extends Model
 
     public function addFile($file)
     {
-        $this->files->add($file);
-        $this->files = collect($this->files->all());
+        $this->files = $this->files->concat([$file]);
     }
 }
