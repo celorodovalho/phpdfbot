@@ -56,9 +56,8 @@ class Opportunity extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->filesCollection = new Collection();
-        if (null !== $this->files) {
-            $this->filesCollection = new Collection($this->files);
+        if (null !== $this->attributes['files']) {
+            $this->attributes['files'] = new Collection();
         }
     }
 
@@ -67,7 +66,7 @@ class Opportunity extends Model
      */
     public function getFilesList(): Collection
     {
-        return $this->files;
+        return $this->attributes['files'];
     }
 
     /**
@@ -77,7 +76,7 @@ class Opportunity extends Model
      */
     public function addFile($file = null)
     {
-        $this->filesCollection->add($file);
+        $this->attributes['files']->add($file);
     }
 
     /**
@@ -87,20 +86,20 @@ class Opportunity extends Model
      */
     public function hasFile(): bool
     {
-        return $this->files ? $this->files->isNotEmpty() : false;
+        return $this->attributes['files'] ? $this->attributes['files']->isNotEmpty() : false;
     }
 
-    /**
-     * Before save/update
-     */
-    public static function boot(): void
-    {
-        parent::boot();
-
-        static::creating(function (Opportunity $opportunity) {
-            if ($opportunity->filesCollection->isNotEmpty()) {
-                $opportunity->files = $opportunity->filesCollection;
-            }
-        });
-    }
+//    /**
+//     * Before save/update
+//     */
+//    public static function boot(): void
+//    {
+//        parent::boot();
+//
+//        static::creating(function (Opportunity $opportunity) {
+//            if ($opportunity->filesCollection->isNotEmpty()) {
+//                $opportunity->files = $opportunity->filesCollection;
+//            }
+//        });
+//    }
 }
