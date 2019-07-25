@@ -19,6 +19,8 @@ use Telegram\Bot\Objects\Message;
 use Telegram\Bot\Objects\PhotoSize;
 use Telegram\Bot\Objects\Update;
 
+use \Exception;
+
 /**
  * Class CommandsHandler
  */
