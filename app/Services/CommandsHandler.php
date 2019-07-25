@@ -157,6 +157,7 @@ class CommandsHandler
         /** @var Message $reply */
         $reply = $message->getReplyToMessage();
         /** @var PhotoSize $photos */
+        /** @var PhotoSize $photo */
         $photos = $message->photo;
         /** @var Document $document */
         $document = $message->document;
@@ -180,7 +181,7 @@ class CommandsHandler
             if (filled($photos)) {
                 foreach ($photos as $photo) {
                     \Log::info('$photo', [$photo]);
-                    $opportunity->addFile($photo);
+                    $opportunity->addFile(json_decode(json_encode($photo), true));
                 }
             }
 
