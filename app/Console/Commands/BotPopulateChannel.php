@@ -329,13 +329,13 @@ class BotPopulateChannel extends AbstractCommand
     private function sendOpportunityFilesToChannel(Opportunity $opportunity): ?int
     {
         $messageId = null;
-        if ($opportunity->files->isNotEmpty()) {
+        if ($opportunity->files && $opportunity->files->isNotEmpty()) {
             $files = $opportunity->files;
             foreach ($files as $file) {
                 $text = $opportunity->title . $this->getGroupSign();
                 try {
                     if (filled($file)) {
-                        if(is_string($file)) {
+                        if (is_string($file)) {
                             $allowedMimeTypes = [
                                 IMAGETYPE_GIF,
                                 IMAGETYPE_JPEG,
