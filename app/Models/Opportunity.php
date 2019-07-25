@@ -51,12 +51,10 @@ class Opportunity extends Model
         'files' => 'collection',
     ];
 
-    protected $filesCollection = [];
-
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        if (null === $this->attributes['files']) {
+        if (array_key_exists('files', $this->attributes) && null === $this->attributes['files']) {
             $this->attributes['files'] = new Collection();
         }
     }
