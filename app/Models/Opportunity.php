@@ -51,6 +51,14 @@ class Opportunity extends Model
         'files' => 'collection',
     ];
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        if (null === $this->files) {
+            $this->files = new Collection();
+        }
+    }
+
     /**
      * @return Collection
      */
@@ -77,16 +85,5 @@ class Opportunity extends Model
     public function hasFile(): bool
     {
         return $this->files ? $this->files->isNotEmpty() : false;
-    }
-
-    /**
-     *
-     */
-    protected static function boot()
-    {
-        parent::boot(); //because we want the parent boot to be run as well
-        static::creating(function(Opportunity $model){
-            $model->files = new Collection();
-        });
     }
 }
