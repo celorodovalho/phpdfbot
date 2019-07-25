@@ -51,7 +51,10 @@ class Opportunity extends Model
         'files' => 'collection',
     ];
 
-    public function addFile($file)
+    /**
+     * @param $file
+     */
+    public function addFile($file): void
     {
         $this->files = $this->files->concat([$file]);
     }

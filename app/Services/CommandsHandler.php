@@ -88,8 +88,6 @@ class CommandsHandler
             /** @var CallbackQuery $callbackQuery */
             $callbackQuery = $update->get('callback_query');
 
-            Log::info('$callbackQuery', [$callbackQuery]);
-
             if (strpos($message->text, '/') === 0) {
                 $command = explode(' ', $message->text);
                 $command = str_replace('/', '', $command[0]);
@@ -122,7 +120,6 @@ class CommandsHandler
     {
         $data = $callbackQuery->get('data');
         $data = explode(' ', $data);
-        Log::info('$data', [$data]);
         switch ($data[0]) {
             case Opportunity::CALLBACK_APPROVE:
                 $opportunity = Opportunity::find($data[1]);
@@ -166,10 +163,6 @@ class CommandsHandler
         /** @var string $caption */
         $caption = $message->caption;
 
-        \Log::info('reply', [$reply]);
-        \Log::info('photos', [$photos]);
-        \Log::info('document', [$document]);
-
         if (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) {
             $opportunity = new Opportunity();
             if (blank($message->text) && blank($caption)) {
@@ -183,15 +176,9 @@ class CommandsHandler
 
             if (filled($photos)) {
                 foreach ($photos as $photo) {
-                    \Log::info('$photo', [json_decode(json_encode($photo), true)]);
-                    $opportunity->addFile(json_decode(json_encode($photo), true));
+                    $opportunity->addFile($photo);
                 }
             }
-
-            Log::info('$hoos', [
-                $opportunity->files->all(),
-                $opportunity->files->toJson(),
-            ]);
 
             $opportunity->save();
 

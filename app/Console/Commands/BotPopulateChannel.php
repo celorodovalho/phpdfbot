@@ -182,7 +182,6 @@ class BotPopulateChannel extends AbstractCommand
                 break;
             case 'send':
                 $opportunity = Opportunity::find($this->argument('opportunity'));
-                Log::info('$opportunity', [$opportunity]);
                 $this->sendOpportunityToChannel($opportunity);
                 break;
             default:
@@ -330,7 +329,7 @@ class BotPopulateChannel extends AbstractCommand
     private function sendOpportunityFilesToChannel(Opportunity $opportunity): ?int
     {
         $messageId = null;
-        Log::info('isNotEmpty', [$opportunity->isNotEmpty()]);
+        Log::info('isNotEmpty', [$opportunity->files->isNotEmpty()]);
         if ($opportunity->files->isNotEmpty()) {
             $files = $opportunity->files;
             Log::info('$files', [$files]);
