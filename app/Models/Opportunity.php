@@ -66,6 +66,9 @@ class Opportunity extends Model
      */
     public function addFile($file = null)
     {
+        if(null === $this->files) {
+            $this->files = new Collection();
+        }
         $this->files->add($file);
     }
 
