@@ -329,15 +329,12 @@ class BotPopulateChannel extends AbstractCommand
     private function sendOpportunityFilesToChannel(Opportunity $opportunity): ?int
     {
         $messageId = null;
-        Log::info('isNotEmpty', [$opportunity->files->isNotEmpty()]);
         if ($opportunity->files->isNotEmpty()) {
             $files = $opportunity->files;
-            Log::info('$files', [$files]);
             foreach ($files as $file) {
                 $text = $opportunity->title . $this->getGroupSign();
                 try {
                     if (filled($file)) {
-                        Log::info('$file', [$file]);
                         if(is_string($file)) {
                             $allowedMimeTypes = [
                                 IMAGETYPE_GIF,
@@ -352,8 +349,7 @@ class BotPopulateChannel extends AbstractCommand
                                 throw new Exception('Is not a valid image!');
                             }
                         }
-                        Log::info('TYPE', [gettype($file)]);
-                        if (property_exists($file, 'file_id')) {
+                        if (array_key_exists('file_id', $file)) {
                             $file = $file['file_id'];
                         }
                         Log::info('$file2', [$file]);
