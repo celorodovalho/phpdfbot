@@ -50,4 +50,9 @@ class Opportunity extends Model
     protected $casts = [
         'files' => 'collection',
     ];
+
+    public function addFile($file)
+    {
+        $this->files = $this->files->merge($file);
+    }
 }

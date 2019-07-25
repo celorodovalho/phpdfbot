@@ -208,6 +208,7 @@ class BotPopulateChannel extends AbstractCommand
                 $opportunity->title = $subject;
                 $opportunity->description = $body;
                 $opportunity->status = Opportunity::STATUS_ACTIVE;
+                $opportunity->files = collect();
                 $opportunity->save();
 
                 if ($message->hasAttachments()) {

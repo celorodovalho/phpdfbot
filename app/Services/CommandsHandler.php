@@ -180,12 +180,11 @@ class CommandsHandler
             $opportunity->description = $text;
             $opportunity->status = Opportunity::STATUS_INACTIVE;
             $opportunity->files = collect();
-            $opportunity->files->add('6546465465');
 
             if (filled($photos)) {
                 foreach ($photos as $photo) {
                     \Log::info('$photo', [json_decode(json_encode($photo), true)]);
-                    $opportunity->files->add(json_decode(json_encode($photo), true));
+                    $opportunity->addFile(json_decode(json_encode($photo), true));
                 }
             }
 
