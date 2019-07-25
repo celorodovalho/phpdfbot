@@ -66,9 +66,6 @@ class Opportunity extends Model
      */
     public function addFile($file = null)
     {
-        if(null === $this->files) {
-            $this->files = new Collection();
-        }
         $this->files->add($file);
     }
 
@@ -80,5 +77,16 @@ class Opportunity extends Model
     public function hasFile(): bool
     {
         return $this->files ? $this->files->isNotEmpty() : false;
+    }
+
+    /**
+     *
+     */
+    protected static function boot()
+    {
+        parent::boot(); //because we want the parent boot to be run as well
+        static::creating(function(Opportunity $model){
+            $model->files = new Collection();
+        });
     }
 }
