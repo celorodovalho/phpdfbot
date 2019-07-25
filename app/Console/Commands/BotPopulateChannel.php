@@ -329,9 +329,9 @@ class BotPopulateChannel extends AbstractCommand
     private function sendOpportunityFilesToChannel(Opportunity $opportunity): ?int
     {
         $messageId = null;
-        Log::info('hasFile', [$opportunity->hasFile()]);
-        if ($opportunity->hasFile()) {
-            $files = $opportunity->getFilesList();
+        Log::info('isNotEmpty', [$opportunity->isNotEmpty()]);
+        if ($opportunity->files->isNotEmpty()) {
+            $files = $opportunity->files;
             Log::info('$files', [$files]);
             foreach ($files as $file) {
                 $text = $opportunity->title . $this->getGroupSign();

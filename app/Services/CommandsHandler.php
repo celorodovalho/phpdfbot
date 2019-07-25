@@ -179,19 +179,18 @@ class CommandsHandler
             $opportunity->title = substr($text, 0, 100);
             $opportunity->description = $text;
             $opportunity->status = Opportunity::STATUS_INACTIVE;
+            $opportunity->files = collect();
 
             if (filled($photos)) {
                 foreach ($photos as $photo) {
                     \Log::info('$photo', [json_decode(json_encode($photo), true)]);
-                    $opportunity->addFile(json_decode(json_encode($photo), true));
+                    $opportunity->files->add(json_decode(json_encode($photo), true));
                 }
             }
 
             Log::info('$hoos', [
                 $opportunity->files->all(),
-                $opportunity->hasFile(),
-                $opportunity->files,
-                optional($opportunity->getFilesList())->toJson()
+                $opportunity->files->toJson(),
             ]);
 
             $opportunity->save();
