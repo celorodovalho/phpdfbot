@@ -343,9 +343,12 @@ class BotPopulateChannel extends AbstractCommand
                                 IMAGETYPE_BMP,
                                 IMAGETYPE_WEBP,
                             ];
-                            $contentType = exif_imagetype($file);
+                            $allowedExtensions = [
+                                'jpeg', 'gif', 'png', 'bmp', 'svg'
+                            ];
+                            $contentType = in_array(\File::extension($file), $allowedExtensions, true) ? exif_imagetype($file) : null;
                             $file = InputFile::create($file);
-                            if (!in_array($contentType, $allowedMimeTypes)) {
+                            if (!in_array($contentType, $allowedMimeTypes, true)) {
                                 throw new Exception('Is not a valid image!');
                             }
                         }
