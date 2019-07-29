@@ -361,18 +361,21 @@ class BotPopulateChannel extends AbstractCommand
                             'chat_id' => $this->channel,
                             'photo' => $file,
                             'caption' => $text,
-                            'parse_mode' => 'Markdown'
+//                            'parse_mode' => 'Markdown'
                         ]);
                         $messageId = $photoSent->messageId;
                     }
                 } catch (Exception $exception) {
                     $this->log($exception, $exception->getMessage(), [$file]);
+                    if (is_string($file)) {
+                        $file = InputFile::create($file);
+                    }
                     try {
                         $documentSent = $this->telegram->sendDocument([
                             'chat_id' => $this->channel,
                             'document' => $file,
                             'caption' => $text,
-                            'parse_mode' => 'Markdown'
+//                            'parse_mode' => 'Markdown'
                         ]);
                         $messageId = $documentSent->messageId;
                     } catch (Exception $exception2) {
