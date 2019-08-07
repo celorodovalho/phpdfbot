@@ -314,7 +314,7 @@ class BotPopulateChannel extends AbstractCommand
      * @return array
      * @throws TelegramSDKException
      */
-    private function sendOpportunity(Opportunity $opportunity, int $chatId, array $options = []): array
+    private function sendOpportunity(Opportunity $opportunity, $chatId, array $options = []): array
     {
         $messageTexts = $this->formatTextOpportunity($opportunity);
         $messageSentIds = [];
