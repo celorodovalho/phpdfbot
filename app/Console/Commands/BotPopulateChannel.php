@@ -237,6 +237,7 @@ class BotPopulateChannel extends AbstractCommand
 //                            $fileUrl = Storage::disk('uploads')->url($filePath);
                             $opportunity->addFile($fileUrl);
                         }
+                        $opportunity->save();
                     }
                 }
 
@@ -585,7 +586,7 @@ class BotPopulateChannel extends AbstractCommand
         );
 
         if ($opportunity->files && $opportunity->files->isNotEmpty()) {
-            $template .= "\n\n" . implode("\n", $opportunity->files);
+            $template .= $opportunity->files->join("\n");
         }
 
         if (filled($opportunity->location)) {
