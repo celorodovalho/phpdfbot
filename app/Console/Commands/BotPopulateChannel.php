@@ -586,7 +586,10 @@ class BotPopulateChannel extends AbstractCommand
         );
 
         if ($opportunity->files && $opportunity->files->isNotEmpty()) {
-            $template .= $opportunity->files->join("\n");
+            $template .= sprintf(
+                "\n%s",
+                $this->escapeMarkdown($opportunity->files->join("\n"))
+            );
         }
 
         if (filled($opportunity->location)) {
