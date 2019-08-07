@@ -230,6 +230,7 @@ class BotPopulateChannel extends AbstractCommand
                             $extension = File::extension($attachment->getFileName());
                             $fileName = Helper::base64UrlEncode($attachment->getFileName()) . '.' . $extension;
                             $filePath = $attachment->saveAttachmentTo($message->getId() . '/', $fileName, 'uploads');
+                            $filePath = Storage::disk('uploads')->path($filePath);
                             /** @var CloudinaryWrapper $cloudImage */
                             $cloudImage = Cloudder::upload($filePath, null);
                             $fileUrl = $cloudImage->show($cloudImage->getPublicId());
