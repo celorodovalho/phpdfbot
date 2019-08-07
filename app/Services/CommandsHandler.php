@@ -48,7 +48,6 @@ class CommandsHandler
      * @param string $botName
      * @param string $token
      * @param Update $update
-     * @throws TelegramSDKException
      */
     public function __construct(BotsManager $botsManager, string $botName, string $token, Update $update)
     {
@@ -66,7 +65,6 @@ class CommandsHandler
      * @param string $token
      * @param Update $update
      * @return CommandsHandler
-     * @throws TelegramSDKException
      */
     public static function make(BotsManager $botsManager, string $botName, string $token, Update $update)
     {
@@ -78,7 +76,6 @@ class CommandsHandler
      *
      * @param Update $update
      * @return mixed
-     * @throws TelegramSDKException
      */
     private function processUpdate(Update $update)
     {
@@ -149,7 +146,7 @@ class CommandsHandler
      * Process the messages coming from bot interface
      *
      * @param Message $message
-     * @throws TelegramSDKException
+     * @throws Exception
      */
     private function processMessage(Message $message): void
     {
@@ -202,36 +199,18 @@ class CommandsHandler
      *
      * @param Opportunity $opportunity
      * @param Message $message
-     * @throws TelegramSDKException
      */
     private function sendOpportunityToApproval(Opportunity $opportunity, Message $message): void
     {
-        $keyboard = Keyboard::make()
-            ->inline()
-            ->row(
-                Keyboard::inlineButton([
-                    'text' => 'Aprovar',
-                    'callback_data' => implode(' ', [Opportunity::CALLBACK_APPROVE, $opportunity->id])
-                ]),
-                Keyboard::inlineButton([
-                    'text' => 'Remover',
-                    'callback_data' => implode(' ', [Opportunity::CALLBACK_REMOVE, $opportunity->id])
-                ])
-            );
-
-        $fwdMessage = $this->telegram->forwardMessage([
-            'chat_id' => env('TELEGRAM_OWNER_ID'),
-            'from_chat_id' => $message->chat->id,
-            'message_id' => $message->messageId
-        ]);
-
-        $this->telegram->sendMessage([
-            'parse_mode' => 'Markdown',
-            'chat_id' => env('TELEGRAM_OWNER_ID'),
-            'text' => 'Aprovar?',
-            'reply_markup' => $keyboard,
-            'reply_to_message_id' => $fwdMessage->messageId
-        ]);
+        Artisan::call(
+            'bot:populate:channel',
+            [
+                'process' => 'approval',
+                'opportunity' => $opportunity->id,
+                'message' => $message->messageId,
+                'chat' => $message->chat->id,
+            ]
+        );
     }
 
     private function error(Exception $exception): void

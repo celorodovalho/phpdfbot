@@ -20,6 +20,9 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
+use JD\Cloudder\CloudinaryWrapper;
+use JD\Cloudder\Facades\Cloudder;
+
 use Symfony\Component\DomCrawler\Crawler;
 
 use Telegram\Bot\Exceptions\TelegramSDKException;
@@ -42,7 +45,7 @@ class BotPopulateChannel extends AbstractCommand
      *
      * @var string
      */
-    protected $signature = 'bot:populate:channel {process} {opportunity?}';
+    protected $signature = 'bot:populate:channel {process} {opportunity?} {message?} {chat?}';
 
     /**
      * The console command description.
@@ -118,11 +121,13 @@ class BotPopulateChannel extends AbstractCommand
         //
     ];
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $channel;
+
+    /** @var string */
     private $appUrl;
+
+    /** @var string */
     private $group;
 
     /**
@@ -181,8 +186,13 @@ class BotPopulateChannel extends AbstractCommand
                 $this->notifyGroup();
                 break;
             case 'send':
-                $opportunity = Opportunity::find($this->argument('opportunity'));
-                $this->sendOpportunityToChannel($opportunity);
+                $this->sendOpportunityToChannel($this->argument('opportunity'));
+                break;
+            case 'approval':
+                $opportunityId = $this->argument('opportunity');
+                $messageId = $this->argument('message');
+                $chatId = $this->argument('chat');
+                $this->sendOpportunityToApproval($opportunityId, $messageId, $chatId);
                 break;
             default:
                 // Do something
@@ -220,12 +230,16 @@ class BotPopulateChannel extends AbstractCommand
                             $extension = File::extension($attachment->getFileName());
                             $fileName = Helper::base64UrlEncode($attachment->getFileName()) . '.' . $extension;
                             $filePath = $attachment->saveAttachmentTo($message->getId() . '/', $fileName, 'uploads');
-                            $fileUrl = Storage::disk('uploads')->url($filePath);
+                            /** @var CloudinaryWrapper $cloudImage */
+                            $cloudImage = Cloudder::upload($filePath, null);
+                            $fileUrl = $cloudImage->show($cloudImage->getPublicId());
+//                            $fileUrl = Storage::disk('uploads')->url($filePath);
                             $opportunity->addFile($fileUrl);
                         }
                     }
                 }
-                $this->sendOpportunityToChannel($opportunity);
+
+                $this->sendOpportunityToApproval($opportunity->id);
                 $message->markAsRead();
                 $message->addLabel(self::LABEL_ENVIADO_PRO_BOT);
                 $message->removeLabel(self::LABEL_STILL_UNREAD);
@@ -276,47 +290,58 @@ class BotPopulateChannel extends AbstractCommand
     /**
      * Prepare and send the opportunity to the channel, then update the TelegramId in database
      *
-     * @param Opportunity $opportunity
+     * @param int $opportunityId
      * @throws TelegramSDKException
      */
-    private function sendOpportunityToChannel(Opportunity $opportunity): void
+    private function sendOpportunityToChannel(int $opportunityId): void
     {
-        $messageId = $this->sendOpportunityFilesToChannel($opportunity);
-        Log::info('$messageId-photo', [$messageId]);
+        /** @var Opportunity $opportunity */
+        $opportunity = Opportunity::find($opportunityId);
 
+        $messageSentId = $this->sendOpportunity($opportunity, $this->channel);
+        $messageSentId = reset($messageSentId);
+        if ($messageSentId) {
+            $opportunity->telegram_id = $messageSentId;
+            $opportunity->save();
+        }
+    }
+
+    /**
+     * @param Opportunity $opportunity
+     * @param int $chatId
+     * @param array $options
+     * @return array
+     * @throws TelegramSDKException
+     */
+    private function sendOpportunity(Opportunity $opportunity, int $chatId, array $options = []): array
+    {
         $messageTexts = $this->formatTextOpportunity($opportunity);
-        $messageSentId = null;
+        $messageSentIds = [];
         foreach ($messageTexts as $messageText) {
-            $sendMsg = [
-                'chat_id' => $this->channel,
+            $sendMsg = array_merge([
+                'chat_id' => $chatId,
                 'parse_mode' => 'Markdown',
                 'text' => $messageText,
-            ];
-            if (isset($messageId)) {
-                $sendMsg['reply_to_message_id'] = $messageId;
-            }
+            ], $options);
 
             try {
                 $messageSent = $this->telegram->sendMessage($sendMsg);
-                $messageSentId = $messageSent->messageId;
+                $messageSentIds[] = $messageSent->messageId;
             } catch (Exception $exception) {
                 if ($exception->getCode() === 400) {
                     try {
                         $sendMsg['text'] = $this->removeMarkdown($messageText);
                         unset($sendMsg['Markdown']);
                         $messageSent = $this->telegram->sendMessage($sendMsg);
-                        $messageSentId = $messageSent->messageId;
+                        $messageSentIds[] = $messageSent->messageId;
                     } catch (Exception $exception2) {
-                        $this->log($exception, 'FALHA_AO_ENVIAR_TEXTPLAIN', [$sendMsg]);
+                        $this->log($exception, 'FALHA_AO_ENVIAR_TEXTPLAIN' . $chatId, [$sendMsg]);
                     }
                 }
-                $this->log($exception, 'FALHA_AO_ENVIAR_MARKDOWN', [$sendMsg]);
+                $this->log($exception, 'FALHA_AO_ENVIAR_MARKDOWN' . $chatId, [$sendMsg]);
             }
         }
-        if ($messageSentId) {
-            $opportunity->telegram_id = $messageSentId;
-            $opportunity->save();
-        }
+        return $messageSentIds;
     }
 
     /**
@@ -558,6 +583,10 @@ class BotPopulateChannel extends AbstractCommand
             $description
         );
 
+        if ($opportunity->files && $opportunity->files->isNotEmpty()) {
+            $template .= "\n\n" . implode("\n", $opportunity->files);
+        }
+
         if (filled($opportunity->location)) {
             $template .= sprintf(
                 "\n\n*Localização*\n%s",
@@ -569,6 +598,13 @@ class BotPopulateChannel extends AbstractCommand
             $template .= sprintf(
                 "\n\n*Empresa*\n%s",
                 $opportunity->company
+            );
+        }
+
+        if (filled($opportunity->salary)) {
+            $template .= sprintf(
+                "\n\n*Salario*\n%s",
+                $opportunity->salary
             );
         }
 
@@ -709,7 +745,7 @@ class BotPopulateChannel extends AbstractCommand
             }
 
             foreach ($opportunities as $opportunity) {
-                $this->sendOpportunityToChannel($opportunity);
+                $this->sendOpportunityToApproval($opportunity->id);
             }
 
             $this->info('The crawler was done!');
@@ -736,7 +772,6 @@ class BotPopulateChannel extends AbstractCommand
         Storage::put($referenceLog, json_encode([$context, $exception]));
         try {
             $this->telegram->sendMessage([
-                'parse_mode' => 'Markdown',
                 'chat_id' => env('TELEGRAM_OWNER_ID'),
                 'text' => sprintf("```\n%s\n```", json_encode([
                     'message' => $message,
@@ -931,5 +966,51 @@ class BotPopulateChannel extends AbstractCommand
             $message .= "\n\n" . implode(' ', $tags);
         }
         return $message;
+    }
+
+    /**
+     * Send opportunity to approval
+     *
+     * @param int $opportunityId
+     * @param int $messageId
+     * @param int $chatId
+     * @throws TelegramSDKException
+     */
+    private function sendOpportunityToApproval(int $opportunityId, int $messageId = null, int $chatId = null): void
+    {
+        $keyboard = Keyboard::make()
+            ->inline()
+            ->row(
+                Keyboard::inlineButton([
+                    'text' => 'Aprovar',
+                    'callback_data' => implode(' ', [Opportunity::CALLBACK_APPROVE, $opportunityId])
+                ]),
+                Keyboard::inlineButton([
+                    'text' => 'Remover',
+                    'callback_data' => implode(' ', [Opportunity::CALLBACK_REMOVE, $opportunityId])
+                ])
+            );
+
+        $messageToSend = [
+            'reply_markup' => $keyboard,
+        ];
+
+        if ($messageId && $chatId) {
+            $fwdMessage = $this->telegram->forwardMessage([
+                'chat_id' => env('TELEGRAM_OWNER_ID'),
+                'from_chat_id' => $chatId,
+                'message_id' => $messageId
+            ]);
+            $messageToSend['reply_to_message_id'] = $fwdMessage->messageId;
+            $messageToSend['parse_mode'] = 'Markdown';
+            $messageToSend['chat_id'] = env('TELEGRAM_OWNER_ID');
+            $messageToSend['text'] = 'Aprovar?';
+
+            $this->telegram->sendMessage($messageToSend);
+        } else {
+            /** @var Opportunity $opportunity */
+            $opportunity = Opportunity::find($opportunityId);
+            $this->sendOpportunity($opportunity, env('TELEGRAM_OWNER_ID'), $messageToSend);
+        }
     }
 }

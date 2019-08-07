@@ -181,6 +181,7 @@ return [
         Telegram\Bot\Laravel\TelegramServiceProvider::class,
         Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class,
         Dacastro4\LaravelGmail\LaravelGmailServiceProvider::class,
+        JD\Cloudder\CloudderServiceProvider::class,
     ],
 
     /*
@@ -234,6 +235,7 @@ return [
         /* Project aliases */
         'Telegram'  => Telegram\Bot\Laravel\Facades\Telegram::class,
         'LaravelGmail' => Dacastro4\LaravelGmail\Facade\LaravelGmail::class,
+        'Cloudder' => JD\Cloudder\Facades\Cloudder::class,
     ],
 
 ];
