@@ -662,10 +662,11 @@ class BotPopulateChannel extends AbstractCommand
     public function notifyGroup(): bool
     {
         try {
-            $vagasEnviadas = Opportunity::where('status', 1)->get();
-            if ($vagasEnviadas->isNotEmpty()) {
+            $opportunities = Opportunity::where('status', 1);
+            $opportunitiesArr = $opportunities->get();
+            if ($opportunitiesArr->isNotEmpty()) {
                 $lastNotifications = Notification::all();
-                $vagasEnviadasChunk = $vagasEnviadas->chunk(10);
+                $vagasEnviadasChunk = $opportunitiesArr->chunk(10);
 
                 foreach ($vagasEnviadasChunk as $key => $vagasEnviadasArr) {
                     $keyboard = Keyboard::make()->inline();
@@ -711,7 +712,7 @@ class BotPopulateChannel extends AbstractCommand
                     }
                     $lastNotification->delete();
                 }
-                Opportunity::whereNotNull('id')->delete();
+                $opportunities->delete();
             }
         } catch (Exception $exception) {
             $this->log($exception, 'ERRO_AO_NOTIFICAR_GRUPO');
