@@ -271,13 +271,18 @@ class BotPopulateChannel extends AbstractCommand
     {
         $words = '{' . implode(' ', $this->mustIncludeWords) . '}';
         $fromTo = [
+            'list:profissaofuturowindows@googlegroups.com',
             'list:nvagas@googlegroups.com',
             'list:leonardoti@googlegroups.com',
             'list:clubinfobsb@googlegroups.com',
+            'to:profissaofuturowindows@googlegroups.com',
             'to:nvagas@googlegroups.com',
             'to:vagas@noreply.github.com',
             'to:clubinfobsb@googlegroups.com',
             'to:leonardoti@googlegroups.com',
+            'bcc:profissaofuturowindows@googlegroups.com',
+            'bcc:nvagas@googlegroups.com',
+            'bcc:clubinfobsb@googlegroups.com',
             'bcc:leonardoti@googlegroups.com',
         ];
         $fromTo = '{' . implode(' ', $fromTo) . '}';
