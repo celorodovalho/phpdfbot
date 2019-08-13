@@ -140,28 +140,29 @@ class BotPopulateChannel extends AbstractCommand
         'AP' => 'Amapá',
         'AM' => 'Amazonas',
         'BA' => 'Bahia',
+        'BSB' => 'Brasília',
         'CE' => 'Ceará',
-        'DF' => 'Distrito Federal',
-        'ES' => 'Espírito Santo',
+        'DF' => '"Distrito Federal"',
+        'ES' => '"Espírito Santo"',
         'GO' => 'Goiás',
         'MA' => 'Maranhão',
-        'MT' => 'Mato Grosso',
-        'MS' => 'Mato Grosso do Sul',
-        'MG' => 'Minas Gerais',
+        'MT' => '"Mato Grosso"',
+        'MS' => '"Mato Grosso do Sul"',
+        'MG' => '"Minas Gerais"',
         'PA' => 'Pará',
         'PB' => 'Paraíba',
         'PR' => 'Paraná',
         'PE' => 'Pernambuco',
         'PI' => 'Piauí',
-        'RJ' => 'Rio de Janeiro',
-        'RN' => 'Rio Grande do Norte',
-        'RS' => 'Rio Grande do Sul',
+        'RJ' => '"Rio de Janeiro"',
+        'RN' => '"Rio Grande do Norte"',
+        'RS' => '"Rio Grande do Sul"',
         'RO' => 'Rondônia',
         'RR' => 'Roraima',
-        'SC' => 'Santa Catarina',
-        'SP' => 'São Paulo',
+        'SC' => '"Santa Catarina"',
+        'SP' => '"São Paulo"',
         'SE' => 'Sergipe',
-        'TO' => 'Tocantins'
+        'TO' => 'Tocantins',
     ];
 
     /**
@@ -461,7 +462,7 @@ class BotPopulateChannel extends AbstractCommand
     {
         $message = preg_replace('/^(RE|FW|FWD|ENC|VAGA|Oportunidade)S?:?/i', '', $message);
         $message = preg_replace('/(\d{0,999} (view|application)s?)/', '', $message);
-        $message = str_replace(['[ClubInfoBSB]', '[leonardoti]', '[NVagas]'], '', $message);
+        $message = str_replace(['[ClubInfoBSB]', '[leonardoti]', '[NVagas]', '[ProfissãoFuturo]'], '', $message);
 //        $message = $this->escapeMarkdown($message);
         return trim($message);
 //        return trim(preg_replace('/\[.+?\]/', '', $message));
