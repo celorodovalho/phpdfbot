@@ -332,12 +332,17 @@ class BotPopulateChannel extends AbstractCommand
     {
         $messageTexts = $this->formatTextOpportunity($opportunity);
         $messageSentIds = [];
+        $lastSentID = null;
         foreach ($messageTexts as $messageText) {
             $sendMsg = array_merge([
                 'chat_id' => $chatId,
                 'parse_mode' => 'Markdown',
                 'text' => $messageText,
             ], $options);
+
+            if ($lastSentID) {
+                $sendMsg['reply_to_message_id'] = $lastSentID;
+            }
 
             try {
                 $messageSent = $this->telegram->sendMessage($sendMsg);
@@ -354,6 +359,10 @@ class BotPopulateChannel extends AbstractCommand
                     }
                 }
                 $this->log($exception, 'FALHA_AO_ENVIAR_MARKDOWN' . $chatId, [$sendMsg]);
+            }
+
+            if ($messageSent) {
+                $lastSentID = $messageSent->messageId;
             }
         }
         return $messageSentIds;
