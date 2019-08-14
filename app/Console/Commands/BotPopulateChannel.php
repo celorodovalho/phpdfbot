@@ -37,8 +37,8 @@ class BotPopulateChannel extends AbstractCommand
     /**
      * Gmail Labels
      */
-    public const LABEL_ENVIADO_PRO_BOT = 'Label_5517839157714334708';
-    public const LABEL_STILL_UNREAD = 'Label_7';
+    private const LABEL_ENVIADO_PRO_BOT = 'Label_5517839157714334708';
+    private const LABEL_STILL_UNREAD = 'Label_7';
 
     /**
      * The name and signature of the console command.
@@ -60,6 +60,15 @@ class BotPopulateChannel extends AbstractCommand
      * @var string
      */
     protected $botName = 'phpdfbot';
+
+    /** @var string */
+    private $channel;
+
+    /** @var string */
+    private $appUrl;
+
+    /** @var string */
+    private $group;
 
     /**
      * The emails must to contain at least one of this words
@@ -121,15 +130,6 @@ class BotPopulateChannel extends AbstractCommand
         //
     ];
 
-    /** @var string */
-    private $channel;
-
-    /** @var string */
-    private $appUrl;
-
-    /** @var string */
-    private $group;
-
     /**
      * Estados
      * @var array
@@ -140,7 +140,6 @@ class BotPopulateChannel extends AbstractCommand
         'AP' => 'Amapá',
         'AM' => 'Amazonas',
         'BA' => 'Bahia',
-        'BSB' => 'Brasília',
         'CE' => 'Ceará',
         'DF' => '"Distrito Federal"',
         'ES' => '"Espírito Santo"',
@@ -163,6 +162,83 @@ class BotPopulateChannel extends AbstractCommand
         'SP' => '"São Paulo"',
         'SE' => 'Sergipe',
         'TO' => 'Tocantins',
+        // cidades
+        'BSB' => 'Brasília',
+        'BH' => '"Belo Horizonte"',
+    ];
+
+    /**
+     * Tags
+     * @var array
+     */
+    private $commonTags = [
+        'remote',
+        'remoto',
+        'júnior',
+        'junior',
+        'pleno',
+        'senior',
+        'sênior',
+        'pj',
+        'clt',
+        'laravel',
+        'symfony',
+        'e-commerce',
+        'ecommerce',
+        'mysql',
+        'js',
+        'graphql',
+        'ui/ux',
+        'css',
+        'html',
+        'photoshop',
+        '"design thinking"',
+        'node',
+        'docker',
+        'kubernets',
+        'angular',
+        'react',
+        'android',
+        'ios',
+        '"teste unitário"',
+        'swift',
+        '"objective-c"',
+        'linux',
+        'postgresql',
+        'dba',
+        'bootstrap',
+        'webpack',
+        'microservices',
+        'selenium',
+        'scrum',
+        'redes',
+        'tomcat',
+        'hibernate',
+        'spring',
+        'git',
+        'oracle',
+        'ionic',
+        'ux',
+        'geoprocessamento',
+        'postgis',
+        '"zend framework"',
+        'oraclesql',
+        'kotlin',
+        'devops',
+        'tdd',
+        'elixir',
+        'clojure',
+        'scala',
+        '"start-up"',
+        'startup',
+        'fintech',
+        'alocado',
+        'presencial',
+        '"continuous integration"',
+        '"continuous deployment"',
+        'ruby',
+        'nativescript',
+        'sass',
     ];
 
     /**
@@ -333,6 +409,7 @@ class BotPopulateChannel extends AbstractCommand
         $messageTexts = $this->formatTextOpportunity($opportunity);
         $messageSentIds = [];
         $lastSentID = null;
+        $messageSent = null;
         foreach ($messageTexts as $messageText) {
             $sendMsg = array_merge([
                 'chat_id' => $chatId,
@@ -469,7 +546,7 @@ class BotPopulateChannel extends AbstractCommand
      */
     private function sanitizeSubject(string $message): string
     {
-        $message = preg_replace('/^(RE|FW|FWD|ENC|VAGA|Oportunidade)S?:?/i', '', $message);
+        $message = preg_replace('/^(RE|FW|FWD|ENC|VAGA|Oportunidade)S?:?/gim', '', $message);
         $message = preg_replace('/(\d{0,999} (view|application)s?)/', '', $message);
         $message = str_replace(['[ClubInfoBSB]', '[leonardoti]', '[NVagas]', '[ProfissãoFuturo]'], '', $message);
 //        $message = $this->escapeMarkdown($message);
@@ -625,13 +702,6 @@ class BotPopulateChannel extends AbstractCommand
             $template .= sprintf(
                 "\n\n*Empresa*\n%s",
                 $opportunity->company
-            );
-        }
-
-        if (filled($opportunity->salary)) {
-            $template .= sprintf(
-                "\n\n*Salario*\n%s",
-                $opportunity->salary
             );
         }
 
@@ -980,7 +1050,11 @@ class BotPopulateChannel extends AbstractCommand
      */
     private function addHashtagFilters(string $message): string
     {
-        $pattern = '#(' . implode('|', array_merge($this->mustIncludeWords, $this->estadosBrasileiros)) . ')#i';
+        $pattern = sprintf(
+            '#(%s)#i',
+            implode('|', array_merge($this->mustIncludeWords, $this->estadosBrasileiros, $this->commonTags))
+        );
+
         $pattern = str_replace('"', '', $pattern);
         if (preg_match_all($pattern, $message, $matches)) {
             $tags = [];
@@ -988,7 +1062,7 @@ class BotPopulateChannel extends AbstractCommand
                 $tags[$key] = '#' . strtolower(str_replace([' ', '-'], '', $item));
             });
             $tags = array_unique($tags);
-            $message .= "\n\n" . implode(' ', $tags);
+            $message .= "\n\n" . implode(' ', $tags) . "\n\n";
         }
         return $message;
     }
