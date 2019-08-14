@@ -249,15 +249,12 @@ class BotPopulateChannel extends AbstractCommand
     public function handle(): void
     {
         $this->channel = env('TELEGRAM_CHANNEL');
-        $this->appUrl = env("APP_URL");
-        $this->group = env("TELEGRAM_GROUP");
+        $this->appUrl = env('APP_URL');
+        $this->group = env('TELEGRAM_GROUP');
 
         switch ($this->argument('process')) {
-            case 'gmail':
-                $this->populateByGmail();
-                break;
-            case 'crawler':
-                $this->crawler();
+            case 'process':
+                $this->processOpportunities();
                 break;
             case 'notify':
                 $this->notifyGroup();
@@ -278,23 +275,65 @@ class BotPopulateChannel extends AbstractCommand
     }
 
     /**
-     * With messages from GMail: Sanitize, populate the database and then sends to channel
+     * @throws TelegramSDKException
      */
-    public function populateByGmail()
+    public function processOpportunities(): void
     {
         try {
-            $messages = $this->getMessages();
+            $opportunities = $this->createOpportunities();
+            foreach($opportunities as $opportunity) {
+                $this->sendOpportunityToApproval($opportunity->id);
+            }
+        } catch (Exception $exception) {
+            $this->error($exception->getMessage());
+            $this->log($exception, 'FALHA_AO_PROCESSAR_OPORTUNIDADES', __FUNCTION__);
+        }
+    }
+
+    /**
+     * @return Collection
+     */
+    public function createOpportunities(): Collection
+    {
+        $opportunitiesRaw = $this->getMessagesFromGMail();
+        $opportunitiesRaw = array_merge(
+            $opportunitiesRaw,
+            $this->getMessagesFromCrawler()
+        );
+
+        $opportunities = array_map(function ($rawOpportunity) {
+            $opportunity = new Opportunity();
+            if (array_key_exists('company', $rawOpportunity)) {
+                $opportunity->company = $rawOpportunity['company'];
+            }
+            if (array_key_exists('location', $rawOpportunity)) {
+                $opportunity->location = $rawOpportunity['location'];
+            }
+            if (array_key_exists('files', $rawOpportunity)) {
+                $opportunity->files = collect($rawOpportunity['files']);
+            }
+            $description = $this->sanitizeBody($rawOpportunity['description']);
+            $description .= $this->getHashtagFilters($description, $rawOpportunity['title']);
+            $opportunity->title = $this->sanitizeSubject($rawOpportunity['title']);
+            $opportunity->description = $description;
+            $opportunity->save();
+            return $opportunity;
+        }, $opportunitiesRaw);
+
+        return collect($opportunities);
+    }
+
+    /**
+     * With messages from GMail: Sanitize, populate the database and then sends to channel
+     */
+    public function getMessagesFromGMail(): array
+    {
+        $opportunities = [];
+        try {
+            $messages = $this->fetchGMailMessages();
             /** @var Mail $message */
             foreach ($messages as $message) {
-                $body = $this->sanitizeBody($this->getMessageBody($message));
-                $body = $this->addHashtagFilters($body);
-                $subject = $this->sanitizeSubject($message->getSubject());
-
-                $opportunity = new Opportunity();
-                $opportunity->title = $subject;
-                $opportunity->description = $body;
-                $opportunity->files = collect();
-                $opportunity->save();
+                $files = [];
 
                 if ($message->hasAttachments()) {
                     $attachments = $message->getAttachments();
@@ -313,18 +352,20 @@ class BotPopulateChannel extends AbstractCommand
                             $fileUrl = $cloudImage->secureShow(
                                 $cloudImage->getPublicId(),
                                 [
-                                    "width" => $width,
-                                    "height" => $height
+                                    'width' => $width,
+                                    'height' => $height
                                 ]
                             );
 //                            $fileUrl = Storage::disk('uploads')->url($filePath);
-                            $opportunity->addFile($fileUrl);
+                            $files[] = $fileUrl;
                         }
-                        $opportunity->save();
                     }
                 }
-
-                $this->sendOpportunityToApproval($opportunity->id);
+                $opportunities[] = [
+                    'title' => $message->getSubject(),
+                    'description' => $this->getMessageBody($message),
+                    'files' => $files,
+                ];
                 $message->markAsRead();
                 $message->addLabel(self::LABEL_ENVIADO_PRO_BOT);
                 $message->removeLabel(self::LABEL_STILL_UNREAD);
@@ -332,18 +373,16 @@ class BotPopulateChannel extends AbstractCommand
             }
         } catch (Exception $exception) {
             $this->error($exception->getMessage());
-            return false;
         }
-        $this->info('The process is done!');
-        return true;
+        return $opportunities;
     }
 
     /**
      * Walks the GMail looking for specifics opportunity messages
      *
-     * @return Collection
+     * @return array
      */
-    private function getMessages(): Collection
+    private function fetchGMailMessages(): array
     {
         $words = '{' . implode(' ', $this->mustIncludeWords) . '}';
         $groups = [
@@ -374,7 +413,7 @@ class BotPopulateChannel extends AbstractCommand
         foreach ($allMessages as $message) {
             $messages[] = new Mail($message, true);
         }
-        return collect($messages);
+        return $messages;
     }
 
     /**
@@ -822,9 +861,8 @@ class BotPopulateChannel extends AbstractCommand
      * Get the results from crawler process, merge they and send to the channel
      *
      * @return bool
-     * @throws TelegramSDKException
      */
-    public function crawler(): bool
+    public function getMessagesFromCrawler(): bool
     {
         $githubSources = [
             'https://github.com/frontendbr/vagas/issues',
@@ -835,24 +873,16 @@ class BotPopulateChannel extends AbstractCommand
             'https://github.com/vuejs-br/vagas/issues',
             'https://github.com/backend-br/vagas/issues',
         ];
-        try {
-            $opportunities = $this->getComoequetala();
-            $opportunities = $opportunities->concat($this->getQueroworkar());
-            foreach ($githubSources as $githubSource) {
-                $opportunities = $opportunities->concat($this->getFromGithub($githubSource));
-            }
 
-            foreach ($opportunities as $opportunity) {
-                $this->sendOpportunityToApproval($opportunity->id);
-            }
-
-            $this->info('The crawler was done!');
-            return true;
-        } catch (Exception $exception) {
-            $this->log($exception, $exception->getMessage());
-            $this->error($exception->getMessage());
-            return false;
+        $opportunities = [];
+        foreach ($githubSources as $githubSource) {
+            $opportunities[] = $this->getMessagesFromGithub($githubSource);
         }
+        return array_merge(
+            $this->getMessagesFromComoEQueTaLa(),
+            $this->getMessagesFromQueroWorkar(),
+            ...$opportunities
+        );
     }
 
     /**
@@ -890,11 +920,11 @@ class BotPopulateChannel extends AbstractCommand
     /**
      * Make a crawler in "comoequetala.com.br" website
      *
-     * @return Collection
+     * @return array
      */
-    private function getComoequetala(): Collection
+    private function getMessagesFromComoEQueTaLa(): array
     {
-        $opportunities = new Collection();
+        $opportunities = [];
         $client = new Client();
         $crawler = $client->request('GET', 'https://comoequetala.com.br/vagas-e-jobs');
         $crawler->filter('.uk-list.uk-list-space > li')->each(function ($node) use (&$opportunities) {
@@ -923,32 +953,26 @@ class BotPopulateChannel extends AbstractCommand
                     $location = trim($node->filter('[itemprop="addressLocality"]')->text()) . '/'
                         . trim($node->filter('[itemprop="addressRegion"]')->text());
 
-                    $description = $this->sanitizeBody(implode("\n\n", $description));
-                    $description = $this->addHashtagFilters($description);
-                    $title = $this->sanitizeSubject($title);
-
-                    $opportunity = new Opportunity();
-                    $opportunity->title = $title;
-                    $opportunity->description = $description;
-                    $opportunity->company = trim($company);
-                    $opportunity->location = trim($location);
-                    $opportunity->save();
-
-                    $opportunities->add($opportunity);
+                    $opportunities[] = [
+                        'title' => $title,
+                        'description' => implode("\n\n", $description),
+                        'company' => trim($company),
+                        'location' => trim($location),
+                    ];
                 }
             }
         });
-        return collect($opportunities);
+        return $opportunities;
     }
 
     /**
      * Make a crawler in "queroworkar.com.br" website
      *
-     * @return Collection
+     * @return array
      */
-    private function getQueroworkar(): Collection
+    private function getMessagesFromQueroWorkar(): array
     {
-        $opportunities = new Collection();
+        $opportunities = [];
         $client = new Client();
         $crawler = $client->request('GET', 'http://queroworkar.com.br/blog/jobs/');
         $crawler->filter('.loadmore-item')->each(function ($node) use (&$opportunities) {
@@ -976,37 +1000,28 @@ class BotPopulateChannel extends AbstractCommand
                         );
                         $description .= "\n\n*Como se candidatar:* " . $link;
 
-                        $company = $crawler2->filter('.company-title')->text();
-                        $location = $crawler2->filter('.job-location')->text();
-
-                        $description = $this->sanitizeBody($description);
-                        $description = $this->addHashtagFilters($description);
-                        $title = $this->sanitizeSubject($title);
-
-                        $opportunity = new Opportunity();
-                        $opportunity->title = $title;
-                        $opportunity->description = $description;
-                        $opportunity->company = trim($company);
-                        $opportunity->location = trim($location);
-                        $opportunity->save();
-
-                        $opportunities->add($opportunity);
+                        $opportunities[] = [
+                            'title' => $title,
+                            'description' => $description,
+                            'company' => trim($crawler2->filter('.company-title')->text()),
+                            'location' => trim($crawler2->filter('.job-location')->text()),
+                        ];
                     }
                 }
             }
         });
-        return collect($opportunities);
+        return $opportunities;
     }
 
     /**
      * Make a crawler in github opportunities channels
      *
      * @param string $url
-     * @return Collection
+     * @return array
      */
-    private function getFromGithub(string $url = '')
+    private function getMessagesFromGithub(string $url = ''): array
     {
-        $opportunities = new Collection();
+        $opportunities = [];
         $client = new Client();
         $crawler = $client->request('GET', $url);
         $crawler->filter('[aria-label="Issues"] .Box-row')->each(function ($node) use (&$opportunities) {
@@ -1018,37 +1033,30 @@ class BotPopulateChannel extends AbstractCommand
             $data = new DateTime($data);
             $today = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
 
-            //relative-time datetime="2019-06-13T21:06:53Z"
             if ($skipDataCheck || $data->format('Ymd') === $today->format('Ymd')) {
                 $link = $node->filter('a')->first()->attr('href');
                 $link = 'https://github.com' . $link;
                 $title = $node->filter('a')->first()->text();
                 //d-block comment-body
                 $crawler2 = $client->request('GET', $link);
-                $description = $crawler2->filter('.d-block.comment-body')->html();
 
-                $description = $this->sanitizeBody($description);
-                $description = $this->addHashtagFilters($description);
-                $title = $this->sanitizeSubject($title);
-
-                $opportunity = new Opportunity();
-                $opportunity->title = $title;
-                $opportunity->description = $description;
-                $opportunity->save();
-
-                $opportunities->add($opportunity);
+                $opportunities[] = [
+                    'title' => trim($title),
+                    'description' => trim($crawler2->filter('.d-block.comment-body')->html()),
+                ];
             }
         });
-        return collect($opportunities);
+        return $opportunities;
     }
 
     /**
      * Append the hashtags relatives the to content
      *
      * @param string $message
+     * @param string $title
      * @return string
      */
-    private function addHashtagFilters(string $message): string
+    private function getHashtagFilters(string $message, string $title): string
     {
         $pattern = sprintf(
             '#(%s)#i',
@@ -1056,15 +1064,16 @@ class BotPopulateChannel extends AbstractCommand
         );
 
         $pattern = str_replace('"', '', $pattern);
-        if (preg_match_all($pattern, $message, $matches)) {
+        $allTags = '';
+        if (preg_match_all($pattern, $title.$message, $matches)) {
             $tags = [];
             array_walk($matches[0], function ($item, $key) use (&$tags) {
                 $tags[$key] = '#' . strtolower(str_replace([' ', '-'], '', $item));
             });
             $tags = array_unique($tags);
-            $message .= "\n\n" . implode(' ', $tags) . "\n\n";
+            $allTags = "\n\n" . implode(' ', $tags) . "\n\n";
         }
-        return $message;
+        return $allTags;
     }
 
     /**
