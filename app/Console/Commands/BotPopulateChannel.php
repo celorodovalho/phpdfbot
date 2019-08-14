@@ -860,9 +860,9 @@ class BotPopulateChannel extends AbstractCommand
     /**
      * Get the results from crawler process, merge they and send to the channel
      *
-     * @return bool
+     * @return array
      */
-    public function getMessagesFromCrawler(): bool
+    public function getMessagesFromCrawler(): array
     {
         $githubSources = [
             'https://github.com/frontendbr/vagas/issues',
