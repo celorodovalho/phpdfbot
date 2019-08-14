@@ -172,7 +172,9 @@ class CommandsHandler
             $opportunity->files = collect();
 
             if (filled($photos)) {
-                $opportunity->addFile($photos->first());
+                foreach($photos as $photo) {
+                    $opportunity->addFile($photo);
+                }
             }
             if (filled($document)) {
                 $opportunity->addFile($document->first());
@@ -215,9 +217,17 @@ class CommandsHandler
 
     private function error(Exception $exception): void
     {
-        $this->telegram->replyWithMessage([
+        $this->telegram->sendMessage([
             'parse_mode' => 'Markdown',
-            'text' => $exception->getMessage()
+            'text' => $exception->getMessage(),
+            'chat_id' => $this->update->getChat()->id,
+            'reply_to_message_id' => $this->update->getMessage()->messageId,
         ]);
+        Log::error('ERROR:', [$exception]);
+
+//        $this->telegram->replyWithMessage([
+//            'parse_mode' => 'Markdown',
+//            'text' => $exception->getMessage()
+//        ]);
     }
 }
