@@ -576,11 +576,8 @@ class BotPopulateChannel extends AbstractCommand
         if (strlen($description) < 200) {
             return [];
         }
-        $template = sprintf(
-            "*%s*\n\n*Descrição*\n%s",
-            $opportunity->title,
-            $description
-        );
+
+        $template = '';
 
         if ($opportunity->files && $opportunity->files->isNotEmpty()) {
             foreach ($opportunity->files as $file) {
@@ -592,6 +589,12 @@ class BotPopulateChannel extends AbstractCommand
                     );
             }
         }
+
+        $template .= sprintf(
+            "*%s*\n\n*Descrição*\n%s",
+            $opportunity->title,
+            $description
+        );
 
         if (filled($opportunity->location)) {
             $template .= sprintf(
