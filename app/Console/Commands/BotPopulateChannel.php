@@ -577,22 +577,24 @@ class BotPopulateChannel extends AbstractCommand
             return [];
         }
 
-        $template = '';
+        $template = sprintf(
+            "*%s*",
+            $opportunity->title
+        );
 
         if ($opportunity->files && $opportunity->files->isNotEmpty()) {
             foreach ($opportunity->files as $file) {
-                $template .= "\n" .
+                $template .= "\n\n" .
                     sprintf(
                         "[Image](%s)",
                         $file
-//                        $this->escapeMarkdown($file)
                     );
             }
+            // $this->escapeMarkdown($file)
         }
 
         $template .= sprintf(
-            "*%s*\n\n*Descrição*\n%s",
-            $opportunity->title,
+            "\n\n*Descrição*\n%s",
             $description
         );
 
