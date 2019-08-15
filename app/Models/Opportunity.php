@@ -33,14 +33,20 @@ class Opportunity extends Model
     public const CALLBACK_APPROVE = 'approve';
     public const CALLBACK_REMOVE = 'remove';
 
+    public const COMPANY = 'company';
+    public const LOCATION = 'location';
+    public const FILES = 'files';
+    public const DESCRIPTION = 'description';
+    public const TITLE = 'title';
+
     protected $fillable = [
-        'title',
+        self::TITLE,
         'position',
-        'description',
+        self::DESCRIPTION,
         'salary',
-        'company',
-        'location',
-        'files',
+        self::COMPANY,
+        self::LOCATION,
+        self::FILES,
         'telegram_id',
         'status',
     ];
