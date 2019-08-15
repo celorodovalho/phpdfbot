@@ -278,17 +278,22 @@ class BotPopulateChannel extends AbstractCommand
                         $fileName = Helper::base64UrlEncode($attachment->getFileName()) . '.' . $extension;
                         $filePath = $attachment->saveAttachmentTo($message->getId() . '/', $fileName, 'uploads');
                         $filePath = Storage::disk('uploads')->path($filePath);
-                        list($width, $height) = getimagesize($filePath);
-                        /** @var CloudinaryWrapper $cloudImage */
-                        $cloudImage = Cloudder::upload($filePath, null);
-                        $fileUrl = $cloudImage->secureShow(
-                            $cloudImage->getPublicId(),
-                            [
-                                'width' => $width,
-                                'height' => $height
-                            ]
-                        );
-                        $files[] = $fileUrl;
+                        try {
+                            list($width, $height) = getimagesize($filePath);
+                            /** @var CloudinaryWrapper $cloudImage */
+                            $cloudImage = Cloudder::upload($filePath, null);
+                            $fileUrl = $cloudImage->secureShow(
+                                $cloudImage->getPublicId(),
+                                [
+                                    'width' => $width,
+                                    'height' => $height
+                                ]
+                            );
+                            $files[] = $fileUrl;
+                        } catch (Exception $exception) {
+                            $this->error($exception->getMessage());
+                            $this->log($exception, 'FALHA_AO_GETIMAGESIZE', $filePath);
+                        }
                     }
                 }
             }
@@ -476,8 +481,7 @@ class BotPopulateChannel extends AbstractCommand
                 'www.linkedin.com/company/clube-de-vagas/',
                 'linkedin.com/company/clube-de-vagas/',
                 'Cordialmente',
-                '--  
-    Tiago Romualdo Souza'
+                'Tiago Romualdo Souza'
             ];
 
             $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
@@ -583,7 +587,8 @@ class BotPopulateChannel extends AbstractCommand
                 $template .= "\n" .
                     sprintf(
                         "[Image](%s)",
-                        $this->escapeMarkdown($file)
+                        $file
+//                        $this->escapeMarkdown($file)
                     );
             }
         }
