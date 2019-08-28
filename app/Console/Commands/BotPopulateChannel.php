@@ -764,10 +764,13 @@ class BotPopulateChannel extends AbstractCommand
         $referenceLog = 'logs/' . $message . time() . '.log';
         Log::error($message, [$exception->getLine(), $exception, $context]);
         Storage::put($referenceLog, json_encode([$context, $exception]));
+        $referenceLog = Storage::url($referenceLog);
         try {
-            $this->telegram->sendMessage([
+            $this->telegram->sendDocument([
                 'chat_id' => env('TELEGRAM_OWNER_ID'),
-                'text' => sprintf("```\n%s\n```", json_encode([
+                'document' => InputFile::create($referenceLog),
+                'parse_mode' => 'HTML',
+                'caption' => sprintf("<pre>\n%s\n</pre>", json_encode([
                     'message' => $message,
                     'exceptionMessage' => $exception->getMessage(),
                     'line' => $exception->getLine(),
@@ -776,9 +779,16 @@ class BotPopulateChannel extends AbstractCommand
                 ]))
             ]);
         } catch (Exception $exception2) {
-            $this->telegram->sendMessage([
+            $this->telegram->sendDocument([
                 'chat_id' => env('TELEGRAM_OWNER_ID'),
-                'text' => $referenceLog
+                'document' => InputFile::create($referenceLog),
+                'caption' => json_encode([
+                    'message' => $message,
+                    'exceptionMessage' => $exception->getMessage(),
+                    'line' => $exception->getLine(),
+                    'context' => $context,
+                    'referenceLog' => $referenceLog,
+                ])
             ]);
         }
     }
