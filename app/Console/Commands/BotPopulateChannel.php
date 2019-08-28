@@ -575,8 +575,10 @@ class BotPopulateChannel extends AbstractCommand
         @$dom->loadHTML(mb_convert_encoding($message, 'HTML-ENTITIES', 'UTF-8'));
         $mock = new \DOMDocument;
         $body = $dom->getElementsByTagName('body')->item(0);
-        foreach ($body->childNodes as $child) {
-            $mock->appendChild($mock->importNode($child, true));
+        if (is_object($body)) {
+            foreach ($body->childNodes as $child) {
+                $mock->appendChild($mock->importNode($child, true));
+            }
         }
         return trim(html_entity_decode($mock->saveHTML()));
     }
@@ -665,9 +667,14 @@ class BotPopulateChannel extends AbstractCommand
     {
         $htmlBody = $message->getHtmlBody();
         if (empty($htmlBody)) {
-            $htmlBody = $message->getDecodedBody(
-                $message->payload->getParts()[0]->getParts()[1]->getBody()->getData()
-            );
+            $parts = $message->payload->getParts()[0]->getParts();
+            if (count($parts) > 1) {
+                $body = $parts[1]->getBody()->getData();
+            } else {
+                $body = $parts[0]->getBody()->getData();
+            }
+
+            $htmlBody = $message->getDecodedBody($body);
         }
         return $htmlBody;
     }
