@@ -361,6 +361,34 @@ class BotPopulateChannel extends AbstractCommand
             $opportunity->telegram_id = $messageSentId;
             $opportunity->status = Opportunity::STATUS_ACTIVE;
             $opportunity->save();
+
+            $this->notifyUser($opportunity);
+        }
+    }
+
+    /**
+     * Notify the send user, that opportunity was published on channel
+     *
+     * @param Opportunity $opportunity
+     * @throws TelegramSDKException
+     */
+    protected function notifyUser(Opportunity $opportunity): void
+    {
+        if ($opportunity->telegram_id) {
+            try {
+                $link = "https://t.me/VagasBrasil\\_TI/{$opportunity->telegram_id}";
+                $this->telegram->sendMessage([
+                    'chat_id' => $opportunity->telegram_user_id,
+                    'parse_mode' => 'Markdown',
+                    'text' => "Sua vaga '[$opportunity->title]($link)' foi publicada no canal @VagasBrasil\\_TI.",
+                ]);
+            } catch (Exception $exception) {
+                $link = "https://t.me/VagasBrasil_TI/{$opportunity->telegram_id}";
+                $this->telegram->sendMessage([
+                    'chat_id' => $opportunity->telegram_user_id,
+                    'text' => "Sua vaga '$link' foi publicada no canal @VagasBrasil_TI.",
+                ]);
+            }
         }
     }
 

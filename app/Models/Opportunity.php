@@ -21,6 +21,7 @@ use Telegram\Bot\Objects\PhotoSize;
  * @property string $location
  * @property int $telegram_id
  * @property int $status
+ * @property int $telegram_user_id
  * @property Collection $files
  */
 class Opportunity extends Model
@@ -49,6 +50,7 @@ class Opportunity extends Model
         self::FILES,
         'telegram_id',
         'status',
+        'telegram_user_id',
     ];
 
     protected $guarded = ['id'];

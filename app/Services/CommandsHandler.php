@@ -170,9 +170,10 @@ class CommandsHandler
             $opportunity->description = $text;
             $opportunity->status = Opportunity::STATUS_INACTIVE;
             $opportunity->files = collect();
+            $opportunity->telegram_user_id = $message->from->id;
 
             if (filled($photos)) {
-                foreach($photos as $photo) {
+                foreach ($photos as $photo) {
                     $opportunity->addFile($photo);
                 }
             }
