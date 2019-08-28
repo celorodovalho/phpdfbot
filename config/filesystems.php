@@ -55,6 +55,13 @@ return [
             'visibility' => 'public',
         ],
 
+        'logs' => [
+            'driver' => 'local',
+            'root' => storage_path('app/logs'),
+            'url' => str_replace('/public/index.php', '', env('APP_URL')) . '/storage/app/logs',
+            'visibility' => 'public',
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

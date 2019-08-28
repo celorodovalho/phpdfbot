@@ -790,10 +790,10 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected function log(Exception $exception, $message = '', $context = null): void
     {
-        $referenceLog = 'logs/' . $message . time() . '.log';
+        $referenceLog = $message . time() . '.log';
         Log::error($message, [$exception->getLine(), $exception, $context]);
-        Storage::put($referenceLog, json_encode([$context, $exception]));
-        $referenceLog = Storage::url($referenceLog);
+        Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception]));
+        $referenceLog = Storage::disk('logs')->url($referenceLog);
         try {
             $this->telegram->sendDocument([
                 'chat_id' => env('TELEGRAM_OWNER_ID'),
