@@ -792,7 +792,7 @@ class BotPopulateChannel extends AbstractCommand
     {
         $referenceLog = $message . time() . '.log';
         Log::error($message, [$exception->getLine(), $exception, $context]);
-        Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception]));
+        Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
         $referenceLog = Storage::disk('logs')->url($referenceLog);
         try {
             $this->telegram->sendDocument([
@@ -802,6 +802,7 @@ class BotPopulateChannel extends AbstractCommand
                 'caption' => sprintf("<pre>\n%s\n</pre>", json_encode([
                     'message' => $message,
                     'exceptionMessage' => $exception->getMessage(),
+                    'file' => $exception->getFile(),
                     'line' => $exception->getLine(),
                     'context' => $context,
                     'referenceLog' => $referenceLog,
@@ -814,6 +815,7 @@ class BotPopulateChannel extends AbstractCommand
                 'caption' => json_encode([
                     'message' => $message,
                     'exceptionMessage' => $exception->getMessage(),
+                    'file' => $exception->getFile(),
                     'line' => $exception->getLine(),
                     'context' => $context,
                     'referenceLog' => $referenceLog,
