@@ -167,7 +167,7 @@ class CommandsHandler
             }
             $text = $message->text ?? $caption;
             $title = str_replace("\n", ' ', $text);
-            $opportunity->title = substr($title, 0, 20);
+            $opportunity->title = substr($title, 0, 50);
             $opportunity->description = $text;
             $opportunity->status = Opportunity::STATUS_INACTIVE;
             $opportunity->files = collect();
