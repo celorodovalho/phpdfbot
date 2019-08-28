@@ -166,7 +166,8 @@ class CommandsHandler
                 throw new Exception('Envie um texto para a vaga, ou o nome da vaga na legenda da imagem/documento.');
             }
             $text = $message->text ?? $caption;
-            $opportunity->title = substr($text, 0, 100);
+            $title = str_replace("\n", ' ', $text);
+            $opportunity->title = substr($title, 0, 20);
             $opportunity->description = $text;
             $opportunity->status = Opportunity::STATUS_INACTIVE;
             $opportunity->files = collect();

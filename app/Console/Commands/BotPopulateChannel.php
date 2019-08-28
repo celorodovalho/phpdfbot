@@ -376,7 +376,7 @@ class BotPopulateChannel extends AbstractCommand
     {
         if ($opportunity->telegram_id) {
             try {
-                $link = "https://t.me/VagasBrasil\\_TI/{$opportunity->telegram_id}";
+                $link = "https://t.me/VagasBrasil_TI/{$opportunity->telegram_id}";
                 $this->telegram->sendMessage([
                     'chat_id' => $opportunity->telegram_user_id,
                     'parse_mode' => 'Markdown',
@@ -509,7 +509,8 @@ class BotPopulateChannel extends AbstractCommand
                 'www.linkedin.com/company/clube-de-vagas/',
                 'linkedin.com/company/clube-de-vagas/',
                 'Cordialmente',
-                'Tiago Romualdo Souza'
+                'Tiago Romualdo Souza',
+                '--'
             ];
 
             $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
