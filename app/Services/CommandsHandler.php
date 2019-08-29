@@ -136,6 +136,7 @@ class CommandsHandler
             default:
                 break;
         }
+        Log::info('DELETE_MESSAGE_ID', [$callbackQuery->message->messageId]);
         $this->telegram->deleteMessage([
             'chat_id' => env('TELEGRAM_OWNER_ID'),
             'message_id' => $callbackQuery->message->messageId
@@ -219,13 +220,13 @@ class CommandsHandler
 
     private function error(Exception $exception): void
     {
+        Log::error('ERROR:', [$exception]);
         $this->telegram->sendMessage([
             'parse_mode' => 'Markdown',
             'text' => $exception->getMessage(),
             'chat_id' => $this->update->getChat()->id,
             'reply_to_message_id' => $this->update->getMessage()->messageId,
         ]);
-        Log::error('ERROR:', [$exception]);
 
 //        $this->telegram->replyWithMessage([
 //            'parse_mode' => 'Markdown',
