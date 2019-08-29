@@ -374,7 +374,7 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected function notifyUser(Opportunity $opportunity): void
     {
-        if ($opportunity->telegram_id) {
+        if ($opportunity->telegram_user_id) {
             try {
                 $link = "https://t.me/VagasBrasil_TI/{$opportunity->telegram_id}";
                 $this->telegram->sendMessage([
