@@ -808,7 +808,6 @@ class BotPopulateChannel extends AbstractCommand
                     'exceptionMessage' => $exception->getMessage(),
                     'file' => $exception->getFile(),
                     'line' => $exception->getLine(),
-                    'context' => $context,
                     'referenceLog' => $referenceLog,
                 ]))
             ]);
@@ -821,7 +820,6 @@ class BotPopulateChannel extends AbstractCommand
                     'exceptionMessage' => $exception->getMessage(),
                     'file' => $exception->getFile(),
                     'line' => $exception->getLine(),
-                    'context' => $context,
                     'referenceLog' => $referenceLog,
                 ])
             ]);
