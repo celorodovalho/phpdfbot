@@ -460,7 +460,7 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected function escapeMarkdown(string $message): string
     {
-        $message = str_replace(['*', '_', '`', '['], ["\\*", "\\_", "\\`", "\\["], $message);
+        $message = str_replace(['*', '_', '`', '[', ']'], ["\\*", "\\_", "\\`", "\\[", '\\]'], $message);
         return trim($message);
     }
 
