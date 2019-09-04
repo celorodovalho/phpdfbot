@@ -712,7 +712,7 @@ class BotPopulateChannel extends AbstractCommand
                     'reply_markup' => $keyboard,
                     'text' => sprintf(
                         "%s\n\n[%s](%s)\n\n%s",
-                        "Há novas vagas no canal!\nConfira: $this->channel $this->group 😉",
+                        "Há novas vagas no canal!\nConfira: {$this->escapeMarkdown($this->channel)} $this->group 😉",
                         "🄿🄷🄿",
                         str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp',
                         $listOpportunities
