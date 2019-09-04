@@ -691,39 +691,39 @@ class BotPopulateChannel extends AbstractCommand
             $opportunitiesArr = $opportunities->get();
             if ($opportunitiesArr->isNotEmpty()) {
                 $lastNotifications = Notification::all();
-                $vagasEnviadasChunk = $opportunitiesArr->chunk(10);
 
-                foreach ($vagasEnviadasChunk as $key => $vagasEnviadasArr) {
-                    $keyboard = Keyboard::make()->inline();
-                    foreach ($vagasEnviadasArr as $vagaEnviada) {
-                        $keyboard->row(Keyboard::inlineButton([
-                            'text' => $vagaEnviada->title,
-                            'url' => 'https://t.me/VagasBrasil_TI/' . $vagaEnviada->telegram_id
-                        ]));
-                    }
+                $listOpportunities = $opportunitiesArr->map(function ($opportunity) {
+                    return sprintf(
+                        "⮚ [%s](%s)",
+                        $opportunity->title,
+                        'https://t.me/VagasBrasil_TI/' . $opportunity->telegram_id
+                    );
+                })->implode("\n");
 
-                    $notificationMessage = [
-                        'chat_id' => $this->group,
-                        'reply_markup' => $keyboard
-                    ];
+                $keyboard = Keyboard::make()->inline();
+                $keyboard->row(Keyboard::inlineButton([
+                    'text' => 'Ver vagas',
+                    'url' => 'https://t.me/VagasBrasil_TI'
+                ]));
 
-                    if ($key < 1) {
-                        $notificationMessage['photo'] = InputFile::create(
-                            str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp'
-                        );
-                        $notificationMessage['caption'] =
-                            "Há novas vagas no canal!\nConfira: $this->channel $this->group 😉";
-                        $photo = $this->telegram->sendPhoto($notificationMessage);
-                    } else {
-                        $notificationMessage['text'] = "$this->channel $this->group - Parte " . ($key + 1);
-                        $photo = $this->telegram->sendMessage($notificationMessage);
-                    }
+                $notificationMessage = [
+                    'chat_id' => $this->group,
+                    'reply_markup' => $keyboard,
+                    'text' => sprintf(
+                        "%s\n\n[%s](%s)\n\n%s",
+                        "Há novas vagas no canal!\nConfira: $this->channel $this->group 😉",
+                        "🄿🄷🄿",
+                        str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp',
+                        $listOpportunities
+                    )
+                ];
 
-                    $notification = new Notification();
-                    $notification->telegram_id = $photo->messageId;
-                    $notification->body = json_encode($notificationMessage);
-                    $notification->save();
-                }
+                $message = $this->telegram->sendMessage($notificationMessage);
+
+                $notification = new Notification();
+                $notification->telegram_id = $message->messageId;
+                $notification->body = json_encode($notificationMessage);
+                $notification->save();
 
                 foreach ($lastNotifications as $lastNotification) {
                     try {
