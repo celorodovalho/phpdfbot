@@ -453,6 +453,18 @@ class BotPopulateChannel extends AbstractCommand
     }
 
     /**
+     * Remove BBCode from strings
+     *
+     * @param string $message
+     * @return string
+     */
+    protected function removeBBCode(string $message): string
+    {
+        $message = preg_replace('#[\(\[\{][^\]]+[\)\]\}]#', '', $message);
+        return trim($message);
+    }
+
+    /**
      * Remove the Brackets from strings
      *
      * @param string $message
@@ -460,7 +472,10 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected function removeBrackets(string $message): string
     {
-        $message = preg_replace('#[\(\[\{][^\]]+[\)\]\}]#', '', $message);
+        $message = trim($message, '[]{}()');
+        $message = preg_replace('#[\(\[\{\)\]\}]#', '--', $message);
+        $message = preg_replace('#(-){2,}#', ' - ', $message);
+        $message = preg_replace('#( ){2,}#', ' ', $message);
         return trim($message);
     }
 
@@ -473,6 +488,19 @@ class BotPopulateChannel extends AbstractCommand
     protected function escapeMarkdown(string $message): string
     {
         $message = str_replace(['*', '_', '`', '[', ']'], ["\\*", "\\_", "\\`", "\\[", '\\]'], $message);
+        return trim($message);
+    }
+
+    /**
+     * Replace the Markdown to avoid bad request in Telegram
+     *
+     * @param string $message
+     * @return string
+     */
+    protected function replaceMarkdown(string $message): string
+    {
+        $message = str_replace(['*', '_', '`', '[', ']'], ' ', $message);
+        $message = preg_replace('#( ){2,}#', ' ', $message);
         return trim($message);
     }
 
@@ -707,7 +735,7 @@ class BotPopulateChannel extends AbstractCommand
                 $listOpportunities = $opportunitiesArr->map(function ($opportunity) {
                     return sprintf(
                         "⮚ [%s](%s)",
-                        $this->escapeMarkdown($this->removeBrackets($opportunity->title)),
+                        $this->replaceMarkdown($this->removeBrackets($opportunity->title)),
                         'https://t.me/VagasBrasil_TI/' . $opportunity->telegram_id
                     );
                 })->implode("\n");
@@ -725,7 +753,7 @@ class BotPopulateChannel extends AbstractCommand
                     'text' => sprintf(
                         "%s\n\n[%s](%s)\n\n%s",
                         "Há novas vagas no canal!\nConfira: {$this->escapeMarkdown($this->channel)} $this->group 😉",
-                        "🄿🄷🄿",
+                        "🄿🄷🄿🄳🄵",
                         str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp',
                         $listOpportunities
                     )
