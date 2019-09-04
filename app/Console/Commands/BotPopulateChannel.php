@@ -708,6 +708,7 @@ class BotPopulateChannel extends AbstractCommand
 
                 $notificationMessage = [
                     'chat_id' => $this->group,
+                    'parse_mode' => 'Markdown',
                     'reply_markup' => $keyboard,
                     'text' => sprintf(
                         "%s\n\n[%s](%s)\n\n%s",
