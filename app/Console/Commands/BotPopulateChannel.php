@@ -695,7 +695,7 @@ class BotPopulateChannel extends AbstractCommand
                 $listOpportunities = $opportunitiesArr->map(function ($opportunity) {
                     return sprintf(
                         "⮚ [%s](%s)",
-                        $opportunity->title,
+                        $this->escapeMarkdown($opportunity->title),
                         'https://t.me/VagasBrasil_TI/' . $opportunity->telegram_id
                     );
                 })->implode("\n");
