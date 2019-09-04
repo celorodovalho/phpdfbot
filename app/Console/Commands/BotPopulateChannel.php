@@ -453,6 +453,18 @@ class BotPopulateChannel extends AbstractCommand
     }
 
     /**
+     * Remove the Brackets from strings
+     *
+     * @param string $message
+     * @return string
+     */
+    protected function removeBrackets(string $message): string
+    {
+        $message = preg_replace('#[\(\[\{][^\]]+[\)\]\}]#', '', $message);
+        return trim($message);
+    }
+
+    /**
      * Escapes the Markdown to avoid bad request in Telegram
      *
      * @param string $message
@@ -695,7 +707,7 @@ class BotPopulateChannel extends AbstractCommand
                 $listOpportunities = $opportunitiesArr->map(function ($opportunity) {
                     return sprintf(
                         "⮚ [%s](%s)",
-                        $opportunity->title,
+                        $this->escapeMarkdown($this->removeBrackets($opportunity->title)),
                         'https://t.me/VagasBrasil_TI/' . $opportunity->telegram_id
                     );
                 })->implode("\n");
