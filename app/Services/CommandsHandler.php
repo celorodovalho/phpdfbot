@@ -128,6 +128,7 @@ class CommandsHandler
                 Opportunity::find($data[1])->delete();
                 break;
             default:
+                $this->processCommand($data[0]);
                 break;
         }
         Log::info('DELETE_MESSAGE_ID', [$callbackQuery->message->messageId]);
