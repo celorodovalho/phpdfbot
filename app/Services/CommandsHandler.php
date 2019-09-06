@@ -87,13 +87,7 @@ class CommandsHandler
 
             if (strpos($message->text, '/') === 0) {
                 $command = explode(' ', $message->text);
-                $command = str_replace('/', '', $command[0]);
-
-                $commands = $this->telegram->getCommands();
-
-                if (array_key_exists($command, $commands)) {
-                    Telegram::processCommand($this->update);
-                }
+                $this->processCommand($command[0]);
             }
             if (filled($callbackQuery)) {
                 $this->processCallbackQuery($callbackQuery);
@@ -216,6 +210,22 @@ class CommandsHandler
                 'chat' => $message->chat->id,
             ]
         );
+    }
+
+    /**
+     * Process the command
+     *
+     * @param string $command
+     */
+    private function processCommand(string $command): void
+    {
+        $command = str_replace('/', '', $command);
+
+        $commands = $this->telegram->getCommands();
+
+        if (array_key_exists($command, $commands)) {
+            Telegram::processCommand($this->update);
+        }
     }
 
     private function error(Exception $exception): void

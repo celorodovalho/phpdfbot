@@ -25,7 +25,7 @@ class OptionsCommand extends Command
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
-        if ($this->getUpdate()->getMessage()->from->id !== env('TELEGRAM_OWNER_ID')) {
+        if ($this->getUpdate()->getMessage()->from->id !== (int)env('TELEGRAM_OWNER_ID')) {
             return $this->replyWithMessage([
                 'text' => 'Lamento, mas esse comando é restrito. Para maiores informações entre em contato: @se45ky',
             ]);
