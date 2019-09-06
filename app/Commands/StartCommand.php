@@ -42,7 +42,7 @@ class StartCommand extends Command
 
         $this->replyWithMessage([
             'parse_mode' => 'Markdown',
-            'text' => "Olá @$username! Seja bem-vindo! Ao entrar, apresente-se e leia nossas regras:",
+            'text' => "Olá @$username! Seja bem-vindo(a)! Ao entrar, apresente-se e leia nossas regras:",
             'reply_markup' => $keyboard
         ]);
 
