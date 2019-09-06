@@ -128,6 +128,7 @@ class CommandsHandler
                 Opportunity::find($data[1])->delete();
                 break;
             default:
+                Log::info('SWITCH_DEFAULT', $data);
                 $this->processCommand($data[0]);
                 break;
         }
