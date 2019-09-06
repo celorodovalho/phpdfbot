@@ -732,9 +732,13 @@ class BotPopulateChannel extends AbstractCommand
             if ($opportunitiesArr->isNotEmpty()) {
                 $lastNotifications = Notification::all();
 
-                $listOpportunities = $opportunitiesArr->map(function ($opportunity) {
+                $firstOpportunityId = null;
+
+                $listOpportunities = $opportunitiesArr->map(function ($opportunity) use (&$firstOpportunityId) {
+                    $firstOpportunityId = null === $firstOpportunityId
+                        ? $opportunity->telegram_id : $firstOpportunityId;
                     return sprintf(
-                        "⮚ [%s](%s)",
+                        "➩ [%s](%s)",
                         $this->replaceMarkdown($this->removeBrackets($opportunity->title)),
                         'https://t.me/VagasBrasil_TI/' . $opportunity->telegram_id
                     );
@@ -743,7 +747,7 @@ class BotPopulateChannel extends AbstractCommand
                 $keyboard = Keyboard::make()->inline();
                 $keyboard->row(Keyboard::inlineButton([
                     'text' => 'Ver vagas',
-                    'url' => 'https://t.me/VagasBrasil_TI'
+                    'url' => 'https://t.me/VagasBrasil_TI/' . $firstOpportunityId
                 ]));
 
                 $notificationMessage = [
