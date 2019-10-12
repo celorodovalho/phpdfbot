@@ -134,7 +134,7 @@ class CommandsHandler
         }
         Log::info('DELETE_MESSAGE_ID', [$callbackQuery->message->messageId]);
         $this->telegram->deleteMessage([
-            'chat_id' => env('TELEGRAM_OWNER_ID'),
+            'chat_id' => env('TELEGRAM_GROUP_ADM'),
             'message_id' => $callbackQuery->message->messageId
         ]);
     }

@@ -70,6 +70,9 @@ class BotPopulateChannel extends AbstractCommand
     /** @var string */
     protected $group;
 
+    /** @var string */
+    protected $adm;
+
     /**
      * The emails must to contain at least one of this words
      *
@@ -147,6 +150,7 @@ class BotPopulateChannel extends AbstractCommand
         $this->channel = env('TELEGRAM_CHANNEL');
         $this->appUrl = env('APP_URL');
         $this->group = env('TELEGRAM_GROUP');
+        $this->adm = env('TELEGRAM_GROUP_ADM');
 
         switch ($this->argument('process')) {
             case 'process':
@@ -845,7 +849,7 @@ class BotPopulateChannel extends AbstractCommand
         $referenceLog = Storage::disk('logs')->url($referenceLog);
         try {
             $this->telegram->sendDocument([
-                'chat_id' => env('TELEGRAM_OWNER_ID'),
+                'chat_id' => $this->adm,
                 'document' => InputFile::create($referenceLog),
                 'parse_mode' => 'HTML',
                 'caption' => sprintf("<pre>\n%s\n</pre>", json_encode([
@@ -858,7 +862,7 @@ class BotPopulateChannel extends AbstractCommand
             ]);
         } catch (Exception $exception2) {
             $this->telegram->sendDocument([
-                'chat_id' => env('TELEGRAM_OWNER_ID'),
+                'chat_id' => $this->adm,
                 'document' => InputFile::create($referenceLog),
                 'caption' => json_encode([
                     'message' => $message,
@@ -1059,20 +1063,20 @@ class BotPopulateChannel extends AbstractCommand
 
         if ($messageId && $chatId) {
             $fwdMessage = $this->telegram->forwardMessage([
-                'chat_id' => env('TELEGRAM_OWNER_ID'),
+                'chat_id' => $this->adm,
                 'from_chat_id' => $chatId,
                 'message_id' => $messageId
             ]);
             $messageToSend['reply_to_message_id'] = $fwdMessage->messageId;
             $messageToSend['parse_mode'] = 'Markdown';
-            $messageToSend['chat_id'] = env('TELEGRAM_OWNER_ID');
+            $messageToSend['chat_id'] = $this->adm;
             $messageToSend['text'] = 'Aprovar?';
 
             $this->telegram->sendMessage($messageToSend);
         } else {
             /** @var Opportunity $opportunity */
             $opportunity = Opportunity::find($opportunityId);
-            $this->sendOpportunity($opportunity, env('TELEGRAM_OWNER_ID'), $messageToSend);
+            $this->sendOpportunity($opportunity, $this->adm, $messageToSend);
         }
     }
 }

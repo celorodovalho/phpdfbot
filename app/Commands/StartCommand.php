@@ -47,7 +47,7 @@ class StartCommand extends Command
         ]);
 
         $this->telegram->sendMessage([
-            'chat_id' => env('TELEGRAM_OWNER_ID'),
+            'chat_id' => env('TELEGRAM_GROUP_ADM'),
             'text' => json_encode($this->getUpdate())
         ]);
 
