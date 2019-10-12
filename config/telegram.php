@@ -128,6 +128,7 @@ return [
 //        App\Commands\HelpCommand::class,
 //        App\Commands\RulesCommand::class,
         App\Commands\NewOpportunityCommand::class,
+        App\Commands\OptionsCommand::class,
     ],
 
     /*

@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Telegram\Bot\Objects\PhotoSize;
 
 /**
  * Class Opportunity
@@ -19,6 +21,7 @@ use Illuminate\Support\Collection;
  * @property string $location
  * @property int $telegram_id
  * @property int $status
+ * @property int $telegram_user_id
  * @property Collection $files
  */
 class Opportunity extends Model
@@ -31,96 +34,36 @@ class Opportunity extends Model
     public const CALLBACK_APPROVE = 'approve';
     public const CALLBACK_REMOVE = 'remove';
 
+    public const COMPANY = 'company';
+    public const LOCATION = 'location';
+    public const FILES = 'files';
+    public const DESCRIPTION = 'description';
+    public const TITLE = 'title';
+
     protected $fillable = [
-        'title',
+        self::TITLE,
         'position',
-        'description',
+        self::DESCRIPTION,
         'salary',
-        'company',
-        'location',
-        'files',
+        self::COMPANY,
+        self::LOCATION,
+        self::FILES,
         'telegram_id',
         'status',
+        'telegram_user_id',
     ];
 
     protected $guarded = ['id'];
 
-    /**
-     * @var Collection
-     */
-    private $filesArray;
-
-    public function __construct(array $attributes = [])
-    {
-        $this->initFiles();
-        parent::__construct($attributes);
-    }
+    protected $casts = [
+        'files' => 'collection',
+    ];
 
     /**
-     * Initiate the file array
+     * @param $file
      */
-    public function initFiles()
+    public function addFile($file): void
     {
-        $this->filesArray = new Collection();
-    }
-
-    /**
-     * @return Collection
-     */
-    public function getFilesList(): Collection
-    {
-        if (empty($this->filesArray) || !$this->filesArray->isNotEmpty()) {
-            $this->filesArray = $this->getFilesAttribute();
-        }
-        return $this->filesArray;
-    }
-
-    /**
-     * Add file to collection
-     *
-     * @param string $file
-     */
-    public function addFile(string $file)
-    {
-        $this->filesArray->add($file);
-    }
-
-    /**
-     * Check if there is file in collection
-     *
-     * @return bool
-     */
-    public function hasFile(): bool
-    {
-        return $this->filesArray ? $this->filesArray->isNotEmpty() : false;
-    }
-
-    /**
-     * Get the files property
-     *
-     * @return Collection
-     */
-    public function getFilesAttribute(): Collection
-    {
-        if (is_string($this->files) && strlen($this->files) > 0) {
-            return collect(json_decode($this->files));
-        }
-        return $this->files;
-    }
-
-    /**
-     * Before save/update
-     */
-    public static function boot(): void
-    {
-        parent::boot();
-
-        static::creating(function (Opportunity $opportunity) {
-            $opportunity->files = optional($opportunity->filesArray)->toJson();
-        });
-
-        static::updating(function (Opportunity $opportunity) {
-            $opportunity->files = optional($opportunity->filesArray)->toJson();
-        });
+        $this->files = $this->files->concat([$file]);
     }
 }

@@ -14,8 +14,12 @@ use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Keyboard\Keyboard;
 use Telegram\Bot\Laravel\Facades\Telegram;
 use Telegram\Bot\Objects\CallbackQuery;
+use Telegram\Bot\Objects\Document;
 use Telegram\Bot\Objects\Message;
+use Telegram\Bot\Objects\PhotoSize;
 use Telegram\Bot\Objects\Update;
+
+use \Exception;
 
 /**
  * Class CommandsHandler
@@ -44,7 +48,6 @@ class CommandsHandler
      * @param string $botName
      * @param string $token
      * @param Update $update
-     * @throws TelegramSDKException
      */
     public function __construct(BotsManager $botsManager, string $botName, string $token, Update $update)
     {
@@ -62,7 +65,6 @@ class CommandsHandler
      * @param string $token
      * @param Update $update
      * @return CommandsHandler
-     * @throws TelegramSDKException
      */
     public static function make(BotsManager $botsManager, string $botName, string $token, Update $update)
     {
@@ -74,30 +76,28 @@ class CommandsHandler
      *
      * @param Update $update
      * @return mixed
-     * @throws TelegramSDKException
      */
     private function processUpdate(Update $update)
     {
-        /** @var Message $message */
-        $message = $update->getMessage();
-        /** @var CallbackQuery $callbackQuery */
-        $callbackQuery = $update->get('callback_query');
+        try {
+            /** @var Message $message */
+            $message = $update->getMessage();
+            /** @var CallbackQuery $callbackQuery */
+            $callbackQuery = $update->get('callback_query');
 
-        if (strpos($message->text, '/') === 0) {
-            $command = explode(' ', $message->text);
-            $command = str_replace('/', '', $command[0]);
-
-            $commands = $this->telegram->getCommands();
-
-            if (array_key_exists($command, $commands)) {
-                Telegram::processCommand($this->update);
+            if (strpos($message->text, '/') === 0) {
+                $command = explode(' ', $message->text);
+                $this->processCommand($command[0]);
             }
+            if (filled($callbackQuery)) {
+                $this->processCallbackQuery($callbackQuery);
+            } elseif (filled($message)) {
+                $this->processMessage($message);
+            }
+        } catch (Exception $exception) {
+            $this->error($exception);
         }
-        if (filled($callbackQuery)) {
-            $this->processCallbackQuery($callbackQuery);
-        } elseif (filled($message)) {
-            $this->processMessage($message);
-        }
+
         return null;
     }
 
@@ -128,10 +128,13 @@ class CommandsHandler
                 Opportunity::find($data[1])->delete();
                 break;
             default:
+                Log::info('SWITCH_DEFAULT', $data);
+                $this->processCommand($data[0]);
                 break;
         }
+        Log::info('DELETE_MESSAGE_ID', [$callbackQuery->message->messageId]);
         $this->telegram->deleteMessage([
-            'chat_id' => env('TELEGRAM_OWNER_ID'),
+            'chat_id' => env('TELEGRAM_GROUP_ADM'),
             'message_id' => $callbackQuery->message->messageId
         ]);
     }
@@ -140,19 +143,45 @@ class CommandsHandler
      * Process the messages coming from bot interface
      *
      * @param Message $message
-     * @throws TelegramSDKException
+     * @throws Exception
      */
     private function processMessage(Message $message): void
     {
         /** @var Message $reply */
         $reply = $message->getReplyToMessage();
+        /** @var PhotoSize $photos */
+        /** @var PhotoSize $photo */
+        $photos = $message->photo;
+        /** @var Document $document */
+        $document = $message->document;
+        /** @var string $caption */
+        $caption = $message->caption;
+
         if (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) {
             $opportunity = new Opportunity();
-            $opportunity->title = substr($message->text, 0, 100);
-            $opportunity->description = $message->text;
+            if (blank($message->text) && blank($caption)) {
+                throw new Exception('Envie um texto para a vaga, ou o nome da vaga na legenda da imagem/documento.');
+            }
+            $text = $message->text ?? $caption;
+            $title = str_replace("\n", ' ', $text);
+            $opportunity->title = substr($title, 0, 50);
+            $opportunity->description = $text;
             $opportunity->status = Opportunity::STATUS_INACTIVE;
+            $opportunity->files = collect();
+            $opportunity->telegram_user_id = $message->from->id;
+
+            if (filled($photos)) {
+                foreach ($photos as $photo) {
+                    $opportunity->addFile($photo);
+                }
+            }
+            if (filled($document)) {
+                $opportunity->addFile($document->first());
+            }
+
             $opportunity->save();
-            $this->sendOpportunityToApproval($opportunity);
+
+            $this->sendOpportunityToApproval($opportunity, $message);
         }
         $newMembers = $message->newChatMembers;
         Log::info('NEW_MEMBER', [$newMembers]);
@@ -170,28 +199,50 @@ class CommandsHandler
      * Send opportunity to approval
      *
      * @param Opportunity $opportunity
-     * @throws TelegramSDKException
+     * @param Message $message
      */
-    private function sendOpportunityToApproval(Opportunity $opportunity): void
+    private function sendOpportunityToApproval(Opportunity $opportunity, Message $message): void
     {
-        $keyboard = Keyboard::make()
-            ->inline()
-            ->row(
-                Keyboard::inlineButton([
-                    'text' => 'Aprovar',
-                    'callback_data' => implode(' ', [Opportunity::CALLBACK_APPROVE, $opportunity->id])
-                ]),
-                Keyboard::inlineButton([
-                    'text' => 'Remover',
-                    'callback_data' => implode(' ', [Opportunity::CALLBACK_REMOVE, $opportunity->id])
-                ])
-            );
+        Artisan::call(
+            'bot:populate:channel',
+            [
+                'process' => 'approval',
+                'opportunity' => $opportunity->id,
+                'message' => $message->messageId,
+                'chat' => $message->chat->id,
+            ]
+        );
+    }
 
+    /**
+     * Process the command
+     *
+     * @param string $command
+     */
+    private function processCommand(string $command): void
+    {
+        $command = str_replace('/', '', $command);
+
+        $commands = $this->telegram->getCommands();
+
+        if (array_key_exists($command, $commands)) {
+            Telegram::processCommand($this->update);
+        }
+    }
+
+    private function error(Exception $exception): void
+    {
+        Log::error('ERROR:', [$exception]);
         $this->telegram->sendMessage([
             'parse_mode' => 'Markdown',
-            'chat_id' => env('TELEGRAM_OWNER_ID'),
-            'text' => $opportunity->description,
-            'reply_markup' => $keyboard
+            'text' => $exception->getMessage(),
+            'chat_id' => $this->update->getChat()->id,
+            'reply_to_message_id' => $this->update->getMessage()->messageId,
         ]);
+
+//        $this->telegram->replyWithMessage([
+//            'parse_mode' => 'Markdown',
+//            'text' => $exception->getMessage()
+//        ]);
     }
 }
