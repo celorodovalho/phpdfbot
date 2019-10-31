@@ -711,8 +711,11 @@ class BotPopulateChannel extends AbstractCommand
     {
         $htmlBody = $message->getHtmlBody();
         if (empty($htmlBody)) {
-            $parts = $message->payload->getParts()[0]->getParts();
-            if (count($parts) > 0) {
+            $parts = $message->payload->getParts();
+            if ($parts->count()) {
+                $parts = $parts[0]->getParts();
+            }
+            if ($parts->count()) {
                 $body = $parts[1]->getBody()->getData();
                 $htmlBody = $message->getDecodedBody($body);
             }
