@@ -102,8 +102,6 @@ class CommandsHandler
         } catch (Exception $exception) {
             $this->log($exception, 'ERRO_AO_PROCESSAR_UPDATE');
         }
-
-        return null;
     }
 
     /**
