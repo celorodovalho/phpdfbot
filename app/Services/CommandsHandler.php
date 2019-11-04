@@ -8,9 +8,11 @@ use App\Models\Opportunity;
 use Illuminate\Support\Facades\Artisan;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramSDKException;
+use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Keyboard\Keyboard;
 use Telegram\Bot\Laravel\Facades\Telegram;
 use Telegram\Bot\Objects\CallbackQuery;
@@ -48,6 +50,7 @@ class CommandsHandler
      * @param string $botName
      * @param string $token
      * @param Update $update
+     * @throws TelegramSDKException
      */
     public function __construct(BotsManager $botsManager, string $botName, string $token, Update $update)
     {
@@ -65,6 +68,7 @@ class CommandsHandler
      * @param string $token
      * @param Update $update
      * @return CommandsHandler
+     * @throws TelegramSDKException
      */
     public static function make(BotsManager $botsManager, string $botName, string $token, Update $update)
     {
@@ -76,8 +80,9 @@ class CommandsHandler
      *
      * @param Update $update
      * @return mixed
+     * @throws TelegramSDKException
      */
-    private function processUpdate(Update $update)
+    private function processUpdate(Update $update): void
     {
         try {
             /** @var Message $message */
@@ -95,7 +100,7 @@ class CommandsHandler
                 $this->processMessage($message);
             }
         } catch (Exception $exception) {
-            $this->error($exception);
+            $this->log($exception, 'ERRO_AO_PROCESSAR_UPDATE');
         }
 
         return null;
@@ -230,19 +235,47 @@ class CommandsHandler
         }
     }
 
-    private function error(Exception $exception): void
+    /**
+     * Generate a log on server, and send a notification to admin
+     *
+     * @param Exception $exception
+     * @param string $message
+     * @param null $context
+     * @throws TelegramSDKException
+     */
+    private function log(Exception $exception, $message = '', $context = null): void
     {
-        Log::error('ERROR:', [$exception]);
-        $this->telegram->sendMessage([
-            'parse_mode' => 'Markdown',
-            'text' => $exception->getMessage(),
-            'chat_id' => $this->update->getChat()->id,
-            'reply_to_message_id' => $this->update->getMessage()->messageId,
-        ]);
-
-//        $this->telegram->replyWithMessage([
-//            'parse_mode' => 'Markdown',
-//            'text' => $exception->getMessage()
-//        ]);
+        $referenceLog = $message . time() . '.log';
+        Log::error($message, [$exception->getLine(), $exception, $context]);
+        Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
+        $referenceLog = Storage::disk('logs')->url($referenceLog);
+        try {
+            $this->telegram->sendDocument([
+                'chat_id' => $this->update->getChat()->id,
+                'reply_to_message_id' => $this->update->getMessage()->messageId,
+                'document' => InputFile::create($referenceLog),
+                'parse_mode' => 'HTML',
+                'caption' => sprintf("<pre>\n%s\n</pre>", json_encode([
+                    'message' => $message,
+                    'exceptionMessage' => $exception->getMessage(),
+                    'file' => $exception->getFile(),
+                    'line' => $exception->getLine(),
+                    'referenceLog' => $referenceLog,
+                ]))
+            ]);
+        } catch (Exception $exception2) {
+            $this->telegram->sendDocument([
+                'chat_id' => $this->update->getChat()->id,
+                'reply_to_message_id' => $this->update->getMessage()->messageId,
+                'document' => InputFile::create($referenceLog),
+                'caption' => json_encode([
+                    'message' => $message,
+                    'exceptionMessage' => $exception->getMessage(),
+                    'file' => $exception->getFile(),
+                    'line' => $exception->getLine(),
+                    'referenceLog' => $referenceLog,
+                ])
+            ]);
+        }
     }
 }
