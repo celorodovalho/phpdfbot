@@ -12,7 +12,7 @@
         "ext-curl": "*",
         "ext-dom": "*",
         "ext-json": "*",
-        "dacastro4/laravel-gmail": "^1.1",
+        "dacastro4/laravel-gmail": "^3.0",
         "doctrine/dbal": "^2.9",
         "fabpot/goutte": "^3.2",
         "fideloper/proxy": "^4.0",
