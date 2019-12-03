@@ -1,4 +1,6 @@
-# Bot de vagas do @phpdf
+# Bot de vagas do PHPDF
+
+Bot para Telegram destinado a disponibilização de vagas para área de Tecnologia. Foi criado utilizando PHP, permitindo com integração com API do Telegram.
 
 ## Comandos
 
@@ -11,6 +13,20 @@
     * opportunity {opcional}: O ID da vaga cadastrada
     * message {opcional}: O ID no telegram da messagem enviada
     * chat {opcional}: O ID no telegram da conversa de quem enviou a vaga
-    
 
-https://t.me/phpdfbot
+## Como acessar?
+
+- [Telegram](https://t.me/phpdfbot)
+
+## :handshake: Contribuindo
+
+ * Se você perceber que algo esta errado, [abra uma issue no GitHub](https://github.com/php-fig/php-fig.github.com/issues).
+
+ * Você mesmo pode consertar, simplesmente [edite o arquivo no GitHub](https://github.com/blog/905-edit-like-an-ace) e abra um novo pull request. O repositório será atualizado assim que o seu pull request for aceito!
+
+:octocat: :smiley: :zap:
+
+## :registered: Referências
+
+- [PHPDF](https://phpdf.org.br)
+- [Padrão de mensagens para commits](https://github.com/devbrotherhood/cmc)
