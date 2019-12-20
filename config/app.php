@@ -1,9 +1,5 @@
 <?php
 
-if (!defined('INTL_IDNA_VARIANT_UTS46')) {
-    define('INTL_IDNA_VARIANT_UTS46', 1);
-}
-
 return [
 
     /*
