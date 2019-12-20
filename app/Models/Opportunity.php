@@ -66,4 +66,13 @@ class Opportunity extends Model
     {
         $this->files = $this->files->concat([$file]);
     }
+
+    public function getText()
+    {
+        return implode(', ', [
+            $this->title,
+            $this->position,
+            $this->description,
+        ]);
+    }
 }

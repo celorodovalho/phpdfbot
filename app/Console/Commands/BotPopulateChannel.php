@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Storage;
 use JD\Cloudder\CloudinaryWrapper;
 use JD\Cloudder\Facades\Cloudder;
 
+use Spatie\Emoji\Emoji;
 use Symfony\Component\DomCrawler\Crawler;
 
 use Telegram\Bot\Exceptions\TelegramSDKException;
@@ -61,17 +62,17 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected $botName = 'phpdfbot';
 
-    /** @var string */
-    protected $channel;
+    /** @var array */
+    protected $channels;
 
     /** @var string */
     protected $appUrl;
 
-    /** @var string */
-    protected $group;
+    /** @var array */
+    protected $groups;
 
     /** @var string */
-    protected $adm;
+    protected $admin;
 
     /**
      * The emails must to contain at least one of this words
@@ -147,10 +148,10 @@ class BotPopulateChannel extends AbstractCommand
      */
     public function handle(): void
     {
-        $this->channel = env('TELEGRAM_CHANNEL');
+        $this->channels = config('telegram.channels');
         $this->appUrl = env('APP_URL');
-        $this->group = env('TELEGRAM_GROUP');
-        $this->adm = env('TELEGRAM_GROUP_ADM');
+        $this->groups = config('telegram.groups');
+        $this->admin = config('telegram.admin');
 
         switch ($this->argument('process')) {
             case 'process':
@@ -160,7 +161,7 @@ class BotPopulateChannel extends AbstractCommand
                 $this->notifyGroup();
                 break;
             case 'send':
-                $this->sendOpportunityToChannel($this->argument('opportunity'));
+                $this->sendOpportunityToChannels($this->argument('opportunity'));
                 break;
             case 'approval':
                 $opportunityId = $this->argument('opportunity');
@@ -220,7 +221,7 @@ class BotPopulateChannel extends AbstractCommand
                 $opportunity->files = collect($rawOpportunity[Opportunity::FILES]);
             }
             $description = $this->sanitizeBody($rawOpportunity[Opportunity::DESCRIPTION]);
-            $description .= $this->getHashtagFilters($description, $rawOpportunity[Opportunity::TITLE]);
+            $description .= $this->getHashTagFilters($description, $rawOpportunity[Opportunity::TITLE]);
             $opportunity->title = $this->sanitizeSubject($rawOpportunity[Opportunity::TITLE]);
             $opportunity->description = $description;
             $opportunity->save();
@@ -354,19 +355,23 @@ class BotPopulateChannel extends AbstractCommand
      * @param int $opportunityId
      * @throws TelegramSDKException
      */
-    protected function sendOpportunityToChannel(int $opportunityId): void
+    protected function sendOpportunityToChannels(int $opportunityId): void
     {
         /** @var Opportunity $opportunity */
         $opportunity = Opportunity::find($opportunityId);
 
-        $messageSentId = $this->sendOpportunity($opportunity, $this->channel);
-        $messageSentId = reset($messageSentId);
-        if ($messageSentId) {
-            $opportunity->telegram_id = $messageSentId;
-            $opportunity->status = Opportunity::STATUS_ACTIVE;
-            $opportunity->save();
+        foreach ($this->channels as $channel => $config) {
+            if (blank($config['tags']) || $this->hasHashTags($config['tags'], $opportunity->getText())) {
+                $messageSentIds = $this->sendOpportunity($opportunity, $channel);
+            }
+            $messageSentId = reset($messageSentIds);
+            if ($messageSentId && $config['main']) {
+                $opportunity->telegram_id = $messageSentId;
+                $opportunity->status = Opportunity::STATUS_ACTIVE;
+                $opportunity->save();
 
-            $this->notifyUser($opportunity);
+                $this->notifyUser($opportunity);
+            }
         }
     }
 
@@ -757,13 +762,20 @@ class BotPopulateChannel extends AbstractCommand
                     'url' => 'https://t.me/VagasBrasil_TI/' . $firstOpportunityId
                 ]));
 
+                $mainGroup = $this->admin;
+                foreach ($this->groups as $group => $config) {
+                    if ($config['main']) {
+                        $mainGroup = $group;
+                    }
+                }
+
                 $notificationMessage = [
-                    'chat_id' => $this->group,
+                    'chat_id' => $mainGroup,
                     'parse_mode' => 'Markdown',
                     'reply_markup' => $keyboard,
                     'text' => sprintf(
                         "%s\n\n[%s](%s)\n\n%s",
-                        "Há novas vagas no canal!\nConfira: {$this->escapeMarkdown($this->channel)} $this->group 😉",
+                        "Há novas vagas no canal!\nConfira: {$this->escapeMarkdown(reset(array_keys($this->channels)))} $this->groups " . Emoji::smilingFace(),
                         "🄿🄷🄿🄳🄵",
                         str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp',
                         $listOpportunities
@@ -780,7 +792,7 @@ class BotPopulateChannel extends AbstractCommand
                 foreach ($lastNotifications as $lastNotification) {
                     try {
                         $this->telegram->deleteMessage([
-                            'chat_id' => $this->group,
+                            'chat_id' => $mainGroup,
                             'message_id' => $lastNotification->telegram_id
                         ]);
                     } catch (Exception $exception) {
@@ -807,7 +819,9 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected function getGroupSign(): string
     {
-        return "\n\n*PHPDF*\n✅ *Canal:* @VagasBrasil\\_TI\n✅ *Grupo:* @phpdf";
+        return "\n\n" .
+            Emoji::megaphone() . $this->escapeMarkdown(implode(' | ', array_keys($this->channels))) . "\n" .
+            Emoji::houses() . $this->escapeMarkdown(implode(' | ', array_keys($this->groups))) . "\n";
     }
 
     /**
@@ -852,7 +866,7 @@ class BotPopulateChannel extends AbstractCommand
         $referenceLog = Storage::disk('logs')->url($referenceLog);
         try {
             $this->telegram->sendDocument([
-                'chat_id' => $this->adm,
+                'chat_id' => $this->admin,
                 'document' => InputFile::create($referenceLog),
                 'parse_mode' => 'HTML',
                 'caption' => sprintf("<pre>\n%s\n</pre>", json_encode([
@@ -865,7 +879,7 @@ class BotPopulateChannel extends AbstractCommand
             ]);
         } catch (Exception $exception2) {
             $this->telegram->sendDocument([
-                'chat_id' => $this->adm,
+                'chat_id' => $this->admin,
                 'document' => InputFile::create($referenceLog),
                 'caption' => json_encode([
                     'message' => $message,
@@ -1017,7 +1031,7 @@ class BotPopulateChannel extends AbstractCommand
      * @param string $title
      * @return string
      */
-    protected function getHashtagFilters(string $message, string $title): string
+    protected function getHashTagFilters(string $message, string $title): string
     {
         $pattern = sprintf(
             '#(%s)#i',
@@ -1026,7 +1040,7 @@ class BotPopulateChannel extends AbstractCommand
 
         $pattern = str_replace('"', '', $pattern);
         $allTags = '';
-        if (preg_match_all($pattern, $title.$message, $matches)) {
+        if (preg_match_all($pattern, $title . $message, $matches)) {
             $tags = [];
             array_walk($matches[0], function ($item, $key) use (&$tags) {
                 $tags[$key] = '#' . strtolower(str_replace([' ', '-'], '', $item));
@@ -1035,6 +1049,24 @@ class BotPopulateChannel extends AbstractCommand
             $allTags = "\n\n" . implode(' ', $tags) . "\n\n";
         }
         return $allTags;
+    }
+
+    /**
+     * Check if text contains specific tag
+     *
+     * @param $tags
+     * @param $text
+     * @return bool
+     */
+    protected function hasHashTags(array $tags, $text)
+    {
+        $text = mb_strtolower($text);
+        foreach ($tags as $tag) {
+            if (strpos($text, '#' . mb_strtolower($tag)) !== false) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -1066,20 +1098,20 @@ class BotPopulateChannel extends AbstractCommand
 
         if ($messageId && $chatId) {
             $fwdMessage = $this->telegram->forwardMessage([
-                'chat_id' => $this->adm,
+                'chat_id' => $this->admin,
                 'from_chat_id' => $chatId,
                 'message_id' => $messageId
             ]);
             $messageToSend['reply_to_message_id'] = $fwdMessage->messageId;
             $messageToSend['parse_mode'] = 'Markdown';
-            $messageToSend['chat_id'] = $this->adm;
+            $messageToSend['chat_id'] = $this->admin;
             $messageToSend['text'] = 'Aprovar?';
 
             $this->telegram->sendMessage($messageToSend);
         } else {
             /** @var Opportunity $opportunity */
             $opportunity = Opportunity::find($opportunityId);
-            $this->sendOpportunity($opportunity, $this->adm, $messageToSend);
+            $this->sendOpportunity($opportunity, $this->admin, $messageToSend);
         }
     }
 }

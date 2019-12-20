@@ -19,7 +19,8 @@
         "irazasyed/telegram-bot-sdk": "^3.0",
         "jrm2k6/cloudder": "^0.6.0",
         "laravel/framework": "5.8.*",
-        "laravel/tinker": "^1.0"
+        "laravel/tinker": "^1.0",
+        "spatie/emoji": "^2.1"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.6",

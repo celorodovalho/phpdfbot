@@ -55,6 +55,21 @@ return [
 //            'token' => '123456:abc',
 //        ],
     ],
+    'admin' => 'botphpdf',
+    'groups' => [
+        '@phpdf' => ['main' => true],
+        '@phpbrasil' => ['main' => false],
+    ],
+    'channels' => [
+        '@VagasBrasil_TI' => [
+            'main' => true,
+            'tags' => [],
+        ],
+        '@phpbrasilvagas' => [
+            'main' => false,
+            'tags' => ['php'],
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------
