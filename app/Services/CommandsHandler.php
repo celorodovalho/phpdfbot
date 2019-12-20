@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Commands\NewOpportunityCommand;
+use App\Commands\OptionsCommand;
 use App\Models\Opportunity;
 
 use Illuminate\Support\Facades\Artisan;
@@ -141,6 +142,9 @@ class CommandsHandler
                     $opportunity->delete();
                 }
                 break;
+            case OptionsCommand::OPTIONS_COMMAND:
+                $this->triggerCommand($data[0]);
+                break;
             default:
                 Log::info('SWITCH_DEFAULT', $data);
                 $this->processCommand($data[0]);
@@ -256,7 +260,25 @@ class CommandsHandler
         Log::info('PROCESS_COMMANDS_AVAILABLE', [$commands]);
 
         if (array_key_exists($command, $commands)) {
-            Telegram::triggerCommand($command, $this->update);
+            $this->telegram->processCommand($this->update);
+        }
+    }
+
+    /**
+     * Process the command
+     *
+     * @param string $command
+     */
+    private function triggerCommand(string $command): void
+    {
+        $command = str_replace('/', '', $command);
+
+        $commands = $this->telegram->getCommands();
+
+        Log::info('TRIGGER_COMMANDS_AVAILABLE', [$commands]);
+
+        if (array_key_exists($command, $commands)) {
+            $this->telegram->triggerCommand($command, $this->update);
         }
     }
 

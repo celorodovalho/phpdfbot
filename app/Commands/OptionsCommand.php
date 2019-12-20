@@ -40,11 +40,11 @@ class OptionsCommand extends Command
             ->row(
                 Keyboard::inlineButton([
                     'text' => 'Notificar Grupo',
-                    'callback_data' => "/$this->name notify"
+                    'callback_data' => "$this->name notify"
                 ]),
                 Keyboard::inlineButton([
                     'text' => 'Realizar Coleta',
-                    'callback_data' => "/$this->name process"
+                    'callback_data' => "$this->name process"
                 ])
             );
 
