@@ -42,6 +42,12 @@ class BotPopulateChannel extends AbstractCommand
     protected const LABEL_STILL_UNREAD = 'Label_7';
 
     /**
+     * Commands
+     */
+    public const COMMAND_NOTIFY = 'notify';
+    public const COMMAND_PROCESS = 'process';
+
+    /**
      * The name and signature of the console command.
      *
      * @var string
@@ -154,10 +160,10 @@ class BotPopulateChannel extends AbstractCommand
         $this->admin = config('telegram.admin');
 
         switch ($this->argument('process')) {
-            case 'process':
+            case self::COMMAND_PROCESS:
                 $this->processOpportunities();
                 break;
-            case 'notify':
+            case self::COMMAND_NOTIFY:
                 $this->notifyGroup();
                 break;
             case 'send':

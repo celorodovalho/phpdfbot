@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Commands\NewOpportunityCommand;
 use App\Commands\OptionsCommand;
+use App\Console\Commands\BotPopulateChannel;
 use App\Models\Opportunity;
 
 use Illuminate\Support\Facades\Artisan;
@@ -122,7 +123,10 @@ class CommandsHandler
         $data = $callbackQuery->get('data');
         $data = explode(' ', $data);
         Log::info('OPPORTUNITY_DATA', $data);
-        $opportunity = Opportunity::find($data[1]);
+        Log::info('ENTITIES', [$this->update->message]);
+        if (is_numeric($data[1])) {
+            $opportunity = Opportunity::find($data[1]);
+        }
         switch ($data[0]) {
             case Opportunity::CALLBACK_APPROVE:
                 if ($opportunity) {
@@ -143,7 +147,10 @@ class CommandsHandler
                 }
                 break;
             case OptionsCommand::OPTIONS_COMMAND:
-                $this->triggerCommand($data[0]);
+                if (in_array($data[1], [BotPopulateChannel::COMMAND_PROCESS, BotPopulateChannel::COMMAND_NOTIFY])) {
+                    Artisan::call('bot:populate:channel', ['process' => $data[1]]);
+                    $this->sendMessage('Done!');
+                }
                 break;
             default:
                 Log::info('SWITCH_DEFAULT', $data);
@@ -324,5 +331,14 @@ class CommandsHandler
                 ])
             ]);
         }
+    }
+
+    private function sendMessage($message)
+    {
+        $this->telegram->sendMessage([
+            'chat_id' => $this->update->getChat()->id,
+            'reply_to_message_id' => $this->update->getMessage()->messageId,
+            'text' => $message
+        ]);
     }
 }

@@ -6,10 +6,12 @@ use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
 use Telegram\Bot\Keyboard\Keyboard;
+use App\Console\Commands\BotPopulateChannel;
 
 class OptionsCommand extends Command
 {
     const OPTIONS_COMMAND = 'options';
+
     /**
      * @var string Command Name
      */
@@ -40,11 +42,11 @@ class OptionsCommand extends Command
             ->row(
                 Keyboard::inlineButton([
                     'text' => 'Notificar Grupo',
-                    'callback_data' => "$this->name notify"
+                    'callback_data' => $this->name . ' ' . BotPopulateChannel::COMMAND_NOTIFY
                 ]),
                 Keyboard::inlineButton([
                     'text' => 'Realizar Coleta',
-                    'callback_data' => "$this->name process"
+                    'callback_data' => $this->name . ' ' . BotPopulateChannel::COMMAND_PROCESS
                 ])
             );
 
