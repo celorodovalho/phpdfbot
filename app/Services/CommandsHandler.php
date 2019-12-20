@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
+use Telegram\Bot\Exceptions\TelegramResponseException;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Keyboard\Keyboard;
@@ -140,11 +141,25 @@ class CommandsHandler
                 $this->processCommand($data[0]);
                 break;
         }
+        Log::info('DELETE_MESSAGE', [$callbackQuery->message]);
         Log::info('DELETE_MESSAGE_ID', [$callbackQuery->message->messageId]);
-        $this->telegram->deleteMessage([
-            'chat_id' => config('telegram.admin'),
-            'message_id' => $callbackQuery->message->messageId
-        ]);
+        try {
+            $this->telegram->deleteMessage([
+                'chat_id' => config('telegram.admin'),
+                'message_id' => $callbackQuery->message->messageId
+            ]);
+        } catch (TelegramResponseException $exception) {
+            /**
+             * A message can only be deleted if it was sent less than 48 hours ago.
+             * Bots can delete outgoing messages in groups and supergroups.
+             * Bots granted can_post_messages permissions can delete outgoing messages in channels.
+             * If the bot is an administrator of a group, it can delete any message there.
+             * If the bot has can_delete_messages permission in a supergroup or a channel, it can delete any message there. Returns True on success.
+             */
+            if ($exception->getCode() != 400) {
+                throw $exception;
+            }
+        }
     }
 
     /**
