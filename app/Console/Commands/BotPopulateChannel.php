@@ -769,13 +769,15 @@ class BotPopulateChannel extends AbstractCommand
                     }
                 }
 
+                $channels = array_keys($this->channels);
+
                 $notificationMessage = [
                     'chat_id' => $mainGroup,
                     'parse_mode' => 'Markdown',
                     'reply_markup' => $keyboard,
                     'text' => sprintf(
                         "%s\n\n[%s](%s)\n\n%s",
-                        "Há novas vagas no canal!\nConfira: {$this->escapeMarkdown(reset(array_keys($this->channels)))} $this->groups " . Emoji::smilingFace(),
+                        "Há novas vagas no canal!\nConfira: {$this->escapeMarkdown(reset($channels))} $this->groups " . Emoji::smilingFace(),
                         "🄿🄷🄿🄳🄵",
                         str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp',
                         $listOpportunities
