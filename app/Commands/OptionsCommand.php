@@ -45,7 +45,7 @@ class OptionsCommand extends Command
             );
 
         $this->replyWithMessage([
-            'text' => json_encode([$this->getArguments()]),
+            'text' => 'Qual acao deseja realizar?',
             'reply_markup' => $keyboard
         ]);
     }

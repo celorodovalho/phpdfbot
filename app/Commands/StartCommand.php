@@ -48,7 +48,7 @@ class StartCommand extends Command
 
         $this->telegram->sendMessage([
             'chat_id' => config('telegram.admin'),
-            'text' => json_encode($this->getUpdate())
+            'text' => 'NOVO USUARIO USANDO O BOT NO PVT: '.json_encode($this->getUpdate())
         ]);
 
         $this->triggerCommand('help');

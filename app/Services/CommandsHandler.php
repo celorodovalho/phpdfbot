@@ -91,6 +91,11 @@ class CommandsHandler
             /** @var CallbackQuery $callbackQuery */
             $callbackQuery = $update->get('callback_query');
 
+            Log::info('PROCESS_UPDATE', [
+                'message' => $message,
+                'callbackQuery' => $callbackQuery,
+            ]);
+
             if (strpos($message->text, '/') === 0) {
                 $command = explode(' ', $message->text);
                 $this->processCommand($command[0]);
