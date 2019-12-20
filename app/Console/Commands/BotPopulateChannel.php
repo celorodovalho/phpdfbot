@@ -820,8 +820,8 @@ class BotPopulateChannel extends AbstractCommand
     protected function getGroupSign(): string
     {
         return "\n\n" .
-            Emoji::megaphone() . $this->escapeMarkdown(implode(' | ', array_keys($this->channels))) . "\n" .
-            Emoji::houses() . $this->escapeMarkdown(implode(' | ', array_keys($this->groups))) . "\n";
+            Emoji::megaphone() . ' ' . $this->escapeMarkdown(implode(' | ', array_keys($this->channels))) . "\n" .
+            Emoji::houses() . ' ' . $this->escapeMarkdown(implode(' | ', array_keys($this->groups))) . "\n";
     }
 
     /**

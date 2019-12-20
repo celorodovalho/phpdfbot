@@ -55,7 +55,7 @@ return [
 //            'token' => '123456:abc',
 //        ],
     ],
-    'admin' => 'botphpdf',
+    'admin' => '@botphpdf',
     'groups' => [
         '@phpdf' => ['main' => true],
         '@phpbrasil' => ['main' => false],
