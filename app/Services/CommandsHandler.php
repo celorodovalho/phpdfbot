@@ -253,6 +253,8 @@ class CommandsHandler
 
         $commands = $this->telegram->getCommands();
 
+        Log::info('PROCESS_COMMANDS_AVAILABLE', [$commands]);
+
         if (array_key_exists($command, $commands)) {
             Telegram::processCommand($this->update);
         }

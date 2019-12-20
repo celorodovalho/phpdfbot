@@ -2,16 +2,18 @@
 
 namespace App\Commands;
 
+use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
 use Telegram\Bot\Keyboard\Keyboard;
 
 class OptionsCommand extends Command
 {
+    const OPTIONS_COMMAND = 'options';
     /**
      * @var string Command Name
      */
-    protected $name = 'options';
+    protected $name = self::OPTIONS_COMMAND;
 
     /**
      * @var string Command Description
@@ -23,6 +25,8 @@ class OptionsCommand extends Command
      */
     public function handle()
     {
+        Log::info('OPTIONS_COMMAND', [$this->arguments, $this->getArguments()]);
+
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
         if ($this->getUpdate()->getMessage()->from->id !== (int)env('TELEGRAM_OWNER_ID')) {
