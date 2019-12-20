@@ -114,21 +114,26 @@ class CommandsHandler
     {
         $data = $callbackQuery->get('data');
         $data = explode(' ', $data);
+        Log::info('OPPORTUNITY_DATA', $data);
+        $opportunity = Opportunity::find($data[1]);
         switch ($data[0]) {
             case Opportunity::CALLBACK_APPROVE:
-                $opportunity = Opportunity::find($data[1]);
-                $opportunity->status = Opportunity::STATUS_ACTIVE;
-                $opportunity->save();
-                Artisan::call(
-                    'bot:populate:channel',
-                    [
-                        'process' => 'send',
-                        'opportunity' => $opportunity->id
-                    ]
-                );
+                if ($opportunity) {
+                    $opportunity->status = Opportunity::STATUS_ACTIVE;
+                    $opportunity->save();
+                    Artisan::call(
+                        'bot:populate:channel',
+                        [
+                            'process' => 'send',
+                            'opportunity' => $opportunity->id
+                        ]
+                    );
+                }
                 break;
             case Opportunity::CALLBACK_REMOVE:
-                Opportunity::find($data[1])->delete();
+                if ($opportunity) {
+                    $opportunity->delete();
+                }
                 break;
             default:
                 Log::info('SWITCH_DEFAULT', $data);
