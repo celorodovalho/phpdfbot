@@ -784,7 +784,7 @@ class BotPopulateChannel extends AbstractCommand
                     'reply_markup' => $keyboard,
                     'text' => sprintf(
                         "%s\n\n[%s](%s)\n\n%s",
-                        "Há novas vagas no canal!\nConfira: {$this->escapeMarkdown(reset($channels))} $groups " . Emoji::smilingFace(),
+                        "Há novas vagas no canal!\nConfira: {$this->escapeMarkdown(implode(' | ', $channels))} | {$this->escapeMarkdown(implode(' | ', $groups))} " . Emoji::smilingFace(),
                         "🄿🄷🄿🄳🄵",
                         str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp',
                         $listOpportunities
