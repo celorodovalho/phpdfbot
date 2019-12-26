@@ -83,6 +83,9 @@ class BotPopulateChannel extends AbstractCommand
     /** @var array */
     protected $groups;
 
+    /** @var array */
+    protected $mailing;
+
     /** @var string */
     protected $admin;
 
@@ -163,6 +166,7 @@ class BotPopulateChannel extends AbstractCommand
         $this->channels = config('telegram.channels');
         $this->appUrl = env('APP_URL');
         $this->groups = config('telegram.groups');
+        $this->mailing = config('telegram.mailing');
         $this->admin = config('telegram.admin');
 
         switch ($this->argument('process')) {
@@ -256,10 +260,14 @@ class BotPopulateChannel extends AbstractCommand
             $messages = $this->fetchGMailMessages();
             /** @var Mail $message */
             foreach ($messages as $message) {
+                $to = $message->getTo();
+                $to = reset($to);
                 $opportunities[] = [
-                    'title' => $message->getSubject(),
-                    'description' => $this->getMessageBody($message),
-                    'files' => $this->getMailAttachments($message),
+                    Opportunity::TITLE => $message->getSubject(),
+                    Opportunity::DESCRIPTION => $this->getMessageBody($message),
+                    Opportunity::FILES => $this->getMailAttachments($message),
+                    Opportunity::URL => 'email',
+                    Opportunity::ORIGIN => $to['email'],
                 ];
                 $message->markAsRead();
                 $message->addLabel(self::LABEL_ENVIADO_PRO_BOT);
@@ -337,7 +345,9 @@ class BotPopulateChannel extends AbstractCommand
             'clubinfobsb@googlegroups.com',
             'vagas@noreply.github.com',
         ];
-        $fromTo = [];
+        $fromTo = [
+            '-from:' . LaravelGmail::user()
+        ];
         foreach ($groups as $group) {
             $fromTo[] = 'list:' . $group;
             $fromTo[] = 'to:' . $group;
@@ -383,6 +393,12 @@ class BotPopulateChannel extends AbstractCommand
                 $opportunity->save();
 
                 $this->notifyUser($opportunity);
+            }
+        }
+
+        foreach ($this->mailing as $mail => $config) {
+            if ($opportunity->url !== 'email' && (blank($config['tags']) || $this->hasHashTags($config['tags'], $opportunity->getText()))) {
+                $this->mailOpportunity($opportunity, $mail);
             }
         }
     }
@@ -459,6 +475,31 @@ class BotPopulateChannel extends AbstractCommand
             }
         }
         return $messageSentIds;
+    }
+
+    /**
+     * @param Opportunity $opportunity
+     * @param string $email
+     * @param array $options
+     * @return Mail
+     * @throws Exception
+     */
+    protected function mailOpportunity(Opportunity $opportunity, string $email, array $options = []): Mail
+    {
+        try {
+            $messageTexts = $this->formatTextOpportunity($opportunity);
+            $messageTexts = Markdown::convertToHtml(implode('', $messageTexts));
+
+            $mail = new Mail();
+            return $mail->to($email)
+                ->message($messageTexts)
+                ->subject($opportunity->title)
+                ->attach($opportunity->files)
+                ->send();
+        } catch (Exception $exception) {
+            $this->log($exception, 'FALHA_AO_ENVIAR_EMAIL');
+        }
+        return null;
     }
 
     /**
@@ -948,6 +989,8 @@ class BotPopulateChannel extends AbstractCommand
                         Opportunity::DESCRIPTION => implode("\n\n", $description),
                         Opportunity::COMPANY => trim($company),
                         Opportunity::LOCATION => trim($location),
+                        Opportunity::URL => trim($link),
+                        Opportunity::ORIGIN => 'comoequetala',
                     ];
                 }
             }
@@ -995,6 +1038,8 @@ class BotPopulateChannel extends AbstractCommand
                             Opportunity::DESCRIPTION => $description,
                             Opportunity::COMPANY => trim($crawler2->filter('.company-title')->text()),
                             Opportunity::LOCATION => trim($crawler2->filter('.job-location')->text()),
+                            Opportunity::URL => trim($link),
+                            Opportunity::ORIGIN => 'queroworkar',
                         ];
                     }
                 }
@@ -1028,6 +1073,8 @@ class BotPopulateChannel extends AbstractCommand
                 $opportunities[] = [
                     Opportunity::TITLE => trim($title),
                     Opportunity::DESCRIPTION => trim($body),
+                    Opportunity::URL => trim($body['url']),
+                    Opportunity::ORIGIN => $username . '/' . $repo,
                 ];
             }
         }
