@@ -1015,8 +1015,8 @@ class BotPopulateChannel extends AbstractCommand
             'since' => $skipDataCheck ? '1990-01-01' : Carbon::now()->format('Y-m-d')
         ]);
 
-        if (!blank($issues['issues'])) {
-            foreach ($issues['issues'] as $issue) {
+        if (!blank($issues)) {
+            foreach ($issues as $issue) {
                 $title = $issue['title'];
                 $body = explode('## Descrição da vaga', $issue['body']);
                 $body = '## Descrição da vaga' . $body[1];
