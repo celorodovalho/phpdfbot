@@ -23,7 +23,9 @@
         "laravel/framework": "^5.8",
         "laravel/tinker": "^1.0",
         "php-http/guzzle6-adapter": "^2.0",
-        "spatie/emoji": "^2.0"
+        "spatie/emoji": "^2.0",
+        "symfony/cache-contracts": "^1.1.7",
+        "symfony/var-exporter": "^4.4.2"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.6",
