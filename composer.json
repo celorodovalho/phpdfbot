@@ -17,6 +17,7 @@
         "fabpot/goutte": "^3.2",
         "fideloper/proxy": "^4.0",
         "graham-campbell/github": "^8.4",
+        "graham-campbell/markdown": "^11.1",
         "guzzlehttp/guzzle": "6.4.*",
         "irazasyed/telegram-bot-sdk": "^3.0",
         "jrm2k6/cloudder": "^0.6.0",

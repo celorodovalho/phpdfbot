@@ -238,6 +238,7 @@ return [
         'LaravelGmail' => Dacastro4\LaravelGmail\Facade\LaravelGmail::class,
         'Cloudder' => JD\Cloudder\Facades\Cloudder::class,
         'GitHub' => GrahamCampbell\GitHub\Facades\GitHub::class,
+        'Markdown' => GrahamCampbell\Markdown\Facades\Markdown::class,
     ],
 
 ];

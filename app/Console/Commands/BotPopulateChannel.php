@@ -7,6 +7,7 @@ use App\Models\Notification;
 use App\Models\Opportunity;
 
 use Carbon\Carbon;
+
 use Dacastro4\LaravelGmail\Facade\LaravelGmail;
 use Dacastro4\LaravelGmail\Services\Message\Attachment;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
@@ -14,7 +15,10 @@ use Dacastro4\LaravelGmail\Services\Message\Mail;
 use DateTime;
 use DateTimeZone;
 use Exception;
+
 use Goutte\Client;
+
+use GrahamCampbell\Markdown\Facades\Markdown;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
@@ -25,6 +29,7 @@ use JD\Cloudder\CloudinaryWrapper;
 use JD\Cloudder\Facades\Cloudder;
 
 use Spatie\Emoji\Emoji;
+
 use Symfony\Component\DomCrawler\Crawler;
 
 use Telegram\Bot\Exceptions\TelegramSDKException;
@@ -1018,8 +1023,7 @@ class BotPopulateChannel extends AbstractCommand
         if (!blank($issues)) {
             foreach ($issues as $issue) {
                 $title = $issue['title'];
-                $body = explode('## Descrição da vaga', $issue['body']);
-                $body = '## Descrição da vaga' . $body[1];
+                $body = Markdown::convertToHtml($issue['body']);
 
                 $opportunities[] = [
                     Opportunity::TITLE => trim($title),
