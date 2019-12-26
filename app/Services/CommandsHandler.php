@@ -7,6 +7,8 @@ use App\Commands\OptionsCommand;
 use App\Console\Commands\BotPopulateChannel;
 use App\Models\Opportunity;
 
+use GrahamCampbell\GitHub\Facades\GitHub;
+use GrahamCampbell\GitHub\GitHubManager;
 use Illuminate\Support\Facades\Artisan;
 
 use Illuminate\Support\Facades\Log;
@@ -47,6 +49,9 @@ class CommandsHandler
     /** @var Update */
     private $update;
 
+    /** @var GitHubManager */
+    private $github;
+
     /**
      * CommandsHandler constructor.
      * @param BotsManager $botsManager
@@ -63,6 +68,7 @@ class CommandsHandler
         $this->update = $update;
         $this->telegram = $this->botsManager->bot($botName);
         $this->processUpdate($update);
+        $this->github = GitHub::connection('main');
     }
 
     /**
@@ -84,6 +90,7 @@ class CommandsHandler
      * @param Update $update
      * @return mixed
      * @throws TelegramSDKException
+     * @throws \Github\Exception\MissingArgumentException
      */
     private function processUpdate(Update $update): void
     {
@@ -92,11 +99,6 @@ class CommandsHandler
             $message = $update->getMessage();
             /** @var CallbackQuery $callbackQuery */
             $callbackQuery = $update->get('callback_query');
-
-            Log::info('PROCESS_UPDATE', [
-                'message' => $message,
-                'callbackQuery' => $callbackQuery,
-            ]);
 
             if (strpos($message->text, '/') === 0) {
                 $command = explode(' ', $message->text);
@@ -122,8 +124,6 @@ class CommandsHandler
     {
         $data = $callbackQuery->get('data');
         $data = explode(' ', $data);
-        Log::info('OPPORTUNITY_DATA', $data);
-        Log::info('ENTITIES', [$this->update->message]);
         if (is_numeric($data[1])) {
             $opportunity = Opportunity::find($data[1]);
         }
@@ -147,7 +147,7 @@ class CommandsHandler
                 }
                 break;
             case OptionsCommand::OPTIONS_COMMAND:
-                if (in_array($data[1], [BotPopulateChannel::COMMAND_PROCESS, BotPopulateChannel::COMMAND_NOTIFY])) {
+                if (in_array($data[1], [BotPopulateChannel::COMMAND_PROCESS, BotPopulateChannel::COMMAND_NOTIFY], true)) {
                     Artisan::call('bot:populate:channel', ['process' => $data[1]]);
                     $this->sendMessage('Done!');
                 }
@@ -157,14 +157,13 @@ class CommandsHandler
                 $this->processCommand($data[0]);
                 break;
         }
-        Log::info('DELETE_MESSAGE', [$callbackQuery->message]);
-        Log::info('DELETE_MESSAGE_ID', [$callbackQuery->message->messageId]);
         try {
             $this->telegram->deleteMessage([
                 'chat_id' => config('telegram.admin'),
                 'message_id' => $callbackQuery->message->messageId
             ]);
         } catch (TelegramResponseException $exception) {
+            Log::info('DELETE_MESSAGE', [$callbackQuery->message]);
             /**
              * A message can only be deleted if it was sent less than 48 hours ago.
              * Bots can delete outgoing messages in groups and supergroups.
@@ -264,8 +263,6 @@ class CommandsHandler
 
         $commands = $this->telegram->getCommands();
 
-        Log::info('PROCESS_COMMANDS_AVAILABLE', [$commands]);
-
         if (array_key_exists($command, $commands)) {
             $this->telegram->processCommand($this->update);
         }
@@ -282,15 +279,13 @@ class CommandsHandler
 
         $commands = $this->telegram->getCommands();
 
-        Log::info('TRIGGER_COMMANDS_AVAILABLE', [$commands]);
-
         if (array_key_exists($command, $commands)) {
             $this->telegram->triggerCommand($command, $this->update);
         }
     }
 
     /**
-     * Generate a log on server, and send a notification to admin
+     * Generate a log on server, and create a issue on github OR send a notification to admin
      *
      * @param Exception $exception
      * @param string $message
@@ -303,32 +298,58 @@ class CommandsHandler
         Log::error($message, [$exception->getLine(), $exception, $context]);
         Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
         $referenceLog = Storage::disk('logs')->url($referenceLog);
+
+        $logMessage = json_encode([
+            'message' => $message,
+            'exceptionMessage' => $exception->getMessage(),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+            'referenceLog' => $referenceLog,
+        ]);
+
+        $username = env('GITHUB_USERNAME');
+        $repo = env('GITHUB_REPO');
+
         try {
-            $this->telegram->sendDocument([
-                'chat_id' => $this->update->getChat()->id,
-                'reply_to_message_id' => $this->update->getMessage()->messageId,
-                'document' => InputFile::create($referenceLog),
-                'parse_mode' => 'HTML',
-                'caption' => sprintf("<pre>\n%s\n</pre>", json_encode([
-                    'message' => $message,
-                    'exceptionMessage' => $exception->getMessage(),
-                    'file' => $exception->getFile(),
-                    'line' => $exception->getLine(),
-                    'referenceLog' => $referenceLog,
-                ]))
+            $issues = $this->github->issues()->find(
+                $username,
+                $repo,
+                'open',
+                $exception->getMessage()
+            );
+
+            $issueBody = sprintf('```json%s```<br>```json%s```', $logMessage, [
+                'referenceLog' => $referenceLog,
+                'code' => $exception->getCode(),
+                'trace' => $exception->getTrace(),
             ]);
+
+            if (blank($issues['issues'])) {
+                $this->github->issues()->create(
+                    $username,
+                    $repo,
+                    [
+                        'title' => $exception->getMessage(),
+                        'body' => $issueBody
+                    ]
+                );
+            } else {
+                $issueNumber = $issues['issues'][0]['number'];
+                $this->github->issues()->comments()->create(
+                    $username,
+                    $repo,
+                    $issueNumber,
+                    [
+                        'body' => $issueBody
+                    ]
+                );
+            }
         } catch (Exception $exception2) {
             $this->telegram->sendDocument([
                 'chat_id' => $this->update->getChat()->id,
                 'reply_to_message_id' => $this->update->getMessage()->messageId,
                 'document' => InputFile::create($referenceLog),
-                'caption' => json_encode([
-                    'message' => $message,
-                    'exceptionMessage' => $exception->getMessage(),
-                    'file' => $exception->getFile(),
-                    'line' => $exception->getLine(),
-                    'referenceLog' => $referenceLog,
-                ])
+                'caption' => $logMessage
             ]);
         }
     }

@@ -6,6 +6,7 @@ use App\Helpers\Helper;
 use App\Models\Notification;
 use App\Models\Opportunity;
 
+use Carbon\Carbon;
 use Dacastro4\LaravelGmail\Facade\LaravelGmail;
 use Dacastro4\LaravelGmail\Services\Message\Attachment;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
@@ -841,18 +842,18 @@ class BotPopulateChannel extends AbstractCommand
     protected function getMessagesFromGithub(): array
     {
         $githubSources = [
-            'https://github.com/frontendbr/vagas/issues',
-            'https://github.com/androiddevbr/vagas/issues',
-            'https://github.com/CangaceirosDevels/vagas_de_emprego/issues',
-            'https://github.com/CocoaHeadsBrasil/vagas/issues',
-            'https://github.com/phpdevbr/vagas/issues',
-            'https://github.com/vuejs-br/vagas/issues',
-            'https://github.com/backend-br/vagas/issues',
+            'frontendbr' => 'vagas',
+            'androiddevbr' => 'vagas',
+            'CangaceirosDevels' => 'vagas_de_emprego',
+            'CocoaHeadsBrasil' => 'vagas',
+            'phpdevbr' => 'vagas',
+            'vuejs-br' => 'vagas',
+            'backend-br' => 'vagas',
         ];
 
         $opportunities = [];
-        foreach ($githubSources as $githubSource) {
-            $opportunities[] = $this->fetchMessagesFromGithub($githubSource);
+        foreach ($githubSources as $username => $repo) {
+            $opportunities[] = $this->fetchMessagesFromGithub($username, $repo);
         }
         return array_merge(
             ...$opportunities
@@ -1000,36 +1001,33 @@ class BotPopulateChannel extends AbstractCommand
     /**
      * Make a crawler in github opportunities channels
      *
-     * @param string $url
+     * @param string $username
+     * @param string $repo
      * @return array
      */
-    protected function fetchMessagesFromGithub(string $url = ''): array
+    protected function fetchMessagesFromGithub(string $username, string $repo): array
     {
         $opportunities = [];
-        $client = new Client();
-        $crawler = $client->request('GET', $url);
-        $crawler->filter('[aria-label="Issues"] .Box-row')->each(function ($node) use (&$opportunities) {
-            $skipDataCheck = env('CRAWLER_SKIP_DATA_CHECK');
-            /** @var Crawler $node */
-            $client = new Client();
+        $skipDataCheck = env('CRAWLER_SKIP_DATA_CHECK');
 
-            $data = $node->filter('relative-time')->attr('datetime');
-            $data = new DateTime($data);
-            $today = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+        $issues = $this->gitHubManager->issues()->all($username, $repo, [
+            'state' => 'open',
+            'since' => $skipDataCheck ? '1990-01-01' : Carbon::now()->format('Y-m-d')
+        ]);
 
-            if ($skipDataCheck || $data->format('Ymd') === $today->format('Ymd')) {
-                $link = $node->filter('a')->first()->attr('href');
-                $link = 'https://github.com' . $link;
-                $title = $node->filter('a')->first()->text();
-                //d-block comment-body
-                $crawler2 = $client->request('GET', $link);
+        if (!blank($issues['issues'])) {
+            foreach ($issues['issues'] as $issue) {
+                $title = $issue['title'];
+                $body = explode('## Descrição da vaga', $issue['body']);
+                $body = '## Descrição da vaga' . $body[1];
 
                 $opportunities[] = [
                     Opportunity::TITLE => trim($title),
-                    Opportunity::DESCRIPTION => trim($crawler2->filter('.d-block.comment-body')->html()),
+                    Opportunity::DESCRIPTION => trim($body),
                 ];
             }
-        });
+        }
+
         return $opportunities;
     }
 

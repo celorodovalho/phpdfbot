@@ -182,6 +182,7 @@ return [
         Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class,
         Dacastro4\LaravelGmail\LaravelGmailServiceProvider::class,
         JD\Cloudder\CloudderServiceProvider::class,
+        GrahamCampbell\GitHub\GitHubServiceProvider::class,
     ],
 
     /*
@@ -236,6 +237,7 @@ return [
         'Telegram'  => Telegram\Bot\Laravel\Facades\Telegram::class,
         'LaravelGmail' => Dacastro4\LaravelGmail\Facade\LaravelGmail::class,
         'Cloudder' => JD\Cloudder\Facades\Cloudder::class,
+        'GitHub' => GrahamCampbell\GitHub\Facades\GitHub::class,
     ],
 
 ];
