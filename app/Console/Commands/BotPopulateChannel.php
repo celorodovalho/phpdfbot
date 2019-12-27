@@ -345,9 +345,7 @@ class BotPopulateChannel extends AbstractCommand
             'clubinfobsb@googlegroups.com',
             'vagas@noreply.github.com',
         ];
-        $fromTo = [
-            '-from:' . LaravelGmail::user()
-        ];
+        $fromTo = [];
         foreach ($groups as $group) {
             $fromTo[] = 'list:' . $group;
             $fromTo[] = 'to:' . $group;
@@ -366,7 +364,10 @@ class BotPopulateChannel extends AbstractCommand
         $messages = [];
         $allMessages = $threads->getMessages();
         foreach ($allMessages as $message) {
-            $messages[] = new Mail($message, true);
+            $message = new Mail($message, true);
+            if ($message->getFrom()['email'] !== LaravelGmail::user()) {
+                $messages[] = $message;
+            }
         }
         return $messages;
     }
@@ -494,7 +495,7 @@ class BotPopulateChannel extends AbstractCommand
             return $mail->to($email)
                 ->message($messageTexts)
                 ->subject($opportunity->title)
-                ->attach($opportunity->files)
+//                ->attach($opportunity->files)
                 ->send();
         } catch (Exception $exception) {
             $this->log($exception, 'FALHA_AO_ENVIAR_EMAIL');
@@ -920,30 +921,57 @@ class BotPopulateChannel extends AbstractCommand
         Log::error($message, [$exception->getLine(), $exception, $context]);
         Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
         $referenceLog = Storage::disk('logs')->url($referenceLog);
+
+        $logMessage = json_encode([
+            'message' => $message,
+            'exceptionMessage' => $exception->getMessage(),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+            'referenceLog' => $referenceLog,
+        ]);
+
+        $username = env('GITHUB_USERNAME');
+        $repo = env('GITHUB_REPO');
+
         try {
-            $this->telegram->sendDocument([
-                'chat_id' => $this->admin,
-                'document' => InputFile::create($referenceLog),
-                'parse_mode' => 'HTML',
-                'caption' => sprintf("<pre>\n%s\n</pre>", json_encode([
-                    'message' => $message,
-                    'exceptionMessage' => $exception->getMessage(),
-                    'file' => $exception->getFile(),
-                    'line' => $exception->getLine(),
-                    'referenceLog' => $referenceLog,
-                ]))
+            $issues = $this->gitHubManager->issues()->find(
+                $username,
+                $repo,
+                'open',
+                $exception->getMessage()
+            );
+
+            $issueBody = sprintf('```json%s```<br>```json%s```', $logMessage, [
+                'referenceLog' => $referenceLog,
+                'code' => $exception->getCode(),
+                'trace' => $exception->getTrace(),
             ]);
+
+            if (blank($issues['issues'])) {
+                $this->gitHubManager->issues()->create(
+                    $username,
+                    $repo,
+                    [
+                        'title' => $exception->getMessage(),
+                        'body' => $issueBody
+                    ]
+                );
+            } else {
+                $issueNumber = $issues['issues'][0]['number'];
+                $this->gitHubManager->issues()->comments()->create(
+                    $username,
+                    $repo,
+                    $issueNumber,
+                    [
+                        'body' => $issueBody
+                    ]
+                );
+            }
         } catch (Exception $exception2) {
             $this->telegram->sendDocument([
                 'chat_id' => $this->admin,
                 'document' => InputFile::create($referenceLog),
-                'caption' => json_encode([
-                    'message' => $message,
-                    'exceptionMessage' => $exception->getMessage(),
-                    'file' => $exception->getFile(),
-                    'line' => $exception->getLine(),
-                    'referenceLog' => $referenceLog,
-                ])
+                'caption' => $logMessage
             ]);
         }
     }
