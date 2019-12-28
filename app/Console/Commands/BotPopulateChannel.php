@@ -489,10 +489,9 @@ class BotPopulateChannel extends AbstractCommand
      * @param Opportunity $opportunity
      * @param string $email
      * @param array $options
-     * @return Mail
      * @throws Exception
      */
-    protected function mailOpportunity(Opportunity $opportunity, string $email, array $options = []): Mail
+    protected function mailOpportunity(Opportunity $opportunity, string $email, array $options = [])
     {
         try {
             $messageTexts = $this->formatTextOpportunity($opportunity, true);
@@ -500,15 +499,13 @@ class BotPopulateChannel extends AbstractCommand
             $messageTexts = Markdown::convertToHtml($messageTexts);
 
             $mail = new Mail();
-            return $mail->to($email)
+            $mail->to($email)
                 ->message($messageTexts)
                 ->subject($opportunity->title)
-//                ->attach($opportunity->files)
                 ->send();
         } catch (Exception $exception) {
-            $this->log($exception, 'FALHA_AO_ENVIAR_EMAIL');
+            $this->log($exception, 'FALHA_AO_ENVIAR_EMAIL', __FUNCTION__);
         }
-        return null;
     }
 
     /**
