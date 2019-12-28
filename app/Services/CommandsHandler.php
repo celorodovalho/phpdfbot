@@ -7,26 +7,25 @@ use App\Commands\OptionsCommand;
 use App\Console\Commands\BotPopulateChannel;
 use App\Models\Opportunity;
 
+use Exception;
+
 use GrahamCampbell\GitHub\Facades\GitHub;
 use GrahamCampbell\GitHub\GitHubManager;
-use Illuminate\Support\Facades\Artisan;
 
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+
 use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramResponseException;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\FileUpload\InputFile;
-use Telegram\Bot\Keyboard\Keyboard;
-use Telegram\Bot\Laravel\Facades\Telegram;
 use Telegram\Bot\Objects\CallbackQuery;
 use Telegram\Bot\Objects\Document;
 use Telegram\Bot\Objects\Message;
 use Telegram\Bot\Objects\PhotoSize;
 use Telegram\Bot\Objects\Update;
-
-use \Exception;
 
 /**
  * Class CommandsHandler
@@ -59,6 +58,7 @@ class CommandsHandler
      * @param string $token
      * @param Update $update
      * @throws TelegramSDKException
+     * @throws \Github\Exception\MissingArgumentException
      */
     public function __construct(BotsManager $botsManager, string $botName, string $token, Update $update)
     {
@@ -207,6 +207,8 @@ class CommandsHandler
             $opportunity->status = Opportunity::STATUS_INACTIVE;
             $opportunity->files = collect();
             $opportunity->telegram_user_id = $message->from->id;
+            $opportunity->url = $this->botName;
+            $opportunity->origin = 'telegram';
 
             if (filled($photos)) {
                 foreach ($photos as $photo) {

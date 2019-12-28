@@ -241,6 +241,8 @@ class BotPopulateChannel extends AbstractCommand
             $description .= $this->getHashTagFilters($description, $rawOpportunity[Opportunity::TITLE]);
             $opportunity->title = $this->sanitizeSubject($rawOpportunity[Opportunity::TITLE]);
             $opportunity->description = $description;
+            $opportunity->url = $rawOpportunity[Opportunity::URL];
+            $opportunity->origin = $rawOpportunity[Opportunity::ORIGIN];
             $opportunity->save();
             return $opportunity;
         }, $opportunitiesRaw);
