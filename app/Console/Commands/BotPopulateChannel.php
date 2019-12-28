@@ -716,9 +716,6 @@ class BotPopulateChannel extends AbstractCommand
     protected function formatTextOpportunity(Opportunity $opportunity, bool $isEmail = false)
     {
         $description = $opportunity->description;
-        if (strlen($description) < 200) {
-            return [];
-        }
 
         $template = sprintf(
             "*%s*",
