@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
+use Illuminate\Support\Str;
 use JD\Cloudder\CloudinaryWrapper;
 use JD\Cloudder\Facades\Cloudder;
 
@@ -261,13 +262,16 @@ class BotPopulateChannel extends AbstractCommand
             /** @var Mail $message */
             foreach ($messages as $message) {
                 $to = $message->getTo();
-                $to = reset($to);
+                $to = array_map(function ($item) {
+                    return $item['email'];
+                }, $to);
+                $to = strtolower(implode('|', $to));
                 $opportunities[] = [
                     Opportunity::TITLE => $message->getSubject(),
                     Opportunity::DESCRIPTION => $this->getMessageBody($message),
                     Opportunity::FILES => $this->getMailAttachments($message),
                     Opportunity::URL => 'email',
-                    Opportunity::ORIGIN => $to['email'],
+                    Opportunity::ORIGIN => $to,
                 ];
                 $message->markAsRead();
                 $message->addLabel(self::LABEL_ENVIADO_PRO_BOT);
@@ -398,7 +402,10 @@ class BotPopulateChannel extends AbstractCommand
         }
 
         foreach ($this->mailing as $mail => $config) {
-            if ($opportunity->url !== 'email' && (blank($config['tags']) || $this->hasHashTags($config['tags'], $opportunity->getText()))) {
+            if (
+                !Str::contains($opportunity->url, $mail) &&
+                (blank($config['tags']) || $this->hasHashTags($config['tags'], $opportunity->getText()))
+            ) {
                 $this->mailOpportunity($opportunity, $mail);
             }
         }
@@ -488,8 +495,9 @@ class BotPopulateChannel extends AbstractCommand
     protected function mailOpportunity(Opportunity $opportunity, string $email, array $options = []): Mail
     {
         try {
-            $messageTexts = $this->formatTextOpportunity($opportunity);
-            $messageTexts = Markdown::convertToHtml(implode('', $messageTexts));
+            $messageTexts = $this->formatTextOpportunity($opportunity, true);
+            $messageTexts = nl2br($messageTexts);
+            $messageTexts = Markdown::convertToHtml($messageTexts);
 
             $mail = new Mail();
             return $mail->to($email)
@@ -702,9 +710,10 @@ class BotPopulateChannel extends AbstractCommand
      * Prepare the opportunity text to send to channel
      *
      * @param Opportunity $opportunity
-     * @return array
+     * @param bool $isEmail
+     * @return array|string
      */
-    protected function formatTextOpportunity(Opportunity $opportunity): array
+    protected function formatTextOpportunity(Opportunity $opportunity, bool $isEmail = false)
     {
         $description = $opportunity->description;
         if (strlen($description) < 200) {
@@ -718,11 +727,19 @@ class BotPopulateChannel extends AbstractCommand
 
         if ($opportunity->files && $opportunity->files->isNotEmpty()) {
             foreach ($opportunity->files as $file) {
-                $template .= "\n\n" .
-                    sprintf(
-                        "[Image](%s)",
-                        $file
-                    );
+                if ($isEmail) {
+                    $template .= '<br><br>' .
+                        sprintf(
+                            '<img src="%s"/>',
+                            $file
+                        );
+                } else {
+                    $template .= "\n\n" .
+                        sprintf(
+                            '[Image](%s)',
+                            $file
+                        );
+                }
             }
             // $this->escapeMarkdown($file)
         }
@@ -753,7 +770,16 @@ class BotPopulateChannel extends AbstractCommand
             );
         }
 
+        if ($isEmail) {
+            $sign = $this->getGroupSign();
+            $sign = str_replace('@', 'https://t.me/', $sign);
+            return $template . $sign;
+        }
+
         $template .= $this->getGroupSign();
+        if (Str::contains($opportunity->origin, 'clubedevagas')) {
+            $template . "\n" . Emoji::link() . '  www.clubedevagas.com.br';
+        }
         return str_split(
             $template,
             4096
@@ -801,8 +827,7 @@ class BotPopulateChannel extends AbstractCommand
                 $firstOpportunityId = null;
 
                 $listOpportunities = $opportunitiesArr->map(function ($opportunity) use (&$firstOpportunityId) {
-                    $firstOpportunityId = null === $firstOpportunityId
-                        ? $opportunity->telegram_id : $firstOpportunityId;
+                    $firstOpportunityId = $firstOpportunityId ?? $opportunity->telegram_id;
                     return sprintf(
                         "➩ [%s](%s)",
                         $this->replaceMarkdown($this->removeBrackets($opportunity->title)),
@@ -1101,7 +1126,7 @@ class BotPopulateChannel extends AbstractCommand
                 $opportunities[] = [
                     Opportunity::TITLE => trim($title),
                     Opportunity::DESCRIPTION => trim($body),
-                    Opportunity::URL => trim($body['url']),
+                    Opportunity::URL => trim($issue['url']),
                     Opportunity::ORIGIN => $username . '/' . $repo,
                 ];
             }

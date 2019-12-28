@@ -69,6 +69,10 @@ return [
             'main' => false,
             'tags' => ['php'],
         ],
+        '@GrupoClubedeVagas' => [
+            'main' => false,
+            'tags' => [],
+        ],
     ],
     'mailing' => [
         'clubinfobsb@googlegroups.com' => [
