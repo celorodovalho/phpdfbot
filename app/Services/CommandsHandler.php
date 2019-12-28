@@ -318,11 +318,11 @@ class CommandsHandler
                 $exception->getMessage()
             );
 
-            $issueBody = sprintf('```json%s```<br>```json%s```', $logMessage, [
+            $issueBody = sprintf('```json%s```<br>```json%s```', $logMessage, json_encode([
                 'referenceLog' => $referenceLog,
                 'code' => $exception->getCode(),
                 'trace' => $exception->getTrace(),
-            ]);
+            ]));
 
             if (blank($issues['issues'])) {
                 $this->github->issues()->create(
