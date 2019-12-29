@@ -482,10 +482,8 @@ class BotPopulateChannel extends AbstractCommand
     {
         try {
             $messageTexts = $this->formatTextOpportunity($opportunity, true);
-            $messageTexts = nl2br($messageTexts);
-            Log::info('messageTexts1', [$messageTexts]);
             $messageTexts = Markdown::convertToHtml($messageTexts);
-            Log::info('messageTexts2', [$messageTexts]);
+            $messageTexts = nl2br($messageTexts);
 
             $mail = new Mail();
             $mail->to($email)
@@ -761,7 +759,7 @@ class BotPopulateChannel extends AbstractCommand
 
         $template .= $this->getGroupSign();
         if (Str::contains($opportunity->origin, 'clubinfobsb')) {
-            $template . "\n" . Emoji::link() . '  www.clubedevagas.com.br';
+            $template .= "\n" . Emoji::link() . '  www.clubedevagas.com.br';
         }
         return str_split(
             $template,
