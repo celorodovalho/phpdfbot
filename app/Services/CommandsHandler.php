@@ -95,7 +95,7 @@ class CommandsHandler
     private function processUpdate(Update $update): void
     {
         try {
-            /** @var Message $message */
+            /** @var MessageService $message */
             $message = $update->getMessage();
             /** @var CallbackQuery $callbackQuery */
             $callbackQuery = $update->get('callback_query');
@@ -180,12 +180,12 @@ class CommandsHandler
     /**
      * Process the messages coming from bot interface
      *
-     * @param Message $message
+     * @param MessageService $message
      * @throws Exception
      */
     private function processMessage(Message $message): void
     {
-        /** @var Message $reply */
+        /** @var MessageService $reply */
         $reply = $message->getReplyToMessage();
         /** @var PhotoSize $photos */
         /** @var PhotoSize $photo */
@@ -239,7 +239,7 @@ class CommandsHandler
      * Send opportunity to approval
      *
      * @param Opportunity $opportunity
-     * @param Message $message
+     * @param MessageService $message
      */
     private function sendOpportunityToApproval(Opportunity $opportunity, Message $message): void
     {
@@ -320,7 +320,7 @@ class CommandsHandler
                 $exception->getMessage()
             );
 
-            $issueBody = sprintf('```json%s```<br>```json%s```', $logMessage, json_encode([
+            $issueBody = sprintf("```json\n%s```<br>```json\n%s```", $logMessage, json_encode([
                 'referenceLog' => $referenceLog,
                 'code' => $exception->getCode(),
                 'trace' => $exception->getTrace(),

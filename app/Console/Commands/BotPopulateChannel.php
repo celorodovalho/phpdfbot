@@ -5,34 +5,23 @@ namespace App\Console\Commands;
 use App\Helpers\Helper;
 use App\Models\Notification;
 use App\Models\Opportunity;
-
 use Carbon\Carbon;
-
-use Dacastro4\LaravelGmail\Facade\LaravelGmail;
 use Dacastro4\LaravelGmail\Services\Message\Attachment;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
-
 use DateTime;
 use DateTimeZone;
 use Exception;
-
 use Goutte\Client;
-
 use GrahamCampbell\Markdown\Facades\Markdown;
-
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-
 use Illuminate\Support\Str;
 use JD\Cloudder\CloudinaryWrapper;
 use JD\Cloudder\Facades\Cloudder;
-
 use Spatie\Emoji\Emoji;
-
 use Symfony\Component\DomCrawler\Crawler;
-
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Keyboard\Keyboard;
@@ -45,8 +34,8 @@ class BotPopulateChannel extends AbstractCommand
     /**
      * Gmail Labels
      */
-    protected const LABEL_ENVIADO_PRO_BOT = 'Label_5517839157714334708';
-    protected const LABEL_STILL_UNREAD = 'Label_7';
+    protected const LABEL_ENVIADO_PRO_BOT = 'Label_5391527689646879721';
+    protected const LABEL_STILL_UNREAD = 'Label_3143736512522239870';
 
     /**
      * Commands
@@ -338,18 +327,23 @@ class BotPopulateChannel extends AbstractCommand
     /**
      * Walks the GMail looking for specifics opportunity messages
      *
-     * @return array
+     * @return Collection
+     * @throws \Dacastro4\LaravelGmail\Exceptions\AuthException
      */
-    protected function fetchGMailMessages(): array
+    protected function fetchGMailMessages(): Collection
     {
+        $messageService = $this->gmailService->message();
+
         $words = '{' . implode(' ', $this->mustIncludeWords) . '}';
+
+        $messageService->add($words);
+
         $groups = [
             'gebeoportunidades@googlegroups.com',
             'profissaofuturowindows@googlegroups.com',
             'nvagas@googlegroups.com',
             'leonardoti@googlegroups.com',
             'clubinfobsb@googlegroups.com',
-            'vagas@noreply.github.com',
         ];
         $fromTo = [];
         foreach ($groups as $group) {
@@ -360,22 +354,13 @@ class BotPopulateChannel extends AbstractCommand
 
         $fromTo = '{' . implode(' ', $fromTo) . '}';
 
-        $query = "$fromTo $words is:unread";
-        /** @var \Google_Service_Gmail_Thread $threads */
-        $threads = LaravelGmail::message()->service->users_messages->listUsersMessages('me', [
-            'q' => $query,
-            //'maxResults' => 5
-        ]);
+        $messageService->add($fromTo);
+        $messageService->getUser();
 
-        $messages = [];
-        $allMessages = $threads->getMessages();
-        foreach ($allMessages as $message) {
-            $message = new Mail($message, true);
-            if ($message->getFrom()['email'] !== LaravelGmail::user()) {
-                $messages[] = $message;
-            }
-        }
-        return $messages;
+        $messages = $messageService->all();
+        return $messages->reject(function ($message) {
+            return $message->getFrom()['email'] === $this->gmailService->user();
+        });
     }
 
     /**
@@ -962,7 +947,7 @@ class BotPopulateChannel extends AbstractCommand
                 $exception->getMessage()
             );
 
-            $issueBody = sprintf('```json%s```<br>```json%s```', $logMessage, json_encode([
+            $issueBody = sprintf("```json\n%s```<br>```json\n%s```", $logMessage, json_encode([
                 'referenceLog' => $referenceLog,
                 'code' => $exception->getCode(),
                 'trace' => $exception->getTrace(),
