@@ -767,10 +767,9 @@ class BotPopulateChannel extends AbstractCommand
      * Get all the unnotified opportunities, build a keyboard with the links, sends to the group, update the opportunity
      * and remove the previous notifications from group
      *
-     * @return bool
      * @throws TelegramSDKException
      */
-    protected function notifyGroup(): bool
+    protected function notifyGroup()
     {
         $opportunities = Opportunity::whereNotNull('telegram_id');
         $opportunitiesArr = $opportunities->get();
