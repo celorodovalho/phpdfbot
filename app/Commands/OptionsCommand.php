@@ -10,7 +10,7 @@ use App\Console\Commands\BotPopulateChannel;
 
 class OptionsCommand extends Command
 {
-    const OPTIONS_COMMAND = 'options';
+    public const OPTIONS_COMMAND = 'options';
 
     /**
      * @var string Command Name

@@ -15,7 +15,6 @@ use Goutte\Client;
 use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use JD\Cloudder\CloudinaryWrapper;
@@ -23,7 +22,6 @@ use JD\Cloudder\Facades\Cloudder;
 use Spatie\Emoji\Emoji;
 use Symfony\Component\DomCrawler\Crawler;
 use Telegram\Bot\Exceptions\TelegramSDKException;
-use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Keyboard\Keyboard;
 
 /**
@@ -185,17 +183,13 @@ class BotPopulateChannel extends AbstractCommand
      * Retrieve the Opportunities objects and send them to approval
      *
      * @throws TelegramSDKException
+     * @throws \Dacastro4\LaravelGmail\Exceptions\AuthException
      */
     protected function processOpportunities(): void
     {
-        try {
-            $opportunities = $this->createOpportunities();
-            foreach ($opportunities as $opportunity) {
-                $this->sendOpportunityToApproval($opportunity->id);
-            }
-        } catch (Exception $exception) {
-            $this->error($exception->getMessage());
-            $this->log($exception, 'FALHA_AO_PROCESSAR_OPORTUNIDADES', __FUNCTION__);
+        $opportunities = $this->createOpportunities();
+        foreach ($opportunities as $opportunity) {
+            $this->sendOpportunityToApproval($opportunity->id);
         }
     }
 
@@ -204,6 +198,7 @@ class BotPopulateChannel extends AbstractCommand
      *
      * @return Collection
      * @throws TelegramSDKException
+     * @throws \Dacastro4\LaravelGmail\Exceptions\AuthException
      */
     protected function createOpportunities(): Collection
     {
@@ -244,34 +239,30 @@ class BotPopulateChannel extends AbstractCommand
      *
      * @return array
      * @throws TelegramSDKException
+     * @throws \Dacastro4\LaravelGmail\Exceptions\AuthException
      */
     protected function getMessagesFromGMail(): array
     {
         $opportunities = [];
-        try {
-            $messages = $this->fetchGMailMessages();
-            /** @var Mail $message */
-            foreach ($messages as $message) {
-                $to = $message->getTo();
-                $to = array_map(function ($item) {
-                    return $item['email'];
-                }, $to);
-                $to = strtolower(implode('|', $to));
-                $opportunities[] = [
-                    Opportunity::TITLE => $message->getSubject(),
-                    Opportunity::DESCRIPTION => $this->getMessageBody($message),
-                    Opportunity::FILES => $this->getMailAttachments($message),
-                    Opportunity::URL => 'email',
-                    Opportunity::ORIGIN => $to,
-                ];
-                $message->markAsRead();
-                $message->addLabel(self::LABEL_ENVIADO_PRO_BOT);
-                $message->removeLabel(self::LABEL_STILL_UNREAD);
-                $message->sendToTrash();
-            }
-        } catch (Exception $exception) {
-            $this->error($exception->getMessage());
-            $this->log($exception, 'FALHA_AO_PROCESSAR_GMAIL', __FUNCTION__);
+        $messages = $this->fetchGMailMessages();
+        /** @var Mail $message */
+        foreach ($messages as $message) {
+            $to = $message->getTo();
+            $to = array_map(function ($item) {
+                return $item['email'];
+            }, $to);
+            $to = strtolower(implode('|', $to));
+            $opportunities[] = [
+                Opportunity::TITLE => $message->getSubject(),
+                Opportunity::DESCRIPTION => $this->getMessageBody($message),
+                Opportunity::FILES => $this->getMailAttachments($message),
+                Opportunity::URL => 'email',
+                Opportunity::ORIGIN => $to,
+            ];
+            $message->markAsRead();
+            $message->addLabel(self::LABEL_ENVIADO_PRO_BOT);
+            $message->removeLabel(self::LABEL_STILL_UNREAD);
+            $message->sendToTrash();
         }
         return $opportunities;
     }
@@ -281,45 +272,39 @@ class BotPopulateChannel extends AbstractCommand
      *
      * @param Mail $message
      * @return array
-     * @throws TelegramSDKException
+     * @throws Exception
      */
     protected function getMailAttachments(Mail $message): array
     {
         $files = [];
-        try {
-            if ($message->hasAttachments()) {
-                $attachments = $message->getAttachments();
-                /** @var Attachment $attachment */
-                foreach ($attachments as $attachment) {
-                    if (!($attachment->getSize() < 50000
-                        && strpos($attachment->getMimeType(), 'image') !== false)
-                    ) {
-                        $extension = File::extension($attachment->getFileName());
-                        $fileName = Helper::base64UrlEncode($attachment->getFileName()) . '.' . $extension;
-                        $filePath = $attachment->saveAttachmentTo($message->getId() . '/', $fileName, 'uploads');
-                        $filePath = Storage::disk('uploads')->path($filePath);
-                        try {
-                            list($width, $height) = getimagesize($filePath);
-                            /** @var CloudinaryWrapper $cloudImage */
-                            $cloudImage = Cloudder::upload($filePath, null);
-                            $fileUrl = $cloudImage->secureShow(
-                                $cloudImage->getPublicId(),
-                                [
-                                    'width' => $width,
-                                    'height' => $height
-                                ]
-                            );
-                            $files[] = $fileUrl;
-                        } catch (Exception $exception) {
-                            $this->error($exception->getMessage());
-                            $this->log($exception, 'FALHA_AO_GETIMAGESIZE', $filePath);
-                        }
+        if ($message->hasAttachments()) {
+            $attachments = $message->getAttachments();
+            /** @var Attachment $attachment */
+            foreach ($attachments as $attachment) {
+                if (!($attachment->getSize() < 50000
+                    && strpos($attachment->getMimeType(), 'image') !== false)
+                ) {
+                    $extension = File::extension($attachment->getFileName());
+                    $fileName = Helper::base64UrlEncode($attachment->getFileName()) . '.' . $extension;
+                    $filePath = $attachment->saveAttachmentTo($message->getId() . '/', $fileName, 'uploads');
+                    $filePath = Storage::disk('uploads')->path($filePath);
+                    try {
+                        list($width, $height) = getimagesize($filePath);
+                        /** @var CloudinaryWrapper $cloudImage */
+                        $cloudImage = Cloudder::upload($filePath, null);
+                        $fileUrl = $cloudImage->secureShow(
+                            $cloudImage->getPublicId(),
+                            [
+                                'width' => $width,
+                                'height' => $height
+                            ]
+                        );
+                        $files[] = $fileUrl;
+                    } catch (Exception $exception) {
+                        $this->error($exception->getMessage());
                     }
                 }
             }
-        } catch (Exception $exception) {
-            $this->error($exception->getMessage());
-            $this->log($exception, 'FALHA_AO_PROCESSAR_ATTACHMENTS', __FUNCTION__);
         }
         return $files;
     }
@@ -356,9 +341,10 @@ class BotPopulateChannel extends AbstractCommand
 
         $messageService->add($fromTo);
         $messageService->getUser();
+        $messageService->getUser();
 
-        $messages = $messageService->all();
-        return $messages->reject(function ($message) {
+        $messages = $messageService->preload()->all();
+        return $messages->reject(function (Mail $message) {
             return $message->getFrom()['email'] === $this->gmailService->user();
         });
     }
@@ -407,20 +393,11 @@ class BotPopulateChannel extends AbstractCommand
     protected function notifyUser(Opportunity $opportunity): void
     {
         if ($opportunity->telegram_user_id) {
-            try {
-                $link = "https://t.me/VagasBrasil_TI/{$opportunity->telegram_id}";
-                $this->telegram->sendMessage([
-                    'chat_id' => $opportunity->telegram_user_id,
-                    'parse_mode' => 'Markdown',
-                    'text' => "Sua vaga '[$opportunity->title]($link)' foi publicada no canal @VagasBrasil\\_TI.",
-                ]);
-            } catch (Exception $exception) {
-                $link = "https://t.me/VagasBrasil_TI/{$opportunity->telegram_id}";
-                $this->telegram->sendMessage([
-                    'chat_id' => $opportunity->telegram_user_id,
-                    'text' => "Sua vaga '$link' foi publicada no canal @VagasBrasil_TI.",
-                ]);
-            }
+            $link = "https://t.me/VagasBrasil_TI/{$opportunity->telegram_id}";
+            $this->telegram->sendMessage([
+                'chat_id' => $opportunity->telegram_user_id,
+                'text' => "Sua vaga '$link' foi publicada no canal @VagasBrasil_TI.",
+            ]);
         }
     }
 
@@ -429,7 +406,6 @@ class BotPopulateChannel extends AbstractCommand
      * @param int $chatId
      * @param array $options
      * @return array
-     * @throws TelegramSDKException
      */
     protected function sendOpportunity(Opportunity $opportunity, $chatId, array $options = []): array
     {
@@ -459,10 +435,10 @@ class BotPopulateChannel extends AbstractCommand
                         $messageSent = $this->telegram->sendMessage($sendMsg);
                         $messageSentIds[] = $messageSent->messageId;
                     } catch (Exception $exception2) {
-                        $this->log($exception, 'FALHA_AO_ENVIAR_TEXTPLAIN' . $chatId, [$sendMsg]);
+                        $this->error(implode(': ', ['FALHA_AO_ENVIAR_TEXTPLAIN', $chatId, json_encode($sendMsg)]));
                     }
                 }
-                $this->log($exception, 'FALHA_AO_ENVIAR_MARKDOWN' . $chatId, [$sendMsg]);
+                $this->error(implode(': ', ['FALHA_AO_ENVIAR_MARKDOWN', $chatId, json_encode($sendMsg)]));
             }
 
             if ($messageSent) {
@@ -480,19 +456,15 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected function mailOpportunity(Opportunity $opportunity, string $email, array $options = [])
     {
-        try {
-            $messageTexts = $this->formatTextOpportunity($opportunity, true);
-            $messageTexts = Markdown::convertToHtml($messageTexts);
-            $messageTexts = nl2br($messageTexts);
+        $messageTexts = $this->formatTextOpportunity($opportunity, true);
+        $messageTexts = Markdown::convertToHtml($messageTexts);
+        $messageTexts = nl2br($messageTexts);
 
-            $mail = new Mail();
-            $mail->to($email)
-                ->message($messageTexts)
-                ->subject($opportunity->title)
-                ->send();
-        } catch (Exception $exception) {
-            $this->log($exception, 'FALHA_AO_ENVIAR_EMAIL', __FUNCTION__);
-        }
+        $mail = new Mail();
+        $mail->to($email)
+            ->message($messageTexts)
+            ->subject($opportunity->title)
+            ->send();
     }
 
     /**
@@ -628,7 +600,7 @@ class BotPopulateChannel extends AbstractCommand
             $message = str_replace('<li>', '•', $message);
             $message = preg_replace('/<br(\s+)?\/?>/i', "\n", $message);
             $message = preg_replace('/<p[^>]*?>/', "\n", $message);
-            $message = str_replace(["</p>", '</li>'], "\n", $message);
+            $message = str_replace(['</p>', '</li>'], "\n", $message);
             $message = strip_tags($message);
 
             $message = str_replace(['**', '__', '``'], '', $message);
@@ -638,9 +610,9 @@ class BotPopulateChannel extends AbstractCommand
             $message = preg_replace("/\s{2,}/m", ' ', $message);
             $message = trim($message, " \t\n\r\0\x0B--");
 
-            $message = preg_replace("/cid:image(.+)/m", '', $message);
+            $message = preg_replace('/cid:image(.+)/m', '', $message);
 
-            $message = str_replace('GrupoClubedeVagas', 'phpdfvagas', $message);
+            $message = str_replace('GrupoClubedeVagas', '', $message);
             $message = preg_replace('/(.+)(chat\.whatsapp\.com\/)(.+)/m', 'http://bit.ly/phpdf-official', $message);
 
         }
@@ -799,80 +771,72 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected function notifyGroup(): bool
     {
-        try {
-            $opportunities = Opportunity::whereNotNull('telegram_id');
-            $opportunitiesArr = $opportunities->get();
-            if ($opportunitiesArr->isNotEmpty()) {
-                $lastNotifications = Notification::all();
+        $opportunities = Opportunity::whereNotNull('telegram_id');
+        $opportunitiesArr = $opportunities->get();
+        if ($opportunitiesArr->isNotEmpty()) {
+            $lastNotifications = Notification::all();
 
-                $firstOpportunityId = null;
+            $firstOpportunityId = null;
 
-                $listOpportunities = $opportunitiesArr->map(function ($opportunity) use (&$firstOpportunityId) {
-                    $firstOpportunityId = $firstOpportunityId ?? $opportunity->telegram_id;
-                    return sprintf(
-                        "➩ [%s](%s)",
-                        $this->replaceMarkdown($this->removeBrackets($opportunity->title)),
-                        'https://t.me/VagasBrasil_TI/' . $opportunity->telegram_id
-                    );
-                })->implode("\n");
+            $listOpportunities = $opportunitiesArr->map(function ($opportunity) use (&$firstOpportunityId) {
+                $firstOpportunityId = $firstOpportunityId ?? $opportunity->telegram_id;
+                return sprintf(
+                    "➩ [%s](%s)",
+                    $this->replaceMarkdown($this->removeBrackets($opportunity->title)),
+                    'https://t.me/VagasBrasil_TI/' . $opportunity->telegram_id
+                );
+            })->implode("\n");
 
-                $keyboard = Keyboard::make()->inline();
-                $keyboard->row(Keyboard::inlineButton([
-                    'text' => 'Ver vagas',
-                    'url' => 'https://t.me/VagasBrasil_TI/' . $firstOpportunityId
-                ]));
+            $keyboard = Keyboard::make()->inline();
+            $keyboard->row(Keyboard::inlineButton([
+                'text' => 'Ver vagas',
+                'url' => 'https://t.me/VagasBrasil_TI/' . $firstOpportunityId
+            ]));
 
-                $mainGroup = $this->admin;
-                foreach ($this->groups as $group => $config) {
-                    if ($config['main']) {
-                        $mainGroup = $group;
-                    }
+            $mainGroup = $this->admin;
+            foreach ($this->groups as $group => $config) {
+                if ($config['main']) {
+                    $mainGroup = $group;
                 }
-
-                $channels = array_keys($this->channels);
-                $groups = array_keys($this->groups);
-
-                $notificationMessage = [
-                    'chat_id' => $mainGroup,
-                    'parse_mode' => 'Markdown',
-                    'reply_markup' => $keyboard,
-                    'text' => sprintf(
-                        "%s\n\n[%s](%s)\n\n%s",
-                        "Há novas vagas no canal!\nConfira: {$this->escapeMarkdown(implode(' | ', $channels))} | {$this->escapeMarkdown(implode(' | ', $groups))} " . Emoji::smilingFace(),
-                        "🄿🄷🄿🄳🄵",
-                        str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp',
-                        $listOpportunities
-                    )
-                ];
-
-                $message = $this->telegram->sendMessage($notificationMessage);
-
-                $notification = new Notification();
-                $notification->telegram_id = $message->messageId;
-                $notification->body = json_encode($notificationMessage);
-                $notification->save();
-
-                foreach ($lastNotifications as $lastNotification) {
-                    try {
-                        $this->telegram->deleteMessage([
-                            'chat_id' => $mainGroup,
-                            'message_id' => $lastNotification->telegram_id
-                        ]);
-                    } catch (Exception $exception) {
-                        $this->log($exception, 'ERRO_AO_DELETAR_NOTIFICACAO');
-                        $this->info($exception->getMessage());
-                    }
-                    $lastNotification->delete();
-                }
-                $opportunities->delete();
             }
-        } catch (Exception $exception) {
-            $this->log($exception, 'ERRO_AO_NOTIFICAR_GRUPO');
-            $this->error($exception->getMessage());
-            return false;
+
+            $channels = array_keys($this->channels);
+            $groups = array_keys($this->groups);
+
+            $notificationMessage = [
+                'chat_id' => $mainGroup,
+                'parse_mode' => 'Markdown',
+                'reply_markup' => $keyboard,
+                'text' => sprintf(
+                    "%s\n\n[%s](%s)\n\n%s",
+                    "Há novas vagas no canal!\nConfira: {$this->escapeMarkdown(implode(' | ', $channels))} | {$this->escapeMarkdown(implode(' | ', $groups))} " . Emoji::smilingFace(),
+                    "🄿🄷🄿🄳🄵",
+                    str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp',
+                    $listOpportunities
+                )
+            ];
+
+            $message = $this->telegram->sendMessage($notificationMessage);
+
+            $notification = new Notification();
+            $notification->telegram_id = $message->messageId;
+            $notification->body = json_encode($notificationMessage);
+            $notification->save();
+
+            foreach ($lastNotifications as $lastNotification) {
+                try {
+                    $this->telegram->deleteMessage([
+                        'chat_id' => $mainGroup,
+                        'message_id' => $lastNotification->telegram_id
+                    ]);
+                } catch (Exception $exception) {
+                    $this->error(implode(': ', ['ERRO_AO_DELETAR_NOTIFICACAO', $exception->getMessage()]));
+                }
+                $lastNotification->delete();
+            }
+            $opportunities->delete();
         }
         $this->info('The group was notified!');
-        return true;
     }
 
     /**
@@ -911,75 +875,6 @@ class BotPopulateChannel extends AbstractCommand
         return array_merge(
             ...$opportunities
         );
-    }
-
-    /**
-     * Generate a log on server, and send a notification to admin
-     *
-     * @param Exception $exception
-     * @param string $message
-     * @param null $context
-     * @throws TelegramSDKException
-     */
-    protected function log(Exception $exception, $message = '', $context = null): void
-    {
-        $referenceLog = $message . time() . '.log';
-        Log::error($message, [$exception->getLine(), $exception, $context]);
-        Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
-        $referenceLog = Storage::disk('logs')->url($referenceLog);
-
-        $logMessage = json_encode([
-            'message' => $message,
-            'exceptionMessage' => $exception->getMessage(),
-            'file' => $exception->getFile(),
-            'line' => $exception->getLine(),
-            'referenceLog' => $referenceLog,
-        ]);
-
-        $username = env('GITHUB_USERNAME');
-        $repo = env('GITHUB_REPO');
-
-        try {
-            $issues = $this->gitHubManager->issues()->find(
-                $username,
-                $repo,
-                'open',
-                $exception->getMessage()
-            );
-
-            $issueBody = sprintf("```json\n%s```<br>```json\n%s```", $logMessage, json_encode([
-                'referenceLog' => $referenceLog,
-                'code' => $exception->getCode(),
-                'trace' => $exception->getTrace(),
-            ]));
-
-            if (blank($issues['issues'])) {
-                $this->gitHubManager->issues()->create(
-                    $username,
-                    $repo,
-                    [
-                        'title' => $exception->getMessage(),
-                        'body' => $issueBody
-                    ]
-                );
-            } else {
-                $issueNumber = $issues['issues'][0]['number'];
-                $this->gitHubManager->issues()->comments()->create(
-                    $username,
-                    $repo,
-                    $issueNumber,
-                    [
-                        'body' => $issueBody
-                    ]
-                );
-            }
-        } catch (Exception $exception2) {
-            $this->telegram->sendDocument([
-                'chat_id' => $this->admin,
-                'document' => InputFile::create($referenceLog),
-                'caption' => $logMessage
-            ]);
-        }
     }
 
     /**

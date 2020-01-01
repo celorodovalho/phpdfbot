@@ -27,3 +27,11 @@ Route::get('/oauth/gmail/logout', function (){
     LaravelGmail::logout(); //It returns exception if fails
     return redirect()->to('/');
 });
+
+Route::get('me', function (){
+    dump(\Telegram\Bot\Laravel\Facades\Telegram::getMe());
+    dump(\Telegram\Bot\Laravel\Facades\Telegram::sendMessage([
+        'chat_id' => 50,
+        'text' => 'sdfadfas'
+    ]));
+});

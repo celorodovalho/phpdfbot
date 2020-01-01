@@ -6,21 +6,13 @@ use App\Commands\NewOpportunityCommand;
 use App\Commands\OptionsCommand;
 use App\Console\Commands\BotPopulateChannel;
 use App\Models\Opportunity;
-
 use Exception;
-
-use GrahamCampbell\GitHub\Facades\GitHub;
-use GrahamCampbell\GitHub\GitHubManager;
-
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-
 use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramResponseException;
 use Telegram\Bot\Exceptions\TelegramSDKException;
-use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Objects\CallbackQuery;
 use Telegram\Bot\Objects\Document;
 use Telegram\Bot\Objects\Message;
@@ -33,12 +25,6 @@ use Telegram\Bot\Objects\Update;
 class CommandsHandler
 {
 
-    /** @var BotsManager */
-    private $botsManager;
-
-    /** @var string */
-    private $token;
-
     /** @var string */
     private $botName;
 
@@ -48,40 +34,31 @@ class CommandsHandler
     /** @var Update */
     private $update;
 
-    /** @var GitHubManager */
-    private $github;
-
     /**
      * CommandsHandler constructor.
      * @param BotsManager $botsManager
      * @param string $botName
-     * @param string $token
      * @param Update $update
      * @throws TelegramSDKException
-     * @throws \Github\Exception\MissingArgumentException
      */
-    public function __construct(BotsManager $botsManager, string $botName, string $token, Update $update)
+    public function __construct(BotsManager $botsManager, string $botName, Update $update)
     {
-        $this->botsManager = $botsManager;
-        $this->token = $token;
         $this->botName = $botName;
         $this->update = $update;
-        $this->telegram = $this->botsManager->bot($botName);
+        $this->telegram = $botsManager->bot($botName);
         $this->processUpdate($update);
-        $this->github = GitHub::connection('main');
     }
 
     /**
      * @param BotsManager $botsManager
      * @param string $botName
-     * @param string $token
      * @param Update $update
      * @return CommandsHandler
      * @throws TelegramSDKException
      */
-    public static function make(BotsManager $botsManager, string $botName, string $token, Update $update)
+    public static function make(BotsManager $botsManager, string $botName, Update $update)
     {
-        return new static($botsManager, $botName, $token, $update);
+        return new static($botsManager, $botName, $update);
     }
 
     /**
@@ -90,27 +67,22 @@ class CommandsHandler
      * @param Update $update
      * @return mixed
      * @throws TelegramSDKException
-     * @throws \Github\Exception\MissingArgumentException
      */
     private function processUpdate(Update $update): void
     {
-        try {
-            /** @var MessageService $message */
-            $message = $update->getMessage();
-            /** @var CallbackQuery $callbackQuery */
-            $callbackQuery = $update->get('callback_query');
+        /** @var Message $message */
+        $message = $update->getMessage();
+        /** @var CallbackQuery $callbackQuery */
+        $callbackQuery = $update->get('callback_query');
 
-            if (strpos($message->text, '/') === 0) {
-                $command = explode(' ', $message->text);
-                $this->processCommand($command[0]);
-            }
-            if (filled($callbackQuery)) {
-                $this->processCallbackQuery($callbackQuery);
-            } elseif (filled($message)) {
-                $this->processMessage($message);
-            }
-        } catch (Exception $exception) {
-            $this->log($exception, 'ERRO_AO_PROCESSAR_UPDATE');
+        if (strpos($message->text, '/') === 0) {
+            $command = explode(' ', $message->text);
+            $this->processCommand($command[0]);
+        }
+        if (filled($callbackQuery)) {
+            $this->processCallbackQuery($callbackQuery);
+        } elseif (filled($message)) {
+            $this->processMessage($message);
         }
     }
 
@@ -180,12 +152,12 @@ class CommandsHandler
     /**
      * Process the messages coming from bot interface
      *
-     * @param MessageService $message
+     * @param Message $message
      * @throws Exception
      */
     private function processMessage(Message $message): void
     {
-        /** @var MessageService $reply */
+        /** @var Message $reply */
         $reply = $message->getReplyToMessage();
         /** @var PhotoSize $photos */
         /** @var PhotoSize $photo */
@@ -239,7 +211,7 @@ class CommandsHandler
      * Send opportunity to approval
      *
      * @param Opportunity $opportunity
-     * @param MessageService $message
+     * @param Message $message
      */
     private function sendOpportunityToApproval(Opportunity $opportunity, Message $message): void
     {
@@ -287,75 +259,9 @@ class CommandsHandler
     }
 
     /**
-     * Generate a log on server, and create a issue on github OR send a notification to admin
-     *
-     * @param Exception $exception
-     * @param string $message
-     * @param null $context
+     * @param $message
      * @throws TelegramSDKException
      */
-    private function log(Exception $exception, $message = '', $context = null): void
-    {
-        $referenceLog = $message . time() . '.log';
-        Log::error($message, [$exception->getLine(), $exception, $context]);
-        Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
-        $referenceLog = Storage::disk('logs')->url($referenceLog);
-
-        $logMessage = json_encode([
-            'message' => $message,
-            'exceptionMessage' => $exception->getMessage(),
-            'file' => $exception->getFile(),
-            'line' => $exception->getLine(),
-            'referenceLog' => $referenceLog,
-        ]);
-
-        $username = env('GITHUB_USERNAME');
-        $repo = env('GITHUB_REPO');
-
-        try {
-            $issues = $this->github->issues()->find(
-                $username,
-                $repo,
-                'open',
-                $exception->getMessage()
-            );
-
-            $issueBody = sprintf("```json\n%s```<br>```json\n%s```", $logMessage, json_encode([
-                'referenceLog' => $referenceLog,
-                'code' => $exception->getCode(),
-                'trace' => $exception->getTrace(),
-            ]));
-
-            if (blank($issues['issues'])) {
-                $this->github->issues()->create(
-                    $username,
-                    $repo,
-                    [
-                        'title' => $exception->getMessage(),
-                        'body' => $issueBody
-                    ]
-                );
-            } else {
-                $issueNumber = $issues['issues'][0]['number'];
-                $this->github->issues()->comments()->create(
-                    $username,
-                    $repo,
-                    $issueNumber,
-                    [
-                        'body' => $issueBody
-                    ]
-                );
-            }
-        } catch (Exception $exception2) {
-            $this->telegram->sendDocument([
-                'chat_id' => $this->update->getChat()->id,
-                'reply_to_message_id' => $this->update->getMessage()->messageId,
-                'document' => InputFile::create($referenceLog),
-                'caption' => $logMessage
-            ]);
-        }
-    }
-
     private function sendMessage($message)
     {
         $this->telegram->sendMessage([
