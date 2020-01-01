@@ -341,7 +341,6 @@ class BotPopulateChannel extends AbstractCommand
         $messageService->unread();
 
         $messages = $messageService->preload()->all();
-        dump($messages);die;
         return $messages->reject(function (Mail $message) {
             return in_array($this->gmailService->user(), $message->getFrom(), true);
         });
