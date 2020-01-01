@@ -811,7 +811,7 @@ class BotPopulateChannel extends AbstractCommand
                 $listOpportunities
             );
 
-            $messages = str_split($text,4096);
+            $messages = explode('¨', wordwrap($text, 4096, '¨'));
 
             foreach ($messages as $message) {
                 $notificationMessage = [
