@@ -541,7 +541,11 @@ class BotPopulateChannel extends AbstractCommand
     {
         $message = preg_replace('/^(RE|FW|FWD|ENC|VAGA|Oportunidade)S?:?/im', '', $message, -1);
         $message = preg_replace('/(\d{0,999} (view|application)s?)/', '', $message);
-        $message = str_replace(['[ClubInfoBSB]', '[leonardoti]', '[NVagas]', '[ProfissãoFuturo]'], '', $message);
+        $message = str_replace(
+            ['[ClubInfoBSB]', '[leonardoti]', '[NVagas]', '[ProfissãoFuturo]', '[GEBE Oportunidades]'],
+            '',
+            $message
+        );
         $message = str_replace("\n", '', $message);
         return trim($message);
     }
