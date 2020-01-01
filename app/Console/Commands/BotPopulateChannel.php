@@ -203,12 +203,13 @@ class BotPopulateChannel extends AbstractCommand
     protected function createOpportunities(): Collection
     {
         $opportunitiesRaw = $this->getMessagesFromGMail();
-        $opportunitiesRaw = array_merge(
-            $opportunitiesRaw,
-            $this->getMessagesFromGithub(),
-            $this->getMessagesFromComoEQueTaLa(),
-            $this->getMessagesFromQueroWorkar()
-        );
+        die;
+//        $opportunitiesRaw = array_merge(
+//            $opportunitiesRaw,
+//            $this->getMessagesFromGithub(),
+//            $this->getMessagesFromComoEQueTaLa(),
+//            $this->getMessagesFromQueroWorkar()
+//        );
 
         $opportunities = array_map(function ($rawOpportunity) {
             $opportunity = new Opportunity();
@@ -238,7 +239,6 @@ class BotPopulateChannel extends AbstractCommand
      * Return the an array of messages, then remove messages from email
      *
      * @return array
-     * @throws TelegramSDKException
      * @throws \Dacastro4\LaravelGmail\Exceptions\AuthException
      */
     protected function getMessagesFromGMail(): array
@@ -340,12 +340,11 @@ class BotPopulateChannel extends AbstractCommand
         $fromTo = '{' . implode(' ', $fromTo) . '}';
 
         $messageService->add($fromTo);
-        $messageService->getUser();
-        $messageService->getUser();
+        $messageService->unread();
 
         $messages = $messageService->preload()->all();
         return $messages->reject(function (Mail $message) {
-            return $message->getFrom()['email'] === $this->gmailService->user();
+            return in_array($this->gmailService->user(), $message->getFrom(), true);
         });
     }
 
