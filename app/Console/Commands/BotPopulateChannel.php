@@ -831,7 +831,7 @@ class BotPopulateChannel extends AbstractCommand
                     $notification->body = json_encode($notificationMessage);
                     $notification->save();
 
-                    $opportunitiesText->forget($opportunitiesText->keys());
+                    $opportunitiesText = collect();
                     $length = 0;
                 }
                 $opportunitiesText->add($opportunity);
