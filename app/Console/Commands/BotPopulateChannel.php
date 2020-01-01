@@ -778,14 +778,15 @@ class BotPopulateChannel extends AbstractCommand
 
             $firstOpportunityId = null;
 
+            /** @var Collection $listOpportunities */
             $listOpportunities = $opportunitiesArr->map(function ($opportunity) use (&$firstOpportunityId) {
                 $firstOpportunityId = $firstOpportunityId ?? $opportunity->telegram_id;
                 return sprintf(
-                    "➩ [%s](%s)",
+                    '➩ [%s](%s)',
                     $this->replaceMarkdown($this->removeBrackets($opportunity->title)),
                     'https://t.me/VagasBrasil_TI/' . $opportunity->telegram_id
                 );
-            })->implode("\n");
+            });
 
             $keyboard = Keyboard::make()->inline();
             $keyboard->row(Keyboard::inlineButton([
@@ -804,30 +805,37 @@ class BotPopulateChannel extends AbstractCommand
             $groups = array_keys($this->groups);
 
             $text = sprintf(
-                "%s\n\n[%s](%s)\n\n%s",
+                "%s\n\n[%s](%s)",
                 "Há novas vagas no canal!\nConfira: {$this->escapeMarkdown(implode(' | ', $channels))} | {$this->escapeMarkdown(implode(' | ', $groups))} " . Emoji::smilingFace(),
                 '🄿🄷🄿🄳🄵',
-                str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp',
-                $listOpportunities
+                str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp'
             );
 
-            $messages = explode('¨', wordwrap($text, 4096, '¨'));
+            $listOpportunities->prepend($text);
+            $length = 0;
+            $opportunitiesText = collect();
+            $listOpportunities->map(function ($opportunity) use ($mainGroup, $keyboard, &$length, &$opportunitiesText) {
+                $length += strlen($opportunity);
+                if ($length >= 4096) {
+                    $notificationMessage = [
+                        'chat_id' => $mainGroup,
+                        'parse_mode' => 'Markdown',
+                        'reply_markup' => $keyboard,
+                        'text' => $opportunitiesText->implode("\n")
+                    ];
 
-            foreach ($messages as $message) {
-                $notificationMessage = [
-                    'chat_id' => $mainGroup,
-                    'parse_mode' => 'Markdown',
-                    'reply_markup' => $keyboard,
-                    'text' => $message
-                ];
+                    $message = $this->telegram->sendMessage($notificationMessage);
 
-                $message = $this->telegram->sendMessage($notificationMessage);
+                    $notification = new Notification();
+                    $notification->telegram_id = $message->messageId;
+                    $notification->body = json_encode($notificationMessage);
+                    $notification->save();
 
-                $notification = new Notification();
-                $notification->telegram_id = $message->messageId;
-                $notification->body = json_encode($notificationMessage);
-                $notification->save();
-            }
+                    $opportunitiesText->forget($opportunitiesText->keys());
+                    $length = 0;
+                }
+                $opportunitiesText->add($opportunity);
+            });
 
             foreach ($lastNotifications as $lastNotification) {
                 try {
