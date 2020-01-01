@@ -803,25 +803,31 @@ class BotPopulateChannel extends AbstractCommand
             $channels = array_keys($this->channels);
             $groups = array_keys($this->groups);
 
-            $notificationMessage = [
-                'chat_id' => $mainGroup,
-                'parse_mode' => 'Markdown',
-                'reply_markup' => $keyboard,
-                'text' => sprintf(
-                    "%s\n\n[%s](%s)\n\n%s",
-                    "Há novas vagas no canal!\nConfira: {$this->escapeMarkdown(implode(' | ', $channels))} | {$this->escapeMarkdown(implode(' | ', $groups))} " . Emoji::smilingFace(),
-                    "🄿🄷🄿🄳🄵",
-                    str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp',
-                    $listOpportunities
-                )
-            ];
+            $text = sprintf(
+                "%s\n\n[%s](%s)\n\n%s",
+                "Há novas vagas no canal!\nConfira: {$this->escapeMarkdown(implode(' | ', $channels))} | {$this->escapeMarkdown(implode(' | ', $groups))} " . Emoji::smilingFace(),
+                '🄿🄷🄿🄳🄵',
+                str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp',
+                $listOpportunities
+            );
 
-            $message = $this->telegram->sendMessage($notificationMessage);
+            $messages = str_split($text,4096);
 
-            $notification = new Notification();
-            $notification->telegram_id = $message->messageId;
-            $notification->body = json_encode($notificationMessage);
-            $notification->save();
+            foreach ($messages as $message) {
+                $notificationMessage = [
+                    'chat_id' => $mainGroup,
+                    'parse_mode' => 'Markdown',
+                    'reply_markup' => $keyboard,
+                    'text' => $message
+                ];
+
+                $message = $this->telegram->sendMessage($notificationMessage);
+
+                $notification = new Notification();
+                $notification->telegram_id = $message->messageId;
+                $notification->body = json_encode($notificationMessage);
+                $notification->save();
+            }
 
             foreach ($lastNotifications as $lastNotification) {
                 try {
