@@ -197,19 +197,17 @@ class BotPopulateChannel extends AbstractCommand
      * Get messages from source and create objects from them
      *
      * @return Collection
-     * @throws TelegramSDKException
      * @throws \Dacastro4\LaravelGmail\Exceptions\AuthException
      */
     protected function createOpportunities(): Collection
     {
         $opportunitiesRaw = $this->getMessagesFromGMail();
-        die;
-//        $opportunitiesRaw = array_merge(
-//            $opportunitiesRaw,
-//            $this->getMessagesFromGithub(),
-//            $this->getMessagesFromComoEQueTaLa(),
-//            $this->getMessagesFromQueroWorkar()
-//        );
+        $opportunitiesRaw = array_merge(
+            $opportunitiesRaw,
+            $this->getMessagesFromGithub(),
+            $this->getMessagesFromComoEQueTaLa(),
+            $this->getMessagesFromQueroWorkar()
+        );
 
         $opportunities = array_map(function ($rawOpportunity) {
             $opportunity = new Opportunity();
