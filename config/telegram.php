@@ -76,7 +76,17 @@ return [
     ],
     'mailing' => [
         'clubinfobsb@googlegroups.com' => [
-            'tags' => []
+            'tags' => [
+                'DF',
+                'BSB',
+                'Distrito Federal',
+                'Brasília',
+                'Águas Claras',
+                'Asa Sul',
+                'Asa Norte',
+                'Taguatinga',
+                'Goiânia',
+            ]
         ]
     ],
 

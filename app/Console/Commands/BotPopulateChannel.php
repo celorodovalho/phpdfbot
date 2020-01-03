@@ -124,9 +124,17 @@ class BotPopulateChannel extends AbstractCommand
         'SP' => '"São Paulo"',
         'SE' => 'Sergipe',
         'TO' => 'Tocantins',
-        // cidades
-        'BSB' => 'Brasília',
-        'BH' => '"Belo Horizonte"',
+    ];
+
+    protected $cidadesBrasileiras = [
+        'BSB' => 'DF',
+        'Brasília' => 'DF',
+        '"Águas Claras"' => 'DF',
+        '"Asa Sul"' => 'DF',
+        '"Asa Norte"' => 'DF',
+        'Taguatinga' => 'DF',
+        'Goiânia' => 'GO',
+        '"Belo Horizonte"' => 'MG',
     ];
 
     /**
@@ -148,6 +156,7 @@ class BotPopulateChannel extends AbstractCommand
      * Execute the console command.
      *
      * @throws TelegramSDKException
+     * @throws \Dacastro4\LaravelGmail\Exceptions\AuthException
      */
     public function handle(): void
     {
@@ -1036,7 +1045,12 @@ class BotPopulateChannel extends AbstractCommand
     {
         $pattern = sprintf(
             '#(%s)#i',
-            implode('|', array_merge($this->mustIncludeWords, $this->estadosBrasileiros, $this->commonTags))
+            implode('|', array_merge(
+                $this->mustIncludeWords,
+                $this->estadosBrasileiros,
+                array_keys($this->cidadesBrasileiras),
+                $this->commonTags
+            ))
         );
 
         $pattern = str_replace('"', '', $pattern);
@@ -1063,7 +1077,7 @@ class BotPopulateChannel extends AbstractCommand
     {
         $text = mb_strtolower($text);
         foreach ($tags as $tag) {
-            if (strpos($text, '#' . mb_strtolower($tag)) !== false) {
+            if (strpos($text, '#' . str_replace(' ', '', mb_strtolower($tag))) !== false) {
                 return true;
             }
         }
