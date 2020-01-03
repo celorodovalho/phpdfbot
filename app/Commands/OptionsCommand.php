@@ -2,16 +2,20 @@
 
 namespace App\Commands;
 
+use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
 use Telegram\Bot\Keyboard\Keyboard;
+use App\Console\Commands\BotPopulateChannel;
 
 class OptionsCommand extends Command
 {
+    public const OPTIONS_COMMAND = 'options';
+
     /**
      * @var string Command Name
      */
-    protected $name = 'options';
+    protected $name = self::OPTIONS_COMMAND;
 
     /**
      * @var string Command Description
@@ -23,6 +27,8 @@ class OptionsCommand extends Command
      */
     public function handle()
     {
+        Log::info('OPTIONS_COMMAND', [$this->arguments, $this->getArguments()]);
+
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
         if ($this->getUpdate()->getMessage()->from->id !== (int)env('TELEGRAM_OWNER_ID')) {
@@ -36,16 +42,16 @@ class OptionsCommand extends Command
             ->row(
                 Keyboard::inlineButton([
                     'text' => 'Notificar Grupo',
-                    'callback_data' => "/$this->name notify"
+                    'callback_data' => $this->name . ' ' . BotPopulateChannel::COMMAND_NOTIFY
                 ]),
                 Keyboard::inlineButton([
                     'text' => 'Realizar Coleta',
-                    'callback_data' => "/$this->name process"
+                    'callback_data' => $this->name . ' ' . BotPopulateChannel::COMMAND_PROCESS
                 ])
             );
 
         $this->replyWithMessage([
-            'text' => json_encode([$this->getArguments()]),
+            'text' => 'Qual acao deseja realizar?',
             'reply_markup' => $keyboard
         ]);
     }

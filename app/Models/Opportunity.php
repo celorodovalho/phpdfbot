@@ -23,6 +23,8 @@ use Telegram\Bot\Objects\PhotoSize;
  * @property int $status
  * @property int $telegram_user_id
  * @property Collection $files
+ * @property string $url
+ * @property string $origin
  */
 class Opportunity extends Model
 {
@@ -39,6 +41,8 @@ class Opportunity extends Model
     public const FILES = 'files';
     public const DESCRIPTION = 'description';
     public const TITLE = 'title';
+    public const URL = 'url';
+    public const ORIGIN = 'origin';
 
     protected $fillable = [
         self::TITLE,
@@ -51,6 +55,8 @@ class Opportunity extends Model
         'telegram_id',
         'status',
         'telegram_user_id',
+        self::URL,
+        self::ORIGIN,
     ];
 
     protected $guarded = ['id'];
@@ -65,5 +71,14 @@ class Opportunity extends Model
     public function addFile($file): void
     {
         $this->files = $this->files->concat([$file]);
+    }
+
+    public function getText()
+    {
+        return implode(', ', [
+            $this->title,
+            $this->position,
+            $this->description,
+        ]);
     }
 }

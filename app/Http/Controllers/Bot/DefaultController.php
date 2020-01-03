@@ -69,7 +69,7 @@ class DefaultController extends Controller
     {
         try {
             $update = Telegram::getWebhookUpdate();
-            CommandsHandler::make($this->botsManager, $botName, $token, $update);
+            CommandsHandler::make($this->botsManager, $botName, $update);
         } catch (Exception $exception) {
             return $exception->getMessage();
         }

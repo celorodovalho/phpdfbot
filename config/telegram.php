@@ -55,6 +55,40 @@ return [
 //            'token' => '123456:abc',
 //        ],
     ],
+    'admin' => '@botphpdf',
+    'groups' => [
+        '@phpdf' => ['main' => true],
+        '@phpbrasil' => ['main' => false],
+    ],
+    'channels' => [
+        '@VagasBrasil_TI' => [
+            'main' => true,
+            'tags' => [],
+        ],
+        '@phpbrasilvagas' => [
+            'main' => false,
+            'tags' => ['php'],
+        ],
+        '@GrupoClubedeVagas' => [
+            'main' => false,
+            'tags' => [],
+        ],
+    ],
+    'mailing' => [
+        'clubinfobsb@googlegroups.com' => [
+            'tags' => [
+                'DF',
+                'BSB',
+                'Distrito Federal',
+                'Brasília',
+                'Águas Claras',
+                'Asa Sul',
+                'Asa Norte',
+                'Taguatinga',
+                'Goiânia',
+            ]
+        ]
+    ],
 
     /*
     |--------------------------------------------------------------------------
