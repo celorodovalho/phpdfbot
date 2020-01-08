@@ -15,6 +15,7 @@ use Goutte\Client;
 use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use JD\Cloudder\CloudinaryWrapper;
@@ -463,6 +464,9 @@ class BotPopulateChannel extends AbstractCommand
     protected function mailOpportunity(Opportunity $opportunity, string $email, array $options = [])
     {
         $messageTexts = $this->formatTextOpportunity($opportunity, true);
+
+        Log::info('TEXT', [$messageTexts]);
+
         $messageTexts = Markdown::convertToHtml($messageTexts);
         $messageTexts = nl2br($messageTexts);
 
