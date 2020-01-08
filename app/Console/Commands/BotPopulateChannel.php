@@ -382,12 +382,10 @@ class BotPopulateChannel extends AbstractCommand
         }
 
         foreach ($this->mailing as $mail => $config) {
-            Log::info('mailing', [$mail]);
             if (
                 !Str::contains($opportunity->origin, $mail) &&
                 (blank($config['tags']) || $this->hasHashTags($config['tags'], $opportunity->getText()))
             ) {
-                Log::info('mailOpportunity', [json_encode([$opportunity, $mail])]);
                 $this->mailOpportunity($opportunity, $mail);
             }
         }
@@ -466,9 +464,6 @@ class BotPopulateChannel extends AbstractCommand
     protected function mailOpportunity(Opportunity $opportunity, string $email, array $options = [])
     {
         $messageTexts = $this->formatTextOpportunity($opportunity, true);
-
-        Log::info('TEXT', [$messageTexts]);
-
         $messageTexts = Markdown::convertToHtml($messageTexts);
         $messageTexts = nl2br($messageTexts);
 
