@@ -75,7 +75,7 @@ return [
         ],
     ],
     'mailing' => [
-        'clubinfobsb@googlegroups.com' => [
+        /*'clubinfobsb@googlegroups.com' => [
             'tags' => [
                 'DF',
                 'BSB',
@@ -87,7 +87,10 @@ return [
                 'Taguatinga',
                 'Goiânia',
             ]
-        ]
+        ],*/
+        'clubedevagas@googlegroups.com' => [
+            'tags' => []
+        ],
     ],
 
     /*

@@ -382,10 +382,12 @@ class BotPopulateChannel extends AbstractCommand
         }
 
         foreach ($this->mailing as $mail => $config) {
+            Log::info('mailing', [$mail]);
             if (
                 !Str::contains($opportunity->origin, $mail) &&
                 (blank($config['tags']) || $this->hasHashTags($config['tags'], $opportunity->getText()))
             ) {
+                Log::info('mailOpportunity', [json_encode([$opportunity, $mail])]);
                 $this->mailOpportunity($opportunity, $mail);
             }
         }
