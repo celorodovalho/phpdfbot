@@ -6,6 +6,7 @@ use App\Helpers\Helper;
 use App\Models\Notification;
 use App\Models\Opportunity;
 use Carbon\Carbon;
+use Dacastro4\LaravelGmail\Exceptions\AuthException;
 use Dacastro4\LaravelGmail\Services\Message\Attachment;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
 use DateTime;
@@ -15,7 +16,6 @@ use Goutte\Client;
 use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use JD\Cloudder\CloudinaryWrapper;
@@ -89,8 +89,9 @@ class BotPopulateChannel extends AbstractCommand
         'frontend', 'back-end', 'backend', 'scrum', 'tecnologia', '"gerente de projetos"', '"analista de dados"',
         '"administrador de dados"', 'infra', 'software', 'oportunidade', 'hardware', 'java', 'javascript', 'python',
         'informática', 'designer', 'react', 'vue', 'wordpress', 'sistemas', 'full-stack', '"full stack"', 'fullstack',
-        'computação', '"gerente de negócios"', 'tecnologias', 'iot', '"machine learning"', '"big data"',
-        '"gerenciamento de projetos"', '"gerenciamento de negócios"',
+        'computação', '"gerente de negócios"', 'tecnologias', 'iot', '"machine learning"', '"big data"',  'javascript',
+        '"gerenciamento de projetos"', '"gerenciamento de negócios"', '"unit test"', 'magento', 'metadados',
+        '"big data"', '"machine learning"',
     ];
 
     /**
@@ -136,6 +137,7 @@ class BotPopulateChannel extends AbstractCommand
         'Taguatinga' => 'DF',
         'Goiânia' => 'GO',
         '"Belo Horizonte"' => 'MG',
+        '"Blumenau"' => 'SC',
     ];
 
     /**
@@ -157,7 +159,7 @@ class BotPopulateChannel extends AbstractCommand
      * Execute the console command.
      *
      * @throws TelegramSDKException
-     * @throws \Dacastro4\LaravelGmail\Exceptions\AuthException
+     * @throws AuthException
      */
     public function handle(): void
     {
@@ -178,10 +180,7 @@ class BotPopulateChannel extends AbstractCommand
                 $this->sendOpportunityToChannels($this->argument('opportunity'));
                 break;
             case 'approval':
-                $opportunityId = $this->argument('opportunity');
-                $messageId = $this->argument('message');
-                $chatId = $this->argument('chat');
-                $this->sendOpportunityToApproval($opportunityId, $messageId, $chatId);
+                $this->sendOpportunityToApproval($this->argument('opportunity'));
                 break;
             default:
                 // Do something
@@ -192,8 +191,7 @@ class BotPopulateChannel extends AbstractCommand
     /**
      * Retrieve the Opportunities objects and send them to approval
      *
-     * @throws TelegramSDKException
-     * @throws \Dacastro4\LaravelGmail\Exceptions\AuthException
+     * @throws AuthException
      */
     protected function processOpportunities(): void
     {
@@ -207,7 +205,7 @@ class BotPopulateChannel extends AbstractCommand
      * Get messages from source and create objects from them
      *
      * @return Collection
-     * @throws \Dacastro4\LaravelGmail\Exceptions\AuthException
+     * @throws AuthException
      */
     protected function createOpportunities(): Collection
     {
@@ -247,7 +245,7 @@ class BotPopulateChannel extends AbstractCommand
      * Return the an array of messages, then remove messages from email
      *
      * @return array
-     * @throws \Dacastro4\LaravelGmail\Exceptions\AuthException
+     * @throws AuthException
      */
     protected function getMessagesFromGMail(): array
     {
@@ -321,7 +319,7 @@ class BotPopulateChannel extends AbstractCommand
      * Walks the GMail looking for specifics opportunity messages
      *
      * @return Collection
-     * @throws \Dacastro4\LaravelGmail\Exceptions\AuthException
+     * @throws AuthException
      */
     protected function fetchGMailMessages(): Collection
     {
@@ -589,7 +587,8 @@ class BotPopulateChannel extends AbstractCommand
                 'linkedin.com/company/clube-de-vagas/',
                 'Cordialmente',
                 'Tiago Romualdo Souza',
-                '--'
+                '--',
+                'Com lisura,',
             ];
 
             $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
@@ -777,8 +776,6 @@ class BotPopulateChannel extends AbstractCommand
      * Notifies the group with the latest opportunities in channel
      * Get all the unnotified opportunities, build a keyboard with the links, sends to the group, update the opportunity
      * and remove the previous notifications from group
-     *
-     * @throws TelegramSDKException
      */
     protected function notifyGroup()
     {
@@ -1090,11 +1087,8 @@ class BotPopulateChannel extends AbstractCommand
      * Send opportunity to approval
      *
      * @param int $opportunityId
-     * @param int $messageId
-     * @param int $chatId
-     * @throws TelegramSDKException
      */
-    protected function sendOpportunityToApproval(int $opportunityId, int $messageId = null, int $chatId = null): void
+    protected function sendOpportunityToApproval(int $opportunityId): void
     {
         $keyboard = Keyboard::make()
             ->inline()
@@ -1113,22 +1107,8 @@ class BotPopulateChannel extends AbstractCommand
             'reply_markup' => $keyboard,
         ];
 
-        if ($messageId && $chatId) {
-            $fwdMessage = $this->telegram->forwardMessage([
-                'chat_id' => $this->admin,
-                'from_chat_id' => $chatId,
-                'message_id' => $messageId
-            ]);
-            $messageToSend['reply_to_message_id'] = $fwdMessage->messageId;
-            $messageToSend['parse_mode'] = 'Markdown';
-            $messageToSend['chat_id'] = $this->admin;
-            $messageToSend['text'] = 'Aprovar?';
-
-            $this->telegram->sendMessage($messageToSend);
-        } else {
-            /** @var Opportunity $opportunity */
-            $opportunity = Opportunity::find($opportunityId);
-            $this->sendOpportunity($opportunity, $this->admin, $messageToSend);
-        }
+        /** @var Opportunity $opportunity */
+        $opportunity = Opportunity::find($opportunityId);
+        $this->sendOpportunity($opportunity, $this->admin, $messageToSend);
     }
 }

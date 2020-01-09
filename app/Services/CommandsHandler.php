@@ -193,7 +193,7 @@ class CommandsHandler
 
             $opportunity->save();
 
-            $this->sendOpportunityToApproval($opportunity, $message);
+            $this->sendOpportunityToApproval($opportunity);
         }
         $newMembers = $message->newChatMembers;
         Log::info('NEW_MEMBER', [$newMembers]);
@@ -211,17 +211,14 @@ class CommandsHandler
      * Send opportunity to approval
      *
      * @param Opportunity $opportunity
-     * @param Message $message
      */
-    private function sendOpportunityToApproval(Opportunity $opportunity, Message $message): void
+    private function sendOpportunityToApproval(Opportunity $opportunity): void
     {
         Artisan::call(
             'bot:populate:channel',
             [
                 'process' => 'approval',
                 'opportunity' => $opportunity->id,
-                'message' => $message->messageId,
-                'chat' => $message->chat->id,
             ]
         );
     }
