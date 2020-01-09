@@ -337,6 +337,7 @@ class BotPopulateChannel extends AbstractCommand
             'nvagas@googlegroups.com',
             'leonardoti@googlegroups.com',
             'clubinfobsb@googlegroups.com',
+            'clubedevagas@googlegroups.com',
         ];
         $fromTo = [];
         foreach ($groups as $group) {
@@ -741,7 +742,7 @@ class BotPopulateChannel extends AbstractCommand
         }
 
         $template .= $this->getGroupSign();
-        if (Str::contains($opportunity->origin, 'clubinfobsb')) {
+        if (Str::contains($opportunity->origin, ['clubinfobsb', 'clubedevagas'])) {
             $template .= "\n" . Emoji::link() . '  www.clubedevagas.com.br';
         }
         return str_split(
