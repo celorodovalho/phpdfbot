@@ -180,7 +180,7 @@ class BotPopulateChannel extends AbstractCommand
                 $this->sendOpportunityToChannels($this->argument('opportunity'));
                 break;
             case 'approval':
-                $this->sendOpportunityToApproval($this->argument('opportunity'));
+                $this->sendTelegramOpportunityToApproval($this->argument('opportunity'));
                 break;
             default:
                 // Do something
@@ -202,6 +202,37 @@ class BotPopulateChannel extends AbstractCommand
     }
 
     /**
+     * @param array|Opportunity $rawOpportunity
+     * @return Opportunity
+     */
+    protected function createOrUpdateOpportunity($rawOpportunity)
+    {
+        if (is_array($rawOpportunity)) {
+            $opportunity = new Opportunity();
+        } else {
+            $opportunity = $rawOpportunity;
+            $rawOpportunity = $rawOpportunity->toArray();
+        }
+        if (array_key_exists(Opportunity::COMPANY, $rawOpportunity)) {
+            $opportunity->company = $rawOpportunity[Opportunity::COMPANY];
+        }
+        if (array_key_exists(Opportunity::LOCATION, $rawOpportunity)) {
+            $opportunity->location = $rawOpportunity[Opportunity::LOCATION];
+        }
+        if (array_key_exists(Opportunity::FILES, $rawOpportunity)) {
+            $opportunity->files = collect($rawOpportunity[Opportunity::FILES]);
+        }
+        $description = $this->sanitizeBody($rawOpportunity[Opportunity::DESCRIPTION]);
+        $description .= $this->getHashTagFilters($description, $rawOpportunity[Opportunity::TITLE]);
+        $opportunity->title = $this->sanitizeSubject($rawOpportunity[Opportunity::TITLE]);
+        $opportunity->description = $description;
+        $opportunity->url = $rawOpportunity[Opportunity::URL];
+        $opportunity->origin = $rawOpportunity[Opportunity::ORIGIN];
+        $opportunity->save();
+        return $opportunity;
+    }
+
+    /**
      * Get messages from source and create objects from them
      *
      * @return Collection
@@ -218,24 +249,7 @@ class BotPopulateChannel extends AbstractCommand
         );
 
         $opportunities = array_map(function ($rawOpportunity) {
-            $opportunity = new Opportunity();
-            if (array_key_exists(Opportunity::COMPANY, $rawOpportunity)) {
-                $opportunity->company = $rawOpportunity[Opportunity::COMPANY];
-            }
-            if (array_key_exists(Opportunity::LOCATION, $rawOpportunity)) {
-                $opportunity->location = $rawOpportunity[Opportunity::LOCATION];
-            }
-            if (array_key_exists(Opportunity::FILES, $rawOpportunity)) {
-                $opportunity->files = collect($rawOpportunity[Opportunity::FILES]);
-            }
-            $description = $this->sanitizeBody($rawOpportunity[Opportunity::DESCRIPTION]);
-            $description .= $this->getHashTagFilters($description, $rawOpportunity[Opportunity::TITLE]);
-            $opportunity->title = $this->sanitizeSubject($rawOpportunity[Opportunity::TITLE]);
-            $opportunity->description = $description;
-            $opportunity->url = $rawOpportunity[Opportunity::URL];
-            $opportunity->origin = $rawOpportunity[Opportunity::ORIGIN];
-            $opportunity->save();
-            return $opportunity;
+            return $this->createOrUpdateOpportunity($rawOpportunity);
         }, $opportunitiesRaw);
 
         return collect($opportunities);
@@ -1110,5 +1124,15 @@ class BotPopulateChannel extends AbstractCommand
         /** @var Opportunity $opportunity */
         $opportunity = Opportunity::find($opportunityId);
         $this->sendOpportunity($opportunity, $this->admin, $messageToSend);
+    }
+
+    /**
+     * @param $opportunityId
+     */
+    protected function sendTelegramOpportunityToApproval($opportunityId)
+    {
+        $opportunity = Opportunity::find($opportunityId);
+        $opportunity = $this->createOrUpdateOpportunity($opportunity);
+        $this->sendOpportunityToApproval($opportunity->id);
     }
 }
