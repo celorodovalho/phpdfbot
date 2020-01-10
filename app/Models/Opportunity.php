@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Prettus\Repository\Contracts\Transformable;
+use Prettus\Repository\Traits\TransformableTrait;
 use Telegram\Bot\Objects\PhotoSize;
 
 /**
@@ -26,10 +28,10 @@ use Telegram\Bot\Objects\PhotoSize;
  * @property string $url
  * @property string $origin
  */
-class Opportunity extends Model
+class Opportunity extends Model implements Transformable
 {
 
-    use SoftDeletes;
+    use SoftDeletes, TransformableTrait;
 
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE = 1;

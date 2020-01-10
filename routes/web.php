@@ -35,3 +35,8 @@ Route::get('me', function (){
         'text' => 'sdfadfas'
     ]));
 });
+
+Route::get('/', function (){
+    dump('show');die;
+});
+Route::get('opportunities', 'Web\OpportunityController@index');

@@ -11,6 +11,6 @@ class OpportunityController extends Controller
 {
     public function index()
     {
-
+        dump('index');
     }
 }
