@@ -223,11 +223,11 @@ class BotPopulateChannel extends AbstractCommand
             $opportunity->files = collect($rawOpportunity[Opportunity::FILES]);
         }
         $description = $this->sanitizeBody($rawOpportunity[Opportunity::DESCRIPTION]);
-        $description .= $this->getHashTagFilters($description, $rawOpportunity[Opportunity::TITLE]);
         $opportunity->title = $this->sanitizeSubject($rawOpportunity[Opportunity::TITLE]);
         $opportunity->description = $description;
         $opportunity->url = $rawOpportunity[Opportunity::URL];
         $opportunity->origin = $rawOpportunity[Opportunity::ORIGIN];
+        $opportunity->tags = $this->getHashTagFilters($description . $rawOpportunity[Opportunity::TITLE]);
         $opportunity->save();
         return $opportunity;
     }
@@ -748,6 +748,13 @@ class BotPopulateChannel extends AbstractCommand
             );
         }
 
+        if (filled($opportunity->tags)) {
+            $template .= sprintf(
+                "\n\n*Tags*\n%s",
+                $opportunity->tags
+            );
+        }
+
         if ($isEmail) {
             $sign = $this->getGroupSign();
             $sign = str_replace('@', 'https://t.me/', $sign);
@@ -1050,11 +1057,10 @@ class BotPopulateChannel extends AbstractCommand
     /**
      * Append the hashtags relatives the to content
      *
-     * @param string $message
-     * @param string $title
+     * @param string $text
      * @return string
      */
-    protected function getHashTagFilters(string $message, string $title): string
+    protected function getHashTagFilters(string $text): string
     {
         $pattern = sprintf(
             '#(%s)#i',
@@ -1068,7 +1074,7 @@ class BotPopulateChannel extends AbstractCommand
 
         $pattern = str_replace('"', '', $pattern);
         $allTags = '';
-        if (preg_match_all($pattern, $title . $message, $matches)) {
+        if (preg_match_all($pattern, $text, $matches)) {
             $tags = [];
             array_walk($matches[0], function ($item, $key) use (&$tags) {
                 $tags[$key] = '#' . strtolower(str_replace([' ', '-'], '', $item));

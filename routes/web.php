@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Web\OpportunityController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -36,7 +38,8 @@ Route::get('me', function (){
     ]));
 });
 
-Route::get('/', function (){
-    dump('show');die;
-});
 Route::get('opportunities', 'Web\OpportunityController@index');
+
+Route::group(['namespace' => 'Web',], function () {
+    Route::resource('opportunities', 'OpportunityController');
+});

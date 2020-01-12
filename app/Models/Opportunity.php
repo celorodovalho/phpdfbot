@@ -27,6 +27,7 @@ use Telegram\Bot\Objects\PhotoSize;
  * @property Collection $files
  * @property string $url
  * @property string $origin
+ * @property string $tags
  */
 class Opportunity extends Model implements Transformable
 {
@@ -45,6 +46,7 @@ class Opportunity extends Model implements Transformable
     public const TITLE = 'title';
     public const URL = 'url';
     public const ORIGIN = 'origin';
+    public const TAGS = 'tags';
 
     protected $fillable = [
         self::TITLE,
@@ -59,6 +61,7 @@ class Opportunity extends Model implements Transformable
         'telegram_user_id',
         self::URL,
         self::ORIGIN,
+        self::TAGS,
     ];
 
     protected $guarded = ['id'];
@@ -81,6 +84,7 @@ class Opportunity extends Model implements Transformable
             $this->title,
             $this->position,
             $this->description,
+            $this->tags,
         ]);
     }
 }

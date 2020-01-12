@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Contracts\Repositories\OpportunityRepository;
 use App\Http\Controllers\ApiController;
 use App\Http\Requests\OpportunityCreateRequest;
 use App\Http\Requests\OpportunityUpdateRequest;
-use App\Validators\OpportunityValidator;
+use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Validator\Contracts\ValidatorInterface;
 use Prettus\Validator\Exceptions\ValidatorException;
 
@@ -24,7 +23,7 @@ class OpportunitiesController extends ApiController
      */
     public function index()
     {
-        $this->repository->pushCriteria(app('Prettus\Repository\Criteria\RequestCriteria'));
+        $this->repository->pushCriteria(app(RequestCriteria::class));
         $opportunities = $this->repository->all();
 
         if (request()->wantsJson()) {
@@ -56,7 +55,7 @@ class OpportunitiesController extends ApiController
 
             $response = [
                 'message' => 'Opportunity created.',
-                'data'    => $opportunity->toArray(),
+                'data' => $opportunity->toArray(),
             ];
 
             if ($request->wantsJson()) {
@@ -68,7 +67,7 @@ class OpportunitiesController extends ApiController
         } catch (ValidatorException $e) {
             if ($request->wantsJson()) {
                 return response()->json([
-                    'error'   => true,
+                    'error' => true,
                     'message' => $e->getMessageBag()
                 ]);
             }
@@ -116,7 +115,7 @@ class OpportunitiesController extends ApiController
      * Update the specified resource in storage.
      *
      * @param  OpportunityUpdateRequest $request
-     * @param  string            $id
+     * @param  string $id
      *
      * @return Response
      *
@@ -132,7 +131,7 @@ class OpportunitiesController extends ApiController
 
             $response = [
                 'message' => 'Opportunity updated.',
-                'data'    => $opportunity->toArray(),
+                'data' => $opportunity->toArray(),
             ];
 
             if ($request->wantsJson()) {
@@ -146,7 +145,7 @@ class OpportunitiesController extends ApiController
             if ($request->wantsJson()) {
 
                 return response()->json([
-                    'error'   => true,
+                    'error' => true,
                     'message' => $e->getMessageBag()
                 ]);
             }

@@ -9,6 +9,7 @@ use App\Models\Opportunity;
 use Exception;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramResponseException;
@@ -174,7 +175,7 @@ class CommandsHandler
             }
             $text = $message->text ?? $caption;
             $title = str_replace("\n", ' ', $text);
-            $opportunity->title = substr($title, 0, 50);
+            $opportunity->title = Str::limit($title, 50);
             $opportunity->description = $text;
             $opportunity->status = Opportunity::STATUS_INACTIVE;
             $opportunity->files = collect();

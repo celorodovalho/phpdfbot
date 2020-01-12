@@ -3,44 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Validation\CreateUpdateInterface;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Foundation\Validation\ValidatesRequests;
-use Prettus\Repository\Contracts\RepositoryCriteriaInterface;
-use Prettus\Repository\Contracts\RepositoryInterface;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Validator\Contracts\ValidatorInterface;
 
 /**
- * Class Controller
- * @property RepositoryInterface|RepositoryCriteriaInterface $repository
- * @property ValidatorInterface $validator
+ * Class ApiController
  */
 class ApiController extends Controller
 {
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
-
-    /**
-     * @var RepositoryInterface|RepositoryCriteriaInterface
-     */
-    protected $repository;
-
-    /**
-     * @var ValidatorInterface
-     */
-    protected $validator;
-
-    /**
-     * Controller constructor.
-     *
-     * @param RepositoryInterface $repository
-     * @param ValidatorInterface  $validator
-     */
-    public function __construct(RepositoryInterface $repository, ValidatorInterface $validator)
-    {
-        $this->repository = $repository;
-        $this->validator = $validator;
-    }
 
     /**
      * Display a listing of the resource.
