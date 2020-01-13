@@ -136,7 +136,7 @@ class CommandsHandler
                 'message_id' => $callbackQuery->message->messageId
             ]);
         } catch (TelegramResponseException $exception) {
-            Log::info('DELETE_MESSAGE', [$callbackQuery->message]);
+            Log::info('DELETE_MESSAGE', [$exception, $callbackQuery->message]);
             /**
              * A message can only be deleted if it was sent less than 48 hours ago.
              * Bots can delete outgoing messages in groups and supergroups.

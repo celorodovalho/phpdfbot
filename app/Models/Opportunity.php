@@ -47,12 +47,14 @@ class Opportunity extends Model implements Transformable
     public const URL = 'url';
     public const ORIGIN = 'origin';
     public const TAGS = 'tags';
+    public const POSITION = 'position';
+    public const SALARY = 'salary';
 
     protected $fillable = [
         self::TITLE,
-        'position',
+        self::POSITION,
         self::DESCRIPTION,
-        'salary',
+        self::SALARY,
         self::COMPANY,
         self::LOCATION,
         self::FILES,

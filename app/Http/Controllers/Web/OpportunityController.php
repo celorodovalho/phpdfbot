@@ -13,7 +13,7 @@ class OpportunityController extends Controller
 {
 
     /**
-     * ExperienceController constructor.
+     * OpportunityController constructor.
      *
      * @param OpportunityRepository $repository
      * @param OpportunityValidator $validator

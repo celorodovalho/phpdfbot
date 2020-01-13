@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\Repositories\OpportunityRepository;
 use App\Http\Controllers\ApiController;
 use App\Http\Requests\OpportunityCreateRequest;
 use App\Http\Requests\OpportunityUpdateRequest;
+use App\Validators\OpportunityValidator;
+use Illuminate\Http\Response;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Validator\Contracts\ValidatorInterface;
 use Prettus\Validator\Exceptions\ValidatorException;
@@ -14,12 +17,24 @@ use Prettus\Validator\Exceptions\ValidatorException;
  *
  * @package namespace App\Http\Controllers\Api;
  */
-class OpportunitiesController extends ApiController
+class OpportunityController extends ApiController
 {
+
+    /**
+     * OpportunityController constructor.
+     *
+     * @param OpportunityRepository $repository
+     * @param OpportunityValidator $validator
+     */
+    public function __construct(OpportunityRepository $repository, OpportunityValidator $validator)
+    {
+        parent::__construct($repository, $validator);
+    }
+
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index()
     {
@@ -39,11 +54,9 @@ class OpportunitiesController extends ApiController
     /**
      * Store a newly created resource in storage.
      *
-     * @param  OpportunityCreateRequest $request
+     * @param OpportunityCreateRequest $request
      *
-     * @return \Illuminate\Http\Response
-     *
-     * @throws \Prettus\Validator\Exceptions\ValidatorException
+     * @return Response
      */
     public function store(OpportunityCreateRequest $request)
     {
@@ -79,9 +92,9 @@ class OpportunitiesController extends ApiController
     /**
      * Display the specified resource.
      *
-     * @param  int $id
+     * @param int $id
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show($id)
     {
@@ -100,9 +113,9 @@ class OpportunitiesController extends ApiController
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int $id
+     * @param int $id
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit($id)
     {
@@ -114,12 +127,10 @@ class OpportunitiesController extends ApiController
     /**
      * Update the specified resource in storage.
      *
-     * @param  OpportunityUpdateRequest $request
-     * @param  string $id
+     * @param OpportunityUpdateRequest $request
+     * @param string $id
      *
      * @return Response
-     *
-     * @throws \Prettus\Validator\Exceptions\ValidatorException
      */
     public function update(OpportunityUpdateRequest $request, $id)
     {
@@ -158,9 +169,9 @@ class OpportunitiesController extends ApiController
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int $id
+     * @param int $id
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy($id)
     {

@@ -2,26 +2,25 @@
 
 namespace App\Console\Commands;
 
-use App\Helpers\Helper;
+use App\Helpers\HashTag;
+use App\Helpers\Sanitizer;
 use App\Models\Notification;
 use App\Models\Opportunity;
+use App\Services\Collect\GMailMessages;
 use Carbon\Carbon;
 use Dacastro4\LaravelGmail\Exceptions\AuthException;
-use Dacastro4\LaravelGmail\Services\Message\Attachment;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
 use DateTime;
 use DateTimeZone;
 use Exception;
 use Goutte\Client;
+use GrahamCampbell\GitHub\GitHubManager;
 use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use JD\Cloudder\CloudinaryWrapper;
-use JD\Cloudder\Facades\Cloudder;
 use Spatie\Emoji\Emoji;
 use Symfony\Component\DomCrawler\Crawler;
+use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Keyboard\Keyboard;
 
@@ -30,11 +29,6 @@ use Telegram\Bot\Keyboard\Keyboard;
  */
 class BotPopulateChannel extends AbstractCommand
 {
-    /**
-     * Gmail Labels
-     */
-    protected const LABEL_ENVIADO_PRO_BOT = 'Label_5391527689646879721';
-    protected const LABEL_STILL_UNREAD = 'Label_3143736512522239870';
 
     /**
      * Commands
@@ -78,82 +72,14 @@ class BotPopulateChannel extends AbstractCommand
     /** @var string */
     protected $admin;
 
-    /**
-     * The emails must to contain at least one of this words
-     *
-     * @var array
-     */
-    protected $mustIncludeWords = [
-        'desenvolvedor', 'desenvolvimento', 'programador', 'developer', 'analista', 'php', 'arquiteto', 'suporte',
-        'devops', 'dev-ops', 'teste', '"banco de dados"', '"segurança da informação"', 'design', 'front-end',
-        'frontend', 'back-end', 'backend', 'scrum', 'tecnologia', '"gerente de projetos"', '"analista de dados"',
-        '"administrador de dados"', 'infra', 'software', 'oportunidade', 'hardware', 'java', 'javascript', 'python',
-        'informática', 'designer', 'react', 'vue', 'wordpress', 'sistemas', 'full-stack', '"full stack"', 'fullstack',
-        'computação', '"gerente de negócios"', 'tecnologias', 'iot', '"machine learning"', '"big data"',  'javascript',
-        '"gerenciamento de projetos"', '"gerenciamento de negócios"', '"unit test"', 'magento', 'metadados',
-        '"big data"', '"machine learning"',
-    ];
+    /** @var GMailMessages */
+    private $mailMessages;
 
-    /**
-     * Estados
-     * @var array
-     */
-    protected $estadosBrasileiros = [
-        'AC' => 'Acre',
-        'AL' => 'Alagoas',
-        'AP' => 'Amapá',
-        'AM' => 'Amazonas',
-        'BA' => 'Bahia',
-        'CE' => 'Ceará',
-        'DF' => '"Distrito Federal"',
-        'ES' => '"Espírito Santo"',
-        'GO' => 'Goiás',
-        'MA' => 'Maranhão',
-        'MT' => '"Mato Grosso"',
-        'MS' => '"Mato Grosso do Sul"',
-        'MG' => '"Minas Gerais"',
-        'PA' => 'Pará',
-        'PB' => 'Paraíba',
-        'PR' => 'Paraná',
-        'PE' => 'Pernambuco',
-        'PI' => 'Piauí',
-        'RJ' => '"Rio de Janeiro"',
-        'RN' => '"Rio Grande do Norte"',
-        'RS' => '"Rio Grande do Sul"',
-        'RO' => 'Rondônia',
-        'RR' => 'Roraima',
-        'SC' => '"Santa Catarina"',
-        'SP' => '"São Paulo"',
-        'SE' => 'Sergipe',
-        'TO' => 'Tocantins',
-    ];
-
-    protected $cidadesBrasileiras = [
-        'BSB' => 'DF',
-        'Brasília' => 'DF',
-        '"Águas Claras"' => 'DF',
-        '"Asa Sul"' => 'DF',
-        '"Asa Norte"' => 'DF',
-        'Taguatinga' => 'DF',
-        'Goiânia' => 'GO',
-        '"Belo Horizonte"' => 'MG',
-        '"Blumenau"' => 'SC',
-    ];
-
-    /**
-     * Tags
-     * @var array
-     */
-    protected $commonTags = [
-        'remote', 'remoto', 'júnior', 'junior', 'pleno', 'senior', 'sênior', 'pj', 'clt', 'laravel', 'symfony',
-        'e-commerce', 'ecommerce', 'mysql', 'js', 'graphql', 'ui/ux', 'css', 'html', 'photoshop', '"design thinking"',
-        'node', 'docker', 'kubernets', 'angular', 'react', 'android', 'ios', '"teste unitário"', 'swift',
-        '"objective-c"', 'linux', 'postgresql', 'dba', 'bootstrap', 'webpack', 'microservices', 'selenium', 'scrum',
-        'redes', 'tomcat', 'hibernate', 'spring', 'git', 'oracle', 'ionic', 'ux', 'geoprocessamento', 'postgis',
-        '"zend framework"', 'oraclesql', 'kotlin', 'devops', 'tdd', 'elixir', 'clojure', 'scala', '"start-up"',
-        'startup', 'fintech', 'alocado', 'presencial', '"continuous integration"', '"continuous deployment"', 'ruby',
-        'nativescript', 'sass',
-    ];
+    public function __construct(BotsManager $botsManager, GitHubManager $gitHubManager, GMailMessages $mailMessages)
+    {
+        parent::__construct($botsManager, $gitHubManager);
+        $this->mailMessages = $mailMessages;
+    }
 
     /**
      * Execute the console command.
@@ -195,7 +121,7 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected function processOpportunities(): void
     {
-        $opportunities = $this->createOpportunities();
+        $opportunities = $this->collectOpportunities();
         foreach ($opportunities as $opportunity) {
             $this->sendOpportunityToApproval($opportunity->id);
         }
@@ -222,12 +148,12 @@ class BotPopulateChannel extends AbstractCommand
         if (array_key_exists(Opportunity::FILES, $rawOpportunity)) {
             $opportunity->files = collect($rawOpportunity[Opportunity::FILES]);
         }
-        $description = $this->sanitizeBody($rawOpportunity[Opportunity::DESCRIPTION]);
-        $opportunity->title = $this->sanitizeSubject($rawOpportunity[Opportunity::TITLE]);
+        $description = Sanitizer::sanitizeBody($rawOpportunity[Opportunity::DESCRIPTION]);
+        $opportunity->title = Sanitizer::sanitizeSubject($rawOpportunity[Opportunity::TITLE]);
         $opportunity->description = $description;
         $opportunity->url = $rawOpportunity[Opportunity::URL];
         $opportunity->origin = $rawOpportunity[Opportunity::ORIGIN];
-        $opportunity->tags = $this->getHashTagFilters($description . $rawOpportunity[Opportunity::TITLE]);
+        $opportunity->tags = HashTag::extractTags($description . $rawOpportunity[Opportunity::TITLE]);
         $opportunity->save();
         return $opportunity;
     }
@@ -238,9 +164,9 @@ class BotPopulateChannel extends AbstractCommand
      * @return Collection
      * @throws AuthException
      */
-    protected function createOpportunities(): Collection
+    protected function collectOpportunities(): Collection
     {
-        $opportunitiesRaw = $this->getMessagesFromGMail();
+        $opportunitiesRaw = $this->mailMessages->collectMessages();
         $opportunitiesRaw = array_merge(
             $opportunitiesRaw,
             $this->getMessagesFromGithub(),
@@ -256,124 +182,11 @@ class BotPopulateChannel extends AbstractCommand
     }
 
     /**
-     * Return the an array of messages, then remove messages from email
-     *
-     * @return array
-     * @throws AuthException
-     */
-    protected function getMessagesFromGMail(): array
-    {
-        $opportunities = [];
-        $messages = $this->fetchGMailMessages();
-        /** @var Mail $message */
-        foreach ($messages as $message) {
-            $to = $message->getTo();
-            $to = array_map(function ($item) {
-                return $item['email'];
-            }, $to);
-            $to = strtolower(implode('|', $to));
-            $opportunities[] = [
-                Opportunity::TITLE => $message->getSubject(),
-                Opportunity::DESCRIPTION => $this->getMessageBody($message),
-                Opportunity::FILES => $this->getMailAttachments($message),
-                Opportunity::URL => 'email',
-                Opportunity::ORIGIN => $to,
-            ];
-            $message->markAsRead();
-            $message->addLabel(self::LABEL_ENVIADO_PRO_BOT);
-            $message->removeLabel(self::LABEL_STILL_UNREAD);
-            $message->sendToTrash();
-        }
-        return $opportunities;
-    }
-
-    /**
-     * Get array of URL for attachments files
-     *
-     * @param Mail $message
-     * @return array
-     * @throws Exception
-     */
-    protected function getMailAttachments(Mail $message): array
-    {
-        $files = [];
-        if ($message->hasAttachments()) {
-            $attachments = $message->getAttachments();
-            /** @var Attachment $attachment */
-            foreach ($attachments as $attachment) {
-                if (!($attachment->getSize() < 50000
-                    && strpos($attachment->getMimeType(), 'image') !== false)
-                ) {
-                    $extension = File::extension($attachment->getFileName());
-                    $fileName = Helper::base64UrlEncode($attachment->getFileName()) . '.' . $extension;
-                    $filePath = $attachment->saveAttachmentTo($message->getId() . '/', $fileName, 'uploads');
-                    $filePath = Storage::disk('uploads')->path($filePath);
-                    try {
-                        list($width, $height) = getimagesize($filePath);
-                        /** @var CloudinaryWrapper $cloudImage */
-                        $cloudImage = Cloudder::upload($filePath, null);
-                        $fileUrl = $cloudImage->secureShow(
-                            $cloudImage->getPublicId(),
-                            [
-                                'width' => $width,
-                                'height' => $height
-                            ]
-                        );
-                        $files[] = $fileUrl;
-                    } catch (Exception $exception) {
-                        $this->error($exception->getMessage());
-                    }
-                }
-            }
-        }
-        return $files;
-    }
-
-    /**
-     * Walks the GMail looking for specifics opportunity messages
-     *
-     * @return Collection
-     * @throws AuthException
-     */
-    protected function fetchGMailMessages(): Collection
-    {
-        $messageService = $this->gmailService->message();
-
-        $words = '{' . implode(' ', $this->mustIncludeWords) . '}';
-
-        $messageService->add($words);
-
-        $groups = [
-            'gebeoportunidades@googlegroups.com',
-            'profissaofuturowindows@googlegroups.com',
-            'nvagas@googlegroups.com',
-            'leonardoti@googlegroups.com',
-            'clubinfobsb@googlegroups.com',
-            'clubedevagas@googlegroups.com',
-        ];
-        $fromTo = [];
-        foreach ($groups as $group) {
-            $fromTo[] = 'list:' . $group;
-            $fromTo[] = 'to:' . $group;
-            $fromTo[] = 'bcc:' . $group;
-        }
-
-        $fromTo = '{' . implode(' ', $fromTo) . '}';
-
-        $messageService->add($fromTo);
-        $messageService->unread();
-
-        $messages = $messageService->preload()->all();
-        return $messages->reject(function (Mail $message) {
-            return in_array($this->gmailService->user(), $message->getFrom(), true);
-        });
-    }
-
-    /**
      * Prepare and send the opportunity to the channel, then update the TelegramId in database
      *
      * @param int $opportunityId
      * @throws TelegramSDKException
+     * @todo Move to communicate-telegram class
      */
     protected function sendOpportunityToChannels(int $opportunityId): void
     {
@@ -381,7 +194,7 @@ class BotPopulateChannel extends AbstractCommand
         $opportunity = Opportunity::find($opportunityId);
 
         foreach ($this->channels as $channel => $config) {
-            if (blank($config['tags']) || $this->hasHashTags($config['tags'], $opportunity->getText())) {
+            if (blank($config['tags']) || HashTag::hasTags($config['tags'], $opportunity->getText())) {
                 $messageSentIds = $this->sendOpportunity($opportunity, $channel);
             }
             $messageSentId = reset($messageSentIds);
@@ -397,7 +210,7 @@ class BotPopulateChannel extends AbstractCommand
         foreach ($this->mailing as $mail => $config) {
             if (
                 !Str::contains($opportunity->origin, $mail) &&
-                (blank($config['tags']) || $this->hasHashTags($config['tags'], $opportunity->getText()))
+                (blank($config['tags']) || HashTag::hasTags($config['tags'], $opportunity->getText()))
             ) {
                 $this->mailOpportunity($opportunity, $mail);
             }
@@ -409,6 +222,7 @@ class BotPopulateChannel extends AbstractCommand
      *
      * @param Opportunity $opportunity
      * @throws TelegramSDKException
+     * @todo Move to communicate-telegram class
      */
     protected function notifyUser(Opportunity $opportunity): void
     {
@@ -426,6 +240,7 @@ class BotPopulateChannel extends AbstractCommand
      * @param int $chatId
      * @param array $options
      * @return array
+     * @todo Move to communicate-telegram class
      */
     protected function sendOpportunity(Opportunity $opportunity, $chatId, array $options = []): array
     {
@@ -473,6 +288,7 @@ class BotPopulateChannel extends AbstractCommand
      * @param string $email
      * @param array $options
      * @throws Exception
+     * @todo Move to communicate-email class
      */
     protected function mailOpportunity(Opportunity $opportunity, string $email, array $options = [])
     {
@@ -488,315 +304,10 @@ class BotPopulateChannel extends AbstractCommand
     }
 
     /**
-     * Remove the Telegram Markdown from messages
-     *
-     * @param string $message
-     * @return string
-     */
-    protected function removeMarkdown(string $message): string
-    {
-        $message = str_replace(['*', '_', '`'], '', $message);
-        return trim($message, '[]');
-    }
-
-    /**
-     * Remove BBCode from strings
-     *
-     * @param string $message
-     * @return string
-     */
-    protected function removeBBCode(string $message): string
-    {
-        $message = preg_replace('#[\(\[\{][^\]]+[\)\]\}]#', '', $message);
-        return trim($message);
-    }
-
-    /**
-     * Remove the Brackets from strings
-     *
-     * @param string $message
-     * @return string
-     */
-    protected function removeBrackets(string $message): string
-    {
-        $message = trim($message, '[]{}()');
-        $message = preg_replace('#[\(\[\{\)\]\}]#', '--', $message);
-        $message = preg_replace('#(-){2,}#', ' - ', $message);
-        $message = preg_replace('#( ){2,}#', ' ', $message);
-        return trim($message);
-    }
-
-    /**
-     * Escapes the Markdown to avoid bad request in Telegram
-     *
-     * @param string $message
-     * @return string
-     */
-    protected function escapeMarkdown(string $message): string
-    {
-        $message = str_replace(['*', '_', '`', '[', ']'], ["\\*", "\\_", "\\`", "\\[", '\\]'], $message);
-        return trim($message);
-    }
-
-    /**
-     * Replace the Markdown to avoid bad request in Telegram
-     *
-     * @param string $message
-     * @return string
-     */
-    protected function replaceMarkdown(string $message): string
-    {
-        $message = str_replace(['*', '_', '`', '[', ']'], ' ', $message);
-        $message = preg_replace('#( ){2,}#', ' ', $message);
-        return trim($message);
-    }
-
-    /**
-     * Sanitizes the subject and remove annoying content
-     *
-     * @param string $message
-     * @return string
-     */
-    protected function sanitizeSubject(string $message): string
-    {
-        $message = preg_replace('/^(RE|FW|FWD|ENC|VAGA|Oportunidade)S?:?/im', '', $message, -1);
-        $message = preg_replace('/(\d{0,999} (view|application)s?)/', '', $message);
-        $message = str_replace(
-            ['[ClubInfoBSB]', '[leonardoti]', '[NVagas]', '[ProfissãoFuturo]', '[GEBE Oportunidades]'],
-            '',
-            $message
-        );
-        $message = str_replace("\n", '', $message);
-        return trim($message);
-    }
-
-    /**
-     * Sanitizes the message, removing annoying and unnecessary content
-     *
-     * @param string $message
-     * @return string
-     */
-    protected function sanitizeBody(string $message): string
-    {
-        if ($message) {
-            $delimiters = [
-                'As informações contidas neste',
-                'You are receiving this because you are subscribed to this thread',
-                'Você recebeu esta mensagem porque está inscrito para o Google',
-                'Você recebeu essa mensagem porque',
-                'Você está recebendo esta mensagem porque',
-                'Esta mensagem pode conter informa',
-                'Você recebeu esta mensagem porque',
-                'Antes de imprimir',
-                'This message contains',
-                'NVagas Conectando',
-                'Atenciosamente',
-                'Att.',
-                'Att,',
-                'AVISO DE CONFIDENCIALIDADE',
-                // Remove
-                'Receba vagas no whatsapp',
-                '-- Linkedin: www.linkedin.com/company/clube-de-vagas/',
-                'www.linkedin.com/company/clube-de-vagas/',
-                'linkedin.com/company/clube-de-vagas/',
-                'Cordialmente',
-                'Tiago Romualdo Souza',
-                '--',
-                'Com lisura,',
-            ];
-
-            $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
-
-            $message = $messageArray[0];
-
-            $message = $this->removeTagsAttributes($message);
-            $message = $this->removeEmptyTagsRecursive($message);
-            $message = $this->closeOpenTags($message);
-
-            $message = $this->removeMarkdown($message);
-
-            $message = str_ireplace(['<3'], '❤️', $message);
-            $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
-            $message = str_ireplace(['<i>', '</i>', '<em>', '</em>'], '_', $message);
-            $message = str_ireplace([
-                '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
-            ], '`', $message);
-            $message = str_replace(['<ul>', '<ol>', '</ul>', '</ol>'], '', $message);
-            $message = str_replace('<li>', '•', $message);
-            $message = preg_replace('/<br(\s+)?\/?>/i', "\n", $message);
-            $message = preg_replace('/<p[^>]*?>/', "\n", $message);
-            $message = str_replace(['</p>', '</li>'], "\n", $message);
-            $message = strip_tags($message);
-
-            $message = str_replace(['**', '__', '``'], '', $message);
-            $message = str_replace(['* *', '_ _', '` `', '*  *', '_  _', '`  `'], '', $message);
-            $message = preg_replace("/([\r\n])+/m", "\n", $message);
-            $message = preg_replace("/\n{2,}/m", "\n", $message);
-            $message = preg_replace("/\s{2,}/m", ' ', $message);
-            $message = trim($message, " \t\n\r\0\x0B--");
-
-            $message = preg_replace('/cid:image(.+)/m', '', $message);
-
-            $message = str_replace('GrupoClubedeVagas', '', $message);
-            $message = preg_replace('/(.+)(chat\.whatsapp\.com\/)(.+)/m', 'http://bit.ly/phpdf-official', $message);
-
-        }
-        return trim($message);
-    }
-
-    /**
-     * Remove attributes from HTML tags
-     *
-     * @param string $message
-     * @return string
-     */
-    protected function removeTagsAttributes(string $message): string
-    {
-        return preg_replace("/<([a-z][a-z0-9]*)[^>]*?(\/?)>/i", '<$1$2>', $message);
-    }
-
-    /**
-     * Closes the HTML open tags
-     *
-     * @param string $message
-     * @return string
-     */
-    protected function closeOpenTags(string $message): string
-    {
-        $dom = new \DOMDocument;
-        @$dom->loadHTML(mb_convert_encoding($message, 'HTML-ENTITIES', 'UTF-8'));
-        $mock = new \DOMDocument;
-        $body = $dom->getElementsByTagName('body')->item(0);
-        if (is_object($body)) {
-            foreach ($body->childNodes as $child) {
-                $mock->appendChild($mock->importNode($child, true));
-            }
-        }
-        return trim(html_entity_decode($mock->saveHTML()));
-    }
-
-    /**
-     * Removes HTML tags without any content
-     *
-     * @param string $str
-     * @param string $repto
-     * @return string
-     */
-    protected function removeEmptyTagsRecursive(string $str, string $repto = ''): string
-    {
-        return trim($str) === '' ? $str : preg_replace('/<([^<\/>]*)>([\s]*?|(?R))<\/\1>/imsU', $repto, $str);
-    }
-
-    /**
-     * Prepare the opportunity text to send to channel
-     *
-     * @param Opportunity $opportunity
-     * @param bool $isEmail
-     * @return array|string
-     */
-    protected function formatTextOpportunity(Opportunity $opportunity, bool $isEmail = false)
-    {
-        $description = $opportunity->description;
-
-        $template = sprintf(
-            "*%s*",
-            $opportunity->title
-        );
-
-        if ($opportunity->files && $opportunity->files->isNotEmpty()) {
-            foreach ($opportunity->files as $file) {
-                if ($isEmail) {
-                    $template .= '<br><br>' .
-                        sprintf(
-                            '<img src="%s"/>',
-                            $file
-                        );
-                } else {
-                    $template .= "\n\n" .
-                        sprintf(
-                            '[Image](%s)',
-                            $file
-                        );
-                }
-            }
-            // $this->escapeMarkdown($file)
-        }
-
-        $template .= sprintf(
-            "\n\n*Descrição*\n%s",
-            $description
-        );
-
-        if (filled($opportunity->location)) {
-            $template .= sprintf(
-                "\n\n*Localização*\n%s",
-                $opportunity->location
-            );
-        }
-
-        if (filled($opportunity->company)) {
-            $template .= sprintf(
-                "\n\n*Empresa*\n%s",
-                $opportunity->company
-            );
-        }
-
-        if (filled($opportunity->salary)) {
-            $template .= sprintf(
-                "\n\n*Salario*\n%s",
-                $opportunity->salary
-            );
-        }
-
-        if (filled($opportunity->tags)) {
-            $template .= sprintf(
-                "\n\n*Tags*\n%s",
-                $opportunity->tags
-            );
-        }
-
-        if ($isEmail) {
-            $sign = $this->getGroupSign();
-            $sign = str_replace('@', 'https://t.me/', $sign);
-            return $template . $sign;
-        }
-
-        $template .= $this->getGroupSign();
-        if (Str::contains($opportunity->origin, ['clubinfobsb', 'clubedevagas'])) {
-            $template .= "\n" . Emoji::link() . '  www.clubedevagas.com.br';
-        }
-        return str_split(
-            $template,
-            4096
-        );
-    }
-
-    /**
-     * Get message body from GMail content
-     *
-     * @param Mail $message
-     * @return bool|string
-     */
-    protected function getMessageBody(Mail $message): string
-    {
-        $htmlBody = $message->getHtmlBody();
-        if (empty($htmlBody)) {
-            $parts = $message->payload->getParts();
-            if (count($parts)) {
-                $parts = $parts[0]->getParts();
-            }
-            if (count($parts)) {
-                $body = $parts[1]->getBody()->getData();
-                $htmlBody = $message->getDecodedBody($body);
-            }
-        }
-        return $htmlBody;
-    }
-
-    /**
      * Notifies the group with the latest opportunities in channel
      * Get all the unnotified opportunities, build a keyboard with the links, sends to the group, update the opportunity
      * and remove the previous notifications from group
+     * @todo Move to communicate-telegram class
      */
     protected function notifyGroup()
     {
@@ -882,22 +393,13 @@ class BotPopulateChannel extends AbstractCommand
         $this->info('The group was notified!');
     }
 
-    /**
-     * Build the footer sign to the messages
-     *
-     * @return string
-     */
-    protected function getGroupSign(): string
-    {
-        return "\n\n" .
-            Emoji::megaphone() . ' ' . $this->escapeMarkdown(implode(' | ', array_keys($this->channels))) . "\n" .
-            Emoji::houses() . ' ' . $this->escapeMarkdown(implode(' | ', array_keys($this->groups))) . "\n";
-    }
+
 
     /**
      * Get the results from crawler process, merge they and send to the channel
      *
      * @return array
+     * @todo Move to collect-github class
      */
     protected function getMessagesFromGithub(): array
     {
@@ -924,6 +426,7 @@ class BotPopulateChannel extends AbstractCommand
      * Make a crawler in "comoequetala.com.br" website
      *
      * @return array
+     * @todo Move to collect-crawler class
      */
     protected function getMessagesFromComoEQueTaLa(): array
     {
@@ -974,6 +477,7 @@ class BotPopulateChannel extends AbstractCommand
      * Make a crawler in "queroworkar.com.br" website
      *
      * @return array
+     * @todo Move to collect-crawler class
      */
     protected function getMessagesFromQueroWorkar(): array
     {
@@ -1026,6 +530,7 @@ class BotPopulateChannel extends AbstractCommand
      * @param string $username
      * @param string $repo
      * @return array
+     * @todo Move to collect-github class
      */
     protected function fetchMessagesFromGithub(string $username, string $repo): array
     {
@@ -1055,58 +560,10 @@ class BotPopulateChannel extends AbstractCommand
     }
 
     /**
-     * Append the hashtags relatives the to content
-     *
-     * @param string $text
-     * @return string
-     */
-    protected function getHashTagFilters(string $text): string
-    {
-        $pattern = sprintf(
-            '#(%s)#i',
-            implode('|', array_merge(
-                $this->mustIncludeWords,
-                $this->estadosBrasileiros,
-                array_keys($this->cidadesBrasileiras),
-                $this->commonTags
-            ))
-        );
-
-        $pattern = str_replace('"', '', $pattern);
-        $allTags = '';
-        if (preg_match_all($pattern, $text, $matches)) {
-            $tags = [];
-            array_walk($matches[0], function ($item, $key) use (&$tags) {
-                $tags[$key] = '#' . strtolower(str_replace([' ', '-'], '', $item));
-            });
-            $tags = array_unique($tags);
-            $allTags = "\n\n" . implode(' ', $tags) . "\n\n";
-        }
-        return $allTags;
-    }
-
-    /**
-     * Check if text contains specific tag
-     *
-     * @param $tags
-     * @param $text
-     * @return bool
-     */
-    protected function hasHashTags(array $tags, $text)
-    {
-        $text = mb_strtolower($text);
-        foreach ($tags as $tag) {
-            if (strpos($text, '#' . str_replace(' ', '', mb_strtolower($tag))) !== false) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * Send opportunity to approval
      *
      * @param int $opportunityId
+     * @todo Move to communicate-telegram class
      */
     protected function sendOpportunityToApproval(int $opportunityId): void
     {
@@ -1134,6 +591,7 @@ class BotPopulateChannel extends AbstractCommand
 
     /**
      * @param $opportunityId
+     * @todo Move to communicate-telegram class
      */
     protected function sendTelegramOpportunityToApproval($opportunityId)
     {

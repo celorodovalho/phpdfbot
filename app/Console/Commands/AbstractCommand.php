@@ -21,20 +21,15 @@ abstract class AbstractCommand extends Command
     /** @var GitHubManager */
     protected $gitHubManager;
 
-    /** @var GmailService */
-    protected $gmailService;
-
     /**
      * Create a new command instance.
      * @param BotsManager $botsManager
      * @param GitHubManager $gitHubManager
-     * @param GmailService $gmailService
      */
-    public function __construct(BotsManager $botsManager, GitHubManager $gitHubManager, GmailService $gmailService)
+    public function __construct(BotsManager $botsManager, GitHubManager $gitHubManager)
     {
         $this->telegram = $botsManager->bot($this->botName);
         $this->gitHubManager = $gitHubManager;
-        $this->gmailService = $gmailService;
         parent::__construct();
     }
 }

@@ -38,7 +38,7 @@ Route::get('me', function (){
     ]));
 });
 
-Route::get('opportunities', 'Web\OpportunityController@index');
+Route::get('/', 'Web\OpportunityController@index');
 
 Route::group(['namespace' => 'Web',], function () {
     Route::resource('opportunities', 'OpportunityController');
