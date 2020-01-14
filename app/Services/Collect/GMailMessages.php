@@ -89,7 +89,7 @@ class GMailMessages implements CollectInterface
     {
         $messageService = $this->gmailService->message();
 
-        $words = '{' . implode(' ', Config::get('constants.requiredWords')) . '}';
+        $words = '{' . implode(' ', ) . '}';
 
         $messageService->add($words);
 
@@ -205,7 +205,7 @@ class GMailMessages implements CollectInterface
         // TODO: Implement extractLocation() method.
     }
 
-    public function extractTags($text)
+    public function extractTags($text): array
     {
         // TODO: Implement extractTags() method.
     }

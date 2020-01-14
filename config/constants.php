@@ -186,4 +186,13 @@ return [
             'Petrópolis',
         ],
     ],
+    'gitHubSources' => [
+        'frontendbr' => 'vagas',
+        'androiddevbr' => 'vagas',
+        'CangaceirosDevels' => 'vagas_de_emprego',
+        'CocoaHeadsBrasil' => 'vagas',
+        'phpdevbr' => 'vagas',
+        'vuejs-br' => 'vagas',
+        'backend-br' => 'vagas',
+    ]
 ];

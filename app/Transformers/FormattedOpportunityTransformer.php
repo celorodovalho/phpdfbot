@@ -2,6 +2,9 @@
 
 namespace App\Transformers;
 
+use App\Helpers\BotHelper;
+use App\Helpers\SanitizerHelper;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use League\Fractal\TransformerAbstract;
 use App\Models\Opportunity;
@@ -14,120 +17,106 @@ use Spatie\Emoji\Emoji;
  */
 class FormattedOpportunityTransformer extends TransformerAbstract
 {
-    /**
-     * Transform the Opportunity entity.
-     *
-     * @param \App\Models\Opportunity $model
-     *
-     * @return array
-     */
-    public function transform($model)
+
+    /** @var bool */
+    private $isEmail;
+
+    public function __construct(bool $isEmail = false)
     {
-        return [
-            'id'         => (int) $model->id,
-
-            /* place your other model properties here */
-
-            'created_at' => $model->created_at,
-            'updated_at' => $model->updated_at
-        ];
+        $this->isEmail = $isEmail;
     }
 
     /**
-     * Prepare the opportunity text to send to channel
+     * Transform the Opportunity entity.
      *
      * @param Opportunity $opportunity
-     * @param bool $isEmail
-     * @return array|string
-     * @todo Move to transform-opportunity class
+     *
+     * @return array
      */
-    protected function formatTextOpportunity(Opportunity $opportunity, bool $isEmail = false)
+    public function transform(Opportunity $opportunity)
     {
-        $description = $opportunity->description;
-
-        $template = sprintf(
+        $body = sprintf(
             "*%s*",
             $opportunity->title
         );
 
         if ($opportunity->files && $opportunity->files->isNotEmpty()) {
             foreach ($opportunity->files as $file) {
-                if ($isEmail) {
-                    $template .= '<br><br>' .
-                        sprintf(
-                            '<img src="%s"/>',
-                            $file
-                        );
-                } else {
-                    $template .= "\n\n" .
-                        sprintf(
-                            '[Image](%s)',
-                            $file
-                        );
+                $file = "\n\n" .
+                    sprintf(
+                        '[Image](%s)',
+                        $file
+                    );
+                if ($this->isEmail) {
+                    $file = '!' . $file;
                 }
+                $body .= $file;
             }
-            // $this->escapeMarkdown($file)
         }
 
-        $template .= sprintf(
-            "\n\n*Descrição*\n%s",
-            $description
+        $body .= sprintf(
+            "\n\n*Descrição:*\n%s",
+            $opportunity->description
         );
 
-        if (filled($opportunity->location)) {
-            $template .= sprintf(
-                "\n\n*Localização*\n%s",
-                $opportunity->location
+        if (filled($opportunity->position)) {
+            $body .= sprintf(
+                "\n\n*Cargo:*\n%s",
+                $opportunity->position
             );
         }
 
         if (filled($opportunity->company)) {
-            $template .= sprintf(
-                "\n\n*Empresa*\n%s",
+            $body .= sprintf(
+                "\n\n*Empresa:*\n%s",
                 $opportunity->company
             );
         }
 
         if (filled($opportunity->salary)) {
-            $template .= sprintf(
-                "\n\n*Salario*\n%s",
+            $body .= sprintf(
+                "\n\n*Salario:*\n%s",
                 $opportunity->salary
             );
         }
 
+        if (filled($opportunity->location)) {
+            $body .= sprintf(
+                "\n\n*Localização:*\n%s",
+                $opportunity->location
+            );
+        }
+
         if (filled($opportunity->tags)) {
-            $template .= sprintf(
-                "\n\n*Tags*\n%s",
+            $body .= sprintf(
+                "\n\n*Tags:*\n%s",
                 $opportunity->tags
             );
         }
 
-        if ($isEmail) {
-            $sign = $this->getGroupSign();
-            $sign = str_replace('@', 'https://t.me/', $sign);
-            return $template . $sign;
-        }
-
-        $template .= $this->getGroupSign();
         if (Str::contains($opportunity->origin, ['clubinfobsb', 'clubedevagas'])) {
-            $template .= "\n" . Emoji::link() . '  www.clubedevagas.com.br';
+            $body .= sprintf(
+                "\n\n*Fonte:*\n%s",
+                'www.clubedevagas.com.br'
+            );
         }
-        return str_split(
-            $template,
-            4096
-        );
-    }
 
-    /**
-     * Build the footer sign to the messages
-     *
-     * @return string
-     * @todo Move to transform-opportunity class
-     */
-    protected function getGroupSign(): string
-    {
-        return "\n\n" .
-            Emoji::megaphone() . ' ' . $this->escapeMarkdown(implode(' | ', array_keys($this->channels))) . "\n" .
-            Emoji::houses() . ' ' . $this->escapeMarkdown(implode(' | ', array_keys($this->groups))) . "\n";
+        $body .= BotHelper::getGroupSign($this->isEmail);
+
+        $body = str_split(
+            $body,
+            4096 - strlen("\n1/1\n")
+        );
+
+        $count = count($body);
+
+        $body = array_map(function ($part, $index) use ($count) {
+            $index++;
+            return $part . "\n{$index}/{$count}\n";
+        }, $body, array_keys($body));
+
+        return [
+            'body' => $body
+        ];
     }
 }

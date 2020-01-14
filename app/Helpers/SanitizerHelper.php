@@ -2,13 +2,14 @@
 
 namespace App\Helpers;
 
+use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Support\Traits\Macroable;
 
 /**
  * Class Sanitizer
  * @package App\Helpers
  */
-class Sanitizer
+class SanitizerHelper
 {
     use Macroable;
 
@@ -21,8 +22,8 @@ class Sanitizer
      */
     public static function removeMarkdown(string $message): string
     {
-        $message = str_replace(['*', '_', '`'], '', $message);
-        return trim($message, '[]');
+        $message = Markdown::convertToHtml($message);
+        return strip_tags($message);
     }
 
     /**
@@ -49,6 +50,7 @@ class Sanitizer
     {
         $message = trim($message, '[]{}()');
         $message = preg_replace('#[\(\[\{\)\]\}]#', '--', $message);
+        $message = trim($message, '--');
         $message = preg_replace('#(-){2,}#', ' - ', $message);
         $message = preg_replace('#( ){2,}#', ' ', $message);
         return trim($message);
@@ -97,7 +99,9 @@ class Sanitizer
             '',
             $message
         );
-        $message = str_replace("\n", '', $message);
+        $message = trim($message, '[]{}()');
+        $message = str_replace(["\n", '[', '{', '}', '(', ')'], '', $message);
+        $message = str_replace([']'], ' -', $message);
         return trim($message);
     }
 

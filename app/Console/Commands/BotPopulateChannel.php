@@ -2,11 +2,12 @@
 
 namespace App\Console\Commands;
 
-use App\Helpers\HashTag;
-use App\Helpers\Sanitizer;
+use App\Helpers\HashTagHelper;
+use App\Helpers\SanitizerHelper;
 use App\Models\Notification;
 use App\Models\Opportunity;
 use App\Services\Collect\GMailMessages;
+use App\Transformers\FormattedOpportunityTransformer;
 use Carbon\Carbon;
 use Dacastro4\LaravelGmail\Exceptions\AuthException;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
@@ -17,8 +18,8 @@ use Goutte\Client;
 use GrahamCampbell\GitHub\GitHubManager;
 use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
-use Spatie\Emoji\Emoji;
 use Symfony\Component\DomCrawler\Crawler;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramSDKException;
@@ -89,11 +90,11 @@ class BotPopulateChannel extends AbstractCommand
      */
     public function handle(): void
     {
-        $this->channels = config('telegram.channels');
+        $this->channels = Config::get('telegram.channels');
         $this->appUrl = env('APP_URL');
-        $this->groups = config('telegram.groups');
-        $this->mailing = config('telegram.mailing');
-        $this->admin = config('telegram.admin');
+        $this->groups = Config::get('telegram.groups');
+        $this->mailing = Config::get('telegram.mailing');
+        $this->admin = Config::get('telegram.admin');
 
         switch ($this->argument('process')) {
             case self::COMMAND_PROCESS:
@@ -148,12 +149,12 @@ class BotPopulateChannel extends AbstractCommand
         if (array_key_exists(Opportunity::FILES, $rawOpportunity)) {
             $opportunity->files = collect($rawOpportunity[Opportunity::FILES]);
         }
-        $description = Sanitizer::sanitizeBody($rawOpportunity[Opportunity::DESCRIPTION]);
-        $opportunity->title = Sanitizer::sanitizeSubject($rawOpportunity[Opportunity::TITLE]);
+        $description = SanitizerHelper::sanitizeBody($rawOpportunity[Opportunity::DESCRIPTION]);
+        $opportunity->title = SanitizerHelper::sanitizeSubject($rawOpportunity[Opportunity::TITLE]);
         $opportunity->description = $description;
         $opportunity->url = $rawOpportunity[Opportunity::URL];
         $opportunity->origin = $rawOpportunity[Opportunity::ORIGIN];
-        $opportunity->tags = HashTag::extractTags($description . $rawOpportunity[Opportunity::TITLE]);
+        $opportunity->tags = HashTagHelper::extractTags($description . $rawOpportunity[Opportunity::TITLE]);
         $opportunity->save();
         return $opportunity;
     }
@@ -194,7 +195,7 @@ class BotPopulateChannel extends AbstractCommand
         $opportunity = Opportunity::find($opportunityId);
 
         foreach ($this->channels as $channel => $config) {
-            if (blank($config['tags']) || HashTag::hasTags($config['tags'], $opportunity->getText())) {
+            if (blank($config['tags']) || HashTagHelper::hasTags($config['tags'], $opportunity->getText())) {
                 $messageSentIds = $this->sendOpportunity($opportunity, $channel);
             }
             $messageSentId = reset($messageSentIds);
@@ -210,7 +211,7 @@ class BotPopulateChannel extends AbstractCommand
         foreach ($this->mailing as $mail => $config) {
             if (
                 !Str::contains($opportunity->origin, $mail) &&
-                (blank($config['tags']) || HashTag::hasTags($config['tags'], $opportunity->getText()))
+                (blank($config['tags']) || HashTagHelper::hasTags($config['tags'], $opportunity->getText()))
             ) {
                 $this->mailOpportunity($opportunity, $mail);
             }
@@ -244,11 +245,11 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected function sendOpportunity(Opportunity $opportunity, $chatId, array $options = []): array
     {
-        $messageTexts = $this->formatTextOpportunity($opportunity);
+        $messageTexts = fractal()->item($opportunity)->transformWith(new FormattedOpportunityTransformer())->toArray();
         $messageSentIds = [];
         $lastSentID = null;
         $messageSent = null;
-        foreach ($messageTexts as $messageText) {
+        foreach ($messageTexts['body'] as $messageText) {
             $sendMsg = array_merge([
                 'chat_id' => $chatId,
                 'parse_mode' => 'Markdown',
@@ -265,7 +266,7 @@ class BotPopulateChannel extends AbstractCommand
             } catch (Exception $exception) {
                 if ($exception->getCode() === 400) {
                     try {
-                        $sendMsg['text'] = $this->removeMarkdown($messageText);
+                        $sendMsg['text'] = SanitizerHelper::removeMarkdown($messageText);
                         unset($sendMsg['Markdown']);
                         $messageSent = $this->telegram->sendMessage($sendMsg);
                         $messageSentIds[] = $messageSent->messageId;
@@ -292,7 +293,7 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected function mailOpportunity(Opportunity $opportunity, string $email, array $options = [])
     {
-        $messageTexts = $this->formatTextOpportunity($opportunity, true);
+        $messageTexts = fractal()->item($opportunity)->transformWith(new FormattedOpportunityTransformer(true))->toArray();
         $messageTexts = Markdown::convertToHtml($messageTexts);
         $messageTexts = nl2br($messageTexts);
 
@@ -323,7 +324,7 @@ class BotPopulateChannel extends AbstractCommand
                 $firstOpportunityId = $firstOpportunityId ?? $opportunity->telegram_id;
                 return sprintf(
                     '➩ [%s](%s)',
-                    $this->replaceMarkdown($this->removeBrackets($opportunity->title)),
+                    SanitizerHelper::sanitizeSubject(SanitizerHelper::removeBrackets($opportunity->title)),
                     'https://t.me/VagasBrasil_TI/' . $opportunity->telegram_id
                 );
             });
@@ -346,7 +347,7 @@ class BotPopulateChannel extends AbstractCommand
 
             $text = sprintf(
                 "%s\n\n[%s](%s)",
-                "Há novas vagas no canal!\nConfira: {$this->escapeMarkdown(implode(' | ', $channels))} | {$this->escapeMarkdown(implode(' | ', $groups))} " . Emoji::smilingFace(),
+                "Há novas vagas no canal!\nConfira: " . SanitizerHelper::escapeMarkdown(implode(' | ', $channels)) . " | " . SanitizerHelper::escapeMarkdown(implode(' | ', $groups)),
                 '🄿🄷🄿🄳🄵',
                 str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp'
             );
@@ -394,7 +395,6 @@ class BotPopulateChannel extends AbstractCommand
     }
 
 
-
     /**
      * Get the results from crawler process, merge they and send to the channel
      *
@@ -403,15 +403,7 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected function getMessagesFromGithub(): array
     {
-        $githubSources = [
-            'frontendbr' => 'vagas',
-            'androiddevbr' => 'vagas',
-            'CangaceirosDevels' => 'vagas_de_emprego',
-            'CocoaHeadsBrasil' => 'vagas',
-            'phpdevbr' => 'vagas',
-            'vuejs-br' => 'vagas',
-            'backend-br' => 'vagas',
-        ];
+        $githubSources = Config::get('constants.gitHubSources');
 
         $opportunities = [];
         foreach ($githubSources as $username => $repo) {

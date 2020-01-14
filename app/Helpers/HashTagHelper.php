@@ -10,7 +10,7 @@ use Illuminate\Support\Traits\Macroable;
  * Class HashTag
  * @package App\Helpers
  */
-class HashTag
+class HashTagHelper
 {
     use Macroable;
 
