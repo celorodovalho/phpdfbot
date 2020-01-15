@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Services\Collect;
+namespace App\Services\Collectors;
 
 use App\Contracts\CollectInterface;
+use App\Helpers\ExtractorHelper;
 use App\Helpers\Helper;
+use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
 use App\Services\GmailService;
 use Dacastro4\LaravelGmail\Exceptions\AuthException;
@@ -31,11 +33,11 @@ class GMailMessages implements CollectInterface
     /**
      * @var GmailService
      */
-    private $gmailService;
+    private $gMailService;
 
-    public function __construct(GmailService $gmailService)
+    public function __construct(GmailService $gMailService)
     {
-        $this->gmailService = $gmailService;
+        $this->gMailService = $gMailService;
     }
 
     /**
@@ -46,11 +48,10 @@ class GMailMessages implements CollectInterface
      */
     public function collectMessages(): array
     {
-        $messages = $this->fetchGMailMessages();
+        $messages = $this->fetchMessages();
         /** @var Mail $message */
         foreach ($messages as $message) {
             $this->createMessageFormat($message);
-
             $message->markAsRead();
             $message->addLabel(self::LABEL_ENVIADO_PRO_BOT);
             $message->removeLabel(self::LABEL_STILL_UNREAD);
@@ -65,17 +66,20 @@ class GMailMessages implements CollectInterface
      */
     public function createMessageFormat($message)
     {
+        $title = $this->extractTitle($message);
+        $description = $this->extractDescription($message);
         $this->opportunities[] = [
-            Opportunity::TITLE => $this->extractTitle($message->getSubject()),
-            Opportunity::DESCRIPTION => $this->extractDescription($message),
+            Opportunity::TITLE => $title,
+            Opportunity::DESCRIPTION => $description,
             Opportunity::FILES => $this->extractFiles($message),
-            Opportunity::POSITION => $this->extractFiles($message),
-            Opportunity::COMPANY => $this->extractFiles($message),
-            Opportunity::LOCATION => $this->extractFiles($message),
-            Opportunity::TAGS => $this->extractFiles($message),
-            Opportunity::SALARY => $this->extractFiles($message),
-            Opportunity::URL => 'email',
+            Opportunity::POSITION => $this->extractPosition($title),
+            Opportunity::COMPANY => $this->extractCompany($title.$description),
+            Opportunity::LOCATION => $this->extractLocation($title.$description),
+            Opportunity::TAGS => $this->extractTags($title.$description),
+            Opportunity::SALARY => $this->extractSalary($title.$description),
+            Opportunity::URL => $this->extractUrl($message),
             Opportunity::ORIGIN => $this->extractOrigin($message),
+            Opportunity::EMAILS => $this->extractEmails($message),
         ];
     }
 
@@ -85,9 +89,9 @@ class GMailMessages implements CollectInterface
      * @return Collection
      * @throws AuthException
      */
-    protected function fetchGMailMessages(): Collection
+    protected function fetchMessages(): Collection
     {
-        $messageService = $this->gmailService->message();
+        $messageService = $this->gMailService->message();
 
         $words = '{' . implode(' ', array_map(function ($word) {
                 return Str::contains($word, ' ') ? '"' . $word . '"' : $word;
@@ -110,7 +114,7 @@ class GMailMessages implements CollectInterface
 
         $messages = $messageService->preload()->all();
         return $messages->reject(function (Mail $message) {
-            return in_array($this->gmailService->user(), $message->getFrom(), true);
+            return in_array($this->gMailService->user(), $message->getFrom(), true);
         });
     }
 
@@ -191,33 +195,67 @@ class GMailMessages implements CollectInterface
         return strtolower(json_encode($to));
     }
 
+    /**
+     * @param Mail $message
+     * @return string
+     */
+    public function extractTitle($message): string
+    {
+        return SanitizerHelper::sanitizeSubject($message->getSubject());
+    }
 
-    public function extractTitle($text): string
+    /**
+     * @param $message
+     * @return string
+     */
+    public function extractLocation($message): string
+    {
+        return implode(' / ', ExtractorHelper::extractLocation($message));
+    }
+
+    /**
+     * @param $message
+     * @return array
+     */
+    public function extractTags($message): array
+    {
+        return ExtractorHelper::extractTags($message);
+    }
+
+    /**
+     * @param $message
+     * @return string
+     */
+    public function extractUrl($message): string
+    {
+        $urls = ExtractorHelper::extractUrls($message);
+        return implode(', ', $urls);
+    }
+
+    /**
+     * @param $message
+     * @return string
+     */
+    public function extractEmails($message): string
+    {
+        $mails = ExtractorHelper::extractEmail($message);
+        return implode(', ', $mails);
+    }
+
+    /** @todo Match position */
+    public function extractPosition($message): string
     {
         return '';
     }
 
-    public function extractCompany($text): string
+    /** @todo Match salary */
+    public function extractSalary($message): string
     {
         return '';
     }
 
-    public function extractLocation($text): string
-    {
-        return '';
-    }
-
-    public function extractTags($text): array
-    {
-        return [];
-    }
-
-    public function extractPosition($text): string
-    {
-        return '';
-    }
-
-    public function extractSalary($text): string
+    /** @todo Match company */
+    public function extractCompany($message): string
     {
         return '';
     }

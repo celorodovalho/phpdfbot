@@ -49,6 +49,7 @@ class Opportunity extends Model implements Transformable
     public const TAGS = 'tags';
     public const POSITION = 'position';
     public const SALARY = 'salary';
+    public const EMAILS = 'emails';
 
     protected $fillable = [
         self::TITLE,
@@ -64,6 +65,7 @@ class Opportunity extends Model implements Transformable
         self::URL,
         self::ORIGIN,
         self::TAGS,
+        self::EMAILS,
     ];
 
     protected $guarded = ['id'];

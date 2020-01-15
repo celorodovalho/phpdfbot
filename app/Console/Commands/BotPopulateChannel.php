@@ -3,25 +3,21 @@
 namespace App\Console\Commands;
 
 use App\Helpers\BotHelper;
-use App\Helpers\HashTagHelper;
+use App\Helpers\ExtractorHelper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Notification;
 use App\Models\Opportunity;
-use App\Services\Collect\GMailMessages;
+use App\Services\Collectors\ComoQueTaLaMessages;
+use App\Services\Collectors\GitHubMessages;
+use App\Services\Collectors\GMailMessages;
 use App\Transformers\FormattedOpportunityTransformer;
-use Carbon\Carbon;
 use Dacastro4\LaravelGmail\Exceptions\AuthException;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
-use DateTime;
-use DateTimeZone;
 use Exception;
-use Goutte\Client;
-use GrahamCampbell\GitHub\GitHubManager;
 use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
-use Symfony\Component\DomCrawler\Crawler;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Keyboard\Keyboard;
@@ -75,12 +71,33 @@ class BotPopulateChannel extends AbstractCommand
     protected $admin;
 
     /** @var GMailMessages */
-    private $mailMessages;
+    private $gMailMessages;
+    /**
+     * @var GitHubMessages
+     */
+    private $gitHubMessages;
+    /**
+     * @var ComoQueTaLaMessages
+     */
+    private $comoQueTaLaMessages;
 
-    public function __construct(BotsManager $botsManager, GitHubManager $gitHubManager, GMailMessages $mailMessages)
-    {
-        parent::__construct($botsManager, $gitHubManager);
-        $this->mailMessages = $mailMessages;
+    /**
+     * BotPopulateChannel constructor.
+     * @param BotsManager $botsManager
+     * @param GMailMessages $gMailMessages
+     * @param GitHubMessages $gitHubMessages
+     * @param ComoQueTaLaMessages $comoQueTaLaMessages
+     */
+    public function __construct(
+        BotsManager $botsManager,
+        GMailMessages $gMailMessages,
+        GitHubMessages $gitHubMessages,
+        ComoQueTaLaMessages $comoQueTaLaMessages
+    ) {
+        parent::__construct($botsManager);
+        $this->gMailMessages = $gMailMessages;
+        $this->gitHubMessages = $gitHubMessages;
+        $this->comoQueTaLaMessages = $comoQueTaLaMessages;
     }
 
     /**
@@ -155,7 +172,7 @@ class BotPopulateChannel extends AbstractCommand
         $opportunity->description = $description;
         $opportunity->url = $rawOpportunity[Opportunity::URL];
         $opportunity->origin = $rawOpportunity[Opportunity::ORIGIN];
-        $opportunity->tags = HashTagHelper::extractTags($description . $rawOpportunity[Opportunity::TITLE]);
+        $opportunity->tags = ExtractorHelper::extractTags($description . $rawOpportunity[Opportunity::TITLE]);
         $opportunity->save();
         return $opportunity;
     }
@@ -168,12 +185,11 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected function collectOpportunities(): Collection
     {
-        $opportunitiesRaw = $this->mailMessages->collectMessages();
+        $opportunitiesRaw = $this->gMailMessages->collectMessages();
         $opportunitiesRaw = array_merge(
             $opportunitiesRaw,
-            $this->getMessagesFromGithub(),
-            $this->getMessagesFromComoEQueTaLa(),
-            $this->getMessagesFromQueroWorkar()
+            $this->gMailMessages->collectMessages(),
+            $this->comoQueTaLaMessages->collectMessages()
         );
 
         $opportunities = array_map(function ($rawOpportunity) {
@@ -196,7 +212,7 @@ class BotPopulateChannel extends AbstractCommand
         $opportunity = Opportunity::find($opportunityId);
 
         foreach ($this->channels as $channel => $config) {
-            if (blank($config['tags']) || HashTagHelper::hasTags($config['tags'], $opportunity->getText())) {
+            if (blank($config['tags']) || ExtractorHelper::hasTags($config['tags'], $opportunity->getText())) {
                 $messageSentIds = $this->sendOpportunity($opportunity, $channel);
             }
             $messageSentId = reset($messageSentIds);
@@ -212,7 +228,7 @@ class BotPopulateChannel extends AbstractCommand
         foreach ($this->mailing as $mail => $config) {
             if (
                 !Str::contains($opportunity->origin, $mail) &&
-                (blank($config['tags']) || HashTagHelper::hasTags($config['tags'], $opportunity->getText()))
+                (blank($config['tags']) || ExtractorHelper::hasTags($config['tags'], $opportunity->getText()))
             ) {
                 $this->mailOpportunity($opportunity, $mail);
             }
@@ -394,163 +410,6 @@ class BotPopulateChannel extends AbstractCommand
             $opportunities->delete();
         }
         $this->info('The group was notified!');
-    }
-
-
-    /**
-     * Get the results from crawler process, merge they and send to the channel
-     *
-     * @return array
-     * @todo Move to collect-github class
-     */
-    protected function getMessagesFromGithub(): array
-    {
-        $githubSources = Config::get('constants.gitHubSources');
-
-        $opportunities = [];
-        foreach ($githubSources as $username => $repo) {
-            $opportunities[] = $this->fetchMessagesFromGithub($username, $repo);
-        }
-        return array_merge(
-            ...$opportunities
-        );
-    }
-
-    /**
-     * Make a crawler in "comoequetala.com.br" website
-     *
-     * @return array
-     * @todo Move to collect-crawler class
-     */
-    protected function getMessagesFromComoEQueTaLa(): array
-    {
-        $opportunities = [];
-        $client = new Client();
-        $crawler = $client->request('GET', 'https://comoequetala.com.br/vagas-e-jobs');
-        $crawler->filter('.uk-list.uk-list-space > li')->each(function ($node) use (&$opportunities) {
-            $skipDataCheck = env('CRAWLER_SKIP_DATA_CHECK');
-            $client = new Client();
-            $pattern = '#(' . implode('|', $this->mustIncludeWords) . ')#i';
-            $pattern = str_replace('"', '', $pattern);
-            if (preg_match_all($pattern, $node->text())) {
-                $data = $node->filter('[itemprop="datePosted"]')->attr('content');
-                $data = new DateTime($data);
-                $today = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
-                if ($skipDataCheck || $data->format('Ymd') === $today->format('Ymd')) {
-                    $link = $node->filter('[itemprop="url"]')->attr('content');
-                    $crawler2 = $client->request('GET', $link);
-                    $title = $crawler2->filter('[itemprop="title"],h3')->text();
-                    $description = [
-                        $crawler2->filter('[itemprop="description"]')->count() ?
-                            $crawler2->filter('[itemprop="description"]')->html() : '',
-                        $crawler2->filter('.uk-container > .uk-grid-divider > .uk-width-1-1:last-child')->count()
-                            ? $crawler2->filter('.uk-container > .uk-grid-divider > .uk-width-1-1:last-child')->html()
-                            : '',
-                        '*Como se candidatar:* ' . $link
-                    ];
-                    //$link = $node->filter('.uk-link')->text();
-                    $company = $node->filter('.vaga_empresa')->count() ? $node->filter('.vaga_empresa')->text() : '';
-                    $location = trim($node->filter('[itemprop="addressLocality"]')->text()) . '/'
-                        . trim($node->filter('[itemprop="addressRegion"]')->text());
-
-                    $opportunities[] = [
-                        Opportunity::TITLE => $title,
-                        Opportunity::DESCRIPTION => implode("\n\n", $description),
-                        Opportunity::COMPANY => trim($company),
-                        Opportunity::LOCATION => trim($location),
-                        Opportunity::URL => trim($link),
-                        Opportunity::ORIGIN => 'comoequetala',
-                    ];
-                }
-            }
-        });
-        return $opportunities;
-    }
-
-    /**
-     * Make a crawler in "queroworkar.com.br" website
-     *
-     * @return array
-     * @todo Move to collect-crawler class
-     */
-    protected function getMessagesFromQueroWorkar(): array
-    {
-        $opportunities = [];
-        $client = new Client();
-        $crawler = $client->request('GET', 'http://queroworkar.com.br/blog/jobs/');
-        $crawler->filter('.loadmore-item')->each(function ($node) use (&$opportunities) {
-            $skipDataCheck = env('CRAWLER_SKIP_DATA_CHECK');
-            /** @var Crawler $node */
-            $client = new Client();
-            $jobsPlace = $node->filter('.job-location');
-            if ($jobsPlace->count()) {
-                $jobsPlace = $jobsPlace->text();
-                if (preg_match_all('#(Em qualquer lugar|Brasil)#i', $jobsPlace)) {
-                    $data = $node->filter('.job-date .entry-date')->attr('datetime');
-                    $data = explode('T', $data);
-                    $data = trim($data[0]);
-                    $data = new DateTime($data);
-                    $today = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
-                    if ($skipDataCheck || $data->format('Ymd') === $today->format('Ymd')) {
-                        $link = $node->filter('a')->first()->attr('href');
-                        $crawler2 = $client->request('GET', $link);
-                        $title = $crawler2->filter('.page-title')->text();
-                        $description = $crawler2->filter('.job-desc')->html();
-                        $description = str_ireplace(
-                            '(adsbygoogle = window.adsbygoogle || []).push({});',
-                            '',
-                            $description
-                        );
-                        $description .= "\n\n*Como se candidatar:* " . $link;
-
-                        $opportunities[] = [
-                            Opportunity::TITLE => $title,
-                            Opportunity::DESCRIPTION => $description,
-                            Opportunity::COMPANY => trim($crawler2->filter('.company-title')->text()),
-                            Opportunity::LOCATION => trim($crawler2->filter('.job-location')->text()),
-                            Opportunity::URL => trim($link),
-                            Opportunity::ORIGIN => 'queroworkar',
-                        ];
-                    }
-                }
-            }
-        });
-        return $opportunities;
-    }
-
-    /**
-     * Make a crawler in github opportunities channels
-     *
-     * @param string $username
-     * @param string $repo
-     * @return array
-     * @todo Move to collect-github class
-     */
-    protected function fetchMessagesFromGithub(string $username, string $repo): array
-    {
-        $opportunities = [];
-        $skipDataCheck = env('CRAWLER_SKIP_DATA_CHECK');
-
-        $issues = $this->gitHubManager->issues()->all($username, $repo, [
-            'state' => 'open',
-            'since' => $skipDataCheck ? '1990-01-01' : Carbon::now()->format('Y-m-d')
-        ]);
-
-        if (!blank($issues)) {
-            foreach ($issues as $issue) {
-                $title = $issue['title'];
-                $body = Markdown::convertToHtml($issue['body']);
-
-                $opportunities[] = [
-                    Opportunity::TITLE => trim($title),
-                    Opportunity::DESCRIPTION => trim($body),
-                    Opportunity::URL => trim($issue['url']),
-                    Opportunity::ORIGIN => $username . '/' . $repo,
-                ];
-            }
-        }
-
-        return $opportunities;
     }
 
     /**

@@ -25,4 +25,8 @@ interface CollectInterface
     public function extractPosition($message): string;
 
     public function extractSalary($message): string;
+
+    public function extractUrl($message): string;
+
+    public function extractEmails($message): string;
 }
