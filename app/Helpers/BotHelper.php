@@ -14,6 +14,8 @@ class BotHelper
 {
     use Macroable;
 
+    public const TELEGRAM_LIMIT = 4096;
+
     /**
      * Build the footer sign to the messages
      *

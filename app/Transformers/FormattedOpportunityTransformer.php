@@ -103,17 +103,19 @@ class FormattedOpportunityTransformer extends TransformerAbstract
 
         $body .= BotHelper::getGroupSign($this->isEmail);
 
-        $body = str_split(
-            $body,
-            4096 - strlen("\n1/1\n")
-        );
+        if (!$this->isEmail) {
+            $body = str_split(
+                $body,
+                BotHelper::TELEGRAM_LIMIT - strlen("\n1/1\n")
+            );
 
-        $count = count($body);
+            $count = count($body);
 
-        $body = array_map(function ($part, $index) use ($count) {
-            $index++;
-            return $part . "\n{$index}/{$count}\n";
-        }, $body, array_keys($body));
+            $body = array_map(function ($part, $index) use ($count) {
+                $index++;
+                return $part . "\n{$index}/{$count}\n";
+            }, $body, array_keys($body));
+        }
 
         return [
             'body' => $body

@@ -14,6 +14,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use JD\Cloudder\CloudinaryWrapper;
 use JD\Cloudder\Facades\Cloudder;
 
@@ -35,7 +36,6 @@ class GMailMessages implements CollectInterface
     public function __construct(GmailService $gmailService)
     {
         $this->gmailService = $gmailService;
-        $this->opportunities = new Collection();
     }
 
     /**
@@ -89,7 +89,9 @@ class GMailMessages implements CollectInterface
     {
         $messageService = $this->gmailService->message();
 
-        $words = '{' . implode(' ', ) . '}';
+        $words = '{' . implode(' ', array_map(function ($word) {
+                return Str::contains($word, ' ') ? '"' . $word . '"' : $word;
+            }, Config::get('constants.requiredWords'))) . '}';
 
         $messageService->add($words);
 
@@ -192,31 +194,31 @@ class GMailMessages implements CollectInterface
 
     public function extractTitle($text): string
     {
-        // TODO: Implement extractTitle() method.
+        return '';
     }
 
     public function extractCompany($text): string
     {
-        // TODO: Implement extractCompany() method.
+        return '';
     }
 
     public function extractLocation($text): string
     {
-        // TODO: Implement extractLocation() method.
+        return '';
     }
 
     public function extractTags($text): array
     {
-        // TODO: Implement extractTags() method.
+        return [];
     }
 
     public function extractPosition($text): string
     {
-        // TODO: Implement extractPosition() method.
+        return '';
     }
 
     public function extractSalary($text): string
     {
-        // TODO: Implement extractSalary() method.
+        return '';
     }
 }

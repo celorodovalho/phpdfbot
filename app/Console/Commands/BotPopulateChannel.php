@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Helpers\BotHelper;
 use App\Helpers\HashTagHelper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Notification;
@@ -294,7 +295,7 @@ class BotPopulateChannel extends AbstractCommand
     protected function mailOpportunity(Opportunity $opportunity, string $email, array $options = [])
     {
         $messageTexts = fractal()->item($opportunity)->transformWith(new FormattedOpportunityTransformer(true))->toArray();
-        $messageTexts = Markdown::convertToHtml($messageTexts);
+        $messageTexts = Markdown::convertToHtml($messageTexts['body']);
         $messageTexts = nl2br($messageTexts);
 
         $mail = new Mail();
@@ -306,7 +307,7 @@ class BotPopulateChannel extends AbstractCommand
 
     /**
      * Notifies the group with the latest opportunities in channel
-     * Get all the unnotified opportunities, build a keyboard with the links, sends to the group, update the opportunity
+     * Get all the unnoticed opportunities, build a keyboard with the links, sends to the group, update the opportunity
      * and remove the previous notifications from group
      * @todo Move to communicate-telegram class
      */
@@ -342,12 +343,13 @@ class BotPopulateChannel extends AbstractCommand
                 }
             }
 
-            $channels = array_keys($this->channels);
-            $groups = array_keys($this->groups);
-
             $text = sprintf(
                 "%s\n\n[%s](%s)",
-                "Há novas vagas no canal!\nConfira: " . SanitizerHelper::escapeMarkdown(implode(' | ', $channels)) . " | " . SanitizerHelper::escapeMarkdown(implode(' | ', $groups)),
+                "Há novas vagas no canal!\nConfira: " .
+                SanitizerHelper::escapeMarkdown(implode(
+                    ' | ',
+                    array_merge(array_keys($this->channels), array_keys($this->groups)))
+                ),
                 '🄿🄷🄿🄳🄵',
                 str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp'
             );
@@ -357,7 +359,7 @@ class BotPopulateChannel extends AbstractCommand
             $opportunitiesText = collect();
             $listOpportunities->map(function ($opportunity) use ($mainGroup, $keyboard, &$length, &$opportunitiesText) {
                 $length += strlen($opportunity);
-                if ($length >= 4096) {
+                if ($length >= BotHelper::TELEGRAM_LIMIT) {
                     $notificationMessage = [
                         'chat_id' => $mainGroup,
                         'parse_mode' => 'Markdown',
