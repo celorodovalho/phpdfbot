@@ -194,6 +194,7 @@ class BotPopulateChannel extends AbstractCommand
 
         foreach ($this->mailing as $mail => $config) {
             if (
+                $config &&
                 !Str::contains($opportunity->origin, $mail) &&
                 (blank($config['tags']) || ExtractorHelper::hasTags($config['tags'], $opportunity->getText()))
             ) {
