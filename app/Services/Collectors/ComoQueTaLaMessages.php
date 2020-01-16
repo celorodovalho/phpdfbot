@@ -4,69 +4,73 @@ namespace App\Services\Collectors;
 
 use App\Contracts\CollectInterface;
 use App\Helpers\ExtractorHelper;
-use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
 use DateTime;
 use DateTimeZone;
 use Exception;
 use Goutte\Client;
 use GrahamCampbell\GitHub\GitHubManager;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Config;
 use Symfony\Component\DomCrawler\Crawler;
 
 class ComoQueTaLaMessages implements CollectInterface
 {
+    /** @var Collection */
+    private $opportunities;
 
-    private $opportunities = [];
-
-    /**
-     * @var GitHubManager
-     */
+    /** @var GitHubManager */
     private $gitHubManager;
 
-    public function __construct(GitHubManager $gitHubManager)
+    /**
+     * ComoQueTaLaMessages constructor.
+     * @param Collection $opportunities
+     * @param GitHubManager $gitHubManager
+     */
+    public function __construct(Collection $opportunities, GitHubManager $gitHubManager)
     {
         $this->gitHubManager = $gitHubManager;
+        $this->opportunities = $opportunities;
     }
 
     /**
      * Return the an array of messages
      *
-     * @return array
+     * @return Collection
      * @throws Exception
      */
-    public function collectMessages(): array
+    public function collectOpportunities(): Collection
     {
         $messages = $this->fetchMessages();
         foreach ($messages as $message) {
-            $this->createMessageFormat($message);
+            $this->createOpportunity($message);
         }
         return $this->opportunities;
-
-
     }
 
     /**
      * @param array $message
      * @throws Exception
      */
-    public function createMessageFormat($message)
+    public function createOpportunity($message)
     {
         $title = $this->extractTitle($message);
         $description = $this->extractDescription($message);
-        $this->opportunities[] = [
-            Opportunity::TITLE => $title,
-            Opportunity::DESCRIPTION => $description,
-            Opportunity::FILES => $this->extractFiles($title . $description),
-            Opportunity::POSITION => $this->extractPosition($title),
-            Opportunity::COMPANY => $this->extractCompany($message),
-            Opportunity::LOCATION => $this->extractLocation($description . $message[Opportunity::LOCATION]),
-            Opportunity::TAGS => $this->extractTags($title . $description . $message[Opportunity::LOCATION]),
-            Opportunity::SALARY => $this->extractSalary($title . $description),
-            Opportunity::URL => $this->extractUrl($description . $message[Opportunity::URL]),
-            Opportunity::ORIGIN => $this->extractOrigin($description),
-            Opportunity::EMAILS => $this->extractEmails($description),
-        ];
+        $this->opportunities->add(Opportunity::make(
+            [
+                Opportunity::TITLE => $title,
+                Opportunity::DESCRIPTION => $description,
+                Opportunity::FILES => $this->extractFiles($title . $description),
+                Opportunity::POSITION => $this->extractPosition($title),
+                Opportunity::COMPANY => $this->extractCompany($message),
+                Opportunity::LOCATION => $this->extractLocation($description . $message[Opportunity::LOCATION]),
+                Opportunity::TAGS => $this->extractTags($title . $description . $message[Opportunity::LOCATION]),
+                Opportunity::SALARY => $this->extractSalary($title . $description),
+                Opportunity::URL => $this->extractUrl($description . $message[Opportunity::URL]),
+                Opportunity::ORIGIN => $this->extractOrigin($description),
+                Opportunity::EMAILS => $this->extractEmails($description),
+            ]
+        ));
     }
 
     /**
@@ -152,7 +156,7 @@ class ComoQueTaLaMessages implements CollectInterface
      */
     public function extractTitle($message): string
     {
-        return SanitizerHelper::sanitizeSubject($message[Opportunity::TITLE]);
+        return $message[Opportunity::TITLE];
     }
 
     /**

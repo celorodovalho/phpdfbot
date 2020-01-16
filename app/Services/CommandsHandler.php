@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Commands\NewOpportunityCommand;
 use App\Commands\OptionsCommand;
 use App\Console\Commands\BotPopulateChannel;
+use App\Helpers\ExtractorHelper;
 use App\Models\Opportunity;
 use Exception;
 use Illuminate\Support\Facades\Artisan;
@@ -120,7 +121,7 @@ class CommandsHandler
                 }
                 break;
             case OptionsCommand::OPTIONS_COMMAND:
-                if (in_array($data[1], [BotPopulateChannel::COMMAND_PROCESS, BotPopulateChannel::COMMAND_NOTIFY], true)) {
+                if (in_array($data[1], [BotPopulateChannel::TYPE_PROCESS, BotPopulateChannel::TYPE_NOTIFY], true)) {
                     Artisan::call('bot:populate:channel', ['process' => $data[1]]);
                     $this->sendMessage('Done!');
                 }
@@ -168,29 +169,42 @@ class CommandsHandler
         /** @var string $caption */
         $caption = $message->caption;
 
+        Log::info('NEW_MESSAGE', [$message]);
+
         if (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) {
-            $opportunity = new Opportunity();
             if (blank($message->text) && blank($caption)) {
                 throw new Exception('Envie um texto para a vaga, ou o nome da vaga na legenda da imagem/documento.');
             }
-            $text = $message->text ?? $caption;
-            $title = str_replace("\n", ' ', $text);
-            $opportunity->title = Str::limit($title, 50);
-            $opportunity->description = $text;
-            $opportunity->status = Opportunity::STATUS_INACTIVE;
-            $opportunity->files = collect();
-            $opportunity->telegram_user_id = $message->from->id;
-            $opportunity->url = $this->botName;
-            $opportunity->origin = 'telegram';
 
+            $files = [];
             if (filled($photos)) {
                 foreach ($photos as $photo) {
-                    $opportunity->addFile($photo);
+                    $files[] = $photo;
                 }
             }
             if (filled($document)) {
-                $opportunity->addFile($document->first());
+                $files[] = $document->first();
             }
+
+            $text = $message->text ?? $caption;
+            $title = str_replace("\n", ' ', $text);
+
+            $opportunity = Opportunity::make([
+                Opportunity::TITLE => Str::limit($title, 50),
+                Opportunity::DESCRIPTION => $text,
+                Opportunity::FILES => $files,
+                Opportunity::URL => implode(', ', ExtractorHelper::extractUrls($text)),
+                Opportunity::ORIGIN => $this->botName,
+                Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
+                Opportunity::TAGS => ExtractorHelper::extractTags($text),
+                Opportunity::EMAILS => implode(', ', ExtractorHelper::extractEmail($text)),
+                Opportunity::POSITION => null,
+                Opportunity::SALARY => null,
+                Opportunity::COMPANY => null,
+            ]);
+
+            $opportunity->status = Opportunity::STATUS_INACTIVE;
+            $opportunity->telegram_user_id = $message->from->id;
 
             $opportunity->save();
 

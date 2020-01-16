@@ -4,35 +4,40 @@ namespace App\Services\Collectors;
 
 use App\Contracts\CollectInterface;
 use App\Helpers\ExtractorHelper;
-use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
 use Carbon\Carbon;
 use Exception;
 use GrahamCampbell\GitHub\GitHubManager;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Config;
 
 class GitHubMessages implements CollectInterface
 {
 
-    private $opportunities = [];
+    /** @var Collection */
+    private $opportunities;
 
-    /**
-     * @var GitHubManager
-     */
+    /** @var GitHubManager */
     private $gitHubManager;
 
-    public function __construct(GitHubManager $gitHubManager)
+    /**
+     * GitHubMessages constructor.
+     * @param Collection $opportunities
+     * @param GitHubManager $gitHubManager
+     */
+    public function __construct(Collection $opportunities, GitHubManager $gitHubManager)
     {
         $this->gitHubManager = $gitHubManager;
+        $this->opportunities = $opportunities;
     }
 
     /**
      * Return the an array of messages
      *
-     * @return array
+     * @return Collection
      * @throws Exception
      */
-    public function collectMessages(): array
+    public function collectOpportunities(): Collection
     {
         $githubSources = Config::get('constants.gitHubSources');
         $messages = [];
@@ -40,7 +45,7 @@ class GitHubMessages implements CollectInterface
             $messages = array_merge($messages, $this->fetchMessages($username, $repo));
         }
         foreach ($messages as $message) {
-            $this->createMessageFormat($message);
+            $this->createOpportunity($message);
         }
         return $this->opportunities;
     }
@@ -49,23 +54,25 @@ class GitHubMessages implements CollectInterface
      * @param array $message
      * @throws Exception
      */
-    public function createMessageFormat($message)
+    public function createOpportunity($message)
     {
         $title = $this->extractTitle($message);
         $description = $this->extractDescription($message);
-        $this->opportunities[] = [
-            Opportunity::TITLE => $title,
-            Opportunity::DESCRIPTION => $description,
-            Opportunity::FILES => $this->extractFiles($title . $description),
-            Opportunity::POSITION => $this->extractPosition($title),
-            Opportunity::COMPANY => $this->extractCompany($title . $description),
-            Opportunity::LOCATION => $this->extractLocation($title . $description),
-            Opportunity::TAGS => $this->extractTags($title . $description),
-            Opportunity::SALARY => $this->extractSalary($title . $description),
-            Opportunity::URL => $this->extractUrl($description . $message['html_url']),
-            Opportunity::ORIGIN => $this->extractOrigin($message['html_url']),
-            Opportunity::EMAILS => $this->extractEmails($message),
-        ];
+        $this->opportunities->add(Opportunity::make(
+            [
+                Opportunity::TITLE => $title,
+                Opportunity::DESCRIPTION => $description,
+                Opportunity::FILES => $this->extractFiles($title . $description),
+                Opportunity::POSITION => $this->extractPosition($title),
+                Opportunity::COMPANY => $this->extractCompany($title . $description),
+                Opportunity::LOCATION => $this->extractLocation($title . $description),
+                Opportunity::TAGS => $this->extractTags($title . $description),
+                Opportunity::SALARY => $this->extractSalary($title . $description),
+                Opportunity::URL => $this->extractUrl($description . $message['html_url']),
+                Opportunity::ORIGIN => $this->extractOrigin($message['html_url']),
+                Opportunity::EMAILS => $this->extractEmails($message),
+            ]
+        ));
     }
 
     /**
@@ -121,7 +128,7 @@ class GitHubMessages implements CollectInterface
      */
     public function extractTitle($message): string
     {
-        return SanitizerHelper::sanitizeSubject($message['title']);
+        return $message['title'];
     }
 
     /**

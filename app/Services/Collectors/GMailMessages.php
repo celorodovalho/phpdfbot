@@ -5,14 +5,14 @@ namespace App\Services\Collectors;
 use App\Contracts\CollectInterface;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\Helper;
-use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
 use App\Services\GmailService;
 use Dacastro4\LaravelGmail\Exceptions\AuthException;
 use Dacastro4\LaravelGmail\Services\Message\Attachment;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
 use Exception;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -20,38 +20,47 @@ use Illuminate\Support\Str;
 use JD\Cloudder\CloudinaryWrapper;
 use JD\Cloudder\Facades\Cloudder;
 
+/**
+ * Class GMailMessages
+ */
 class GMailMessages implements CollectInterface
 {
 
-    private $opportunities = [];
     /**
      * Gmail Labels
      */
     protected const LABEL_ENVIADO_PRO_BOT = 'Label_5391527689646879721';
     protected const LABEL_STILL_UNREAD = 'Label_3143736512522239870';
 
-    /**
-     * @var GmailService
-     */
+    /** @var Collection */
+    private $opportunities = [];
+
+    /** @var GmailService */
     private $gMailService;
 
-    public function __construct(GmailService $gMailService)
+    /**
+     * GMailMessages constructor.
+     * @param Collection $opportunities
+     * @param GmailService $gMailService
+     */
+    public function __construct(Collection $opportunities, GmailService $gMailService)
     {
         $this->gMailService = $gMailService;
+        $this->opportunities = $opportunities;
     }
 
     /**
      * Return the an array of messages, then remove messages from email
      *
-     * @return array
+     * @return Collection
      * @throws AuthException
      */
-    public function collectMessages(): array
+    public function collectOpportunities(): Collection
     {
         $messages = $this->fetchMessages();
         /** @var Mail $message */
         foreach ($messages as $message) {
-            $this->createMessageFormat($message);
+            $this->createOpportunity($message);
             $message->markAsRead();
             $message->addLabel(self::LABEL_ENVIADO_PRO_BOT);
             $message->removeLabel(self::LABEL_STILL_UNREAD);
@@ -64,32 +73,34 @@ class GMailMessages implements CollectInterface
      * @param Mail $message
      * @throws Exception
      */
-    public function createMessageFormat($message)
+    public function createOpportunity($message)
     {
         $title = $this->extractTitle($message);
         $description = $this->extractDescription($message);
-        $this->opportunities[] = [
-            Opportunity::TITLE => $title,
-            Opportunity::DESCRIPTION => $description,
-            Opportunity::FILES => $this->extractFiles($message),
-            Opportunity::POSITION => $this->extractPosition($title),
-            Opportunity::COMPANY => $this->extractCompany($title.$description),
-            Opportunity::LOCATION => $this->extractLocation($title.$description),
-            Opportunity::TAGS => $this->extractTags($title.$description),
-            Opportunity::SALARY => $this->extractSalary($title.$description),
-            Opportunity::URL => $this->extractUrl($message),
-            Opportunity::ORIGIN => $this->extractOrigin($message),
-            Opportunity::EMAILS => $this->extractEmails($message),
-        ];
+        $this->opportunities->add(Opportunity::make(
+            [
+                Opportunity::TITLE => $title,
+                Opportunity::DESCRIPTION => $description,
+                Opportunity::FILES => $this->extractFiles($message),
+                Opportunity::POSITION => $this->extractPosition($title),
+                Opportunity::COMPANY => $this->extractCompany($title . $description),
+                Opportunity::LOCATION => $this->extractLocation($title . $description),
+                Opportunity::TAGS => $this->extractTags($title . $description),
+                Opportunity::SALARY => $this->extractSalary($title . $description),
+                Opportunity::URL => $this->extractUrl($message),
+                Opportunity::ORIGIN => $this->extractOrigin($message),
+                Opportunity::EMAILS => $this->extractEmails($message),
+            ]
+        ));
     }
 
     /**
      * Walks the GMail looking for specifics opportunity messages
      *
-     * @return Collection
+     * @return BaseCollection
      * @throws AuthException
      */
-    protected function fetchMessages(): Collection
+    protected function fetchMessages(): BaseCollection
     {
         $messageService = $this->gMailService->message();
 
@@ -201,7 +212,7 @@ class GMailMessages implements CollectInterface
      */
     public function extractTitle($message): string
     {
-        return SanitizerHelper::sanitizeSubject($message->getSubject());
+        return $message->getSubject();
     }
 
     /**

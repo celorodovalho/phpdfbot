@@ -56,7 +56,7 @@ class FormattedOpportunityTransformer extends TransformerAbstract
 
         $body .= sprintf(
             "\n\n*Descrição:*\n%s",
-            $opportunity->description
+            str_replace('Descrição:', '', $opportunity->description)
         );
 
         if (filled($opportunity->position)) {
@@ -94,7 +94,14 @@ class FormattedOpportunityTransformer extends TransformerAbstract
             );
         }
 
-        if (Str::contains($opportunity->origin, ['clubinfobsb', 'clubedevagas'])) {
+        if (filled($opportunity->emails) || filled($opportunity->url)) {
+            $body .= sprintf(
+                "\n\n*Como se candidatar:*\n%s",
+                implode(', ', array_filter([$opportunity->emails, $opportunity->url]))
+            );
+        }
+
+        if (Str::contains(strtolower($opportunity->origin), ['clubinfobsb', 'clubedevagas'])) {
             $body .= sprintf(
                 "\n\n*Fonte:*\n%s",
                 'www.clubedevagas.com.br'

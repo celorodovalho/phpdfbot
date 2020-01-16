@@ -31,15 +31,17 @@ class BotPopulateChannel extends AbstractCommand
     /**
      * Commands
      */
-    public const COMMAND_NOTIFY = 'notify';
-    public const COMMAND_PROCESS = 'process';
+    public const TYPE_NOTIFY = 'notify';
+    public const TYPE_PROCESS = 'process';
+    public const TYPE_SEND = 'send';
+    public const TYPE_APPROVAL = 'approval';
 
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'bot:populate:channel {process} {opportunity?} {message?} {chat?}';
+    protected $signature = 'bot:populate:channel {type} {opportunity?}';
 
     /**
      * The console command description.
@@ -72,13 +74,11 @@ class BotPopulateChannel extends AbstractCommand
 
     /** @var GMailMessages */
     private $gMailMessages;
-    /**
-     * @var GitHubMessages
-     */
+
+    /** @var GitHubMessages */
     private $gitHubMessages;
-    /**
-     * @var ComoQueTaLaMessages
-     */
+
+    /** @var ComoQueTaLaMessages */
     private $comoQueTaLaMessages;
 
     /**
@@ -114,17 +114,17 @@ class BotPopulateChannel extends AbstractCommand
         $this->mailing = Config::get('telegram.mailing');
         $this->admin = Config::get('telegram.admin');
 
-        switch ($this->argument('process')) {
-            case self::COMMAND_PROCESS:
+        switch ($this->argument('type')) {
+            case self::TYPE_PROCESS:
                 $this->processOpportunities();
                 break;
-            case self::COMMAND_NOTIFY:
+            case self::TYPE_NOTIFY:
                 $this->notifyGroup();
                 break;
-            case 'send':
+            case self::TYPE_SEND:
                 $this->sendOpportunityToChannels($this->argument('opportunity'));
                 break;
-            case 'approval':
+            case self::TYPE_APPROVAL:
                 $this->sendTelegramOpportunityToApproval($this->argument('opportunity'));
                 break;
             default:
@@ -137,44 +137,14 @@ class BotPopulateChannel extends AbstractCommand
      * Retrieve the Opportunities objects and send them to approval
      *
      * @throws AuthException
+     * @throws TelegramSDKException
      */
     protected function processOpportunities(): void
     {
         $opportunities = $this->collectOpportunities();
         foreach ($opportunities as $opportunity) {
-            $this->sendOpportunityToApproval($opportunity->id);
+            $this->sendOpportunityToApproval($opportunity);
         }
-    }
-
-    /**
-     * @param array|Opportunity $rawOpportunity
-     * @return Opportunity
-     */
-    protected function createOrUpdateOpportunity($rawOpportunity)
-    {
-        if (is_array($rawOpportunity)) {
-            $opportunity = new Opportunity();
-        } else {
-            $opportunity = $rawOpportunity;
-            $rawOpportunity = $rawOpportunity->toArray();
-        }
-        if (array_key_exists(Opportunity::COMPANY, $rawOpportunity)) {
-            $opportunity->company = $rawOpportunity[Opportunity::COMPANY];
-        }
-        if (array_key_exists(Opportunity::LOCATION, $rawOpportunity)) {
-            $opportunity->location = $rawOpportunity[Opportunity::LOCATION];
-        }
-        if (array_key_exists(Opportunity::FILES, $rawOpportunity)) {
-            $opportunity->files = collect($rawOpportunity[Opportunity::FILES]);
-        }
-        $description = SanitizerHelper::sanitizeBody($rawOpportunity[Opportunity::DESCRIPTION]);
-        $opportunity->title = SanitizerHelper::sanitizeSubject($rawOpportunity[Opportunity::TITLE]);
-        $opportunity->description = $description;
-        $opportunity->url = $rawOpportunity[Opportunity::URL];
-        $opportunity->origin = $rawOpportunity[Opportunity::ORIGIN];
-        $opportunity->tags = ExtractorHelper::extractTags($description . $rawOpportunity[Opportunity::TITLE]);
-        $opportunity->save();
-        return $opportunity;
     }
 
     /**
@@ -185,18 +155,15 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected function collectOpportunities(): Collection
     {
-        $opportunitiesRaw = $this->gMailMessages->collectMessages();
-        $opportunitiesRaw = array_merge(
-            $opportunitiesRaw,
-            $this->gMailMessages->collectMessages(),
-            $this->comoQueTaLaMessages->collectMessages()
-        );
+        $opportunities = $this->gMailMessages->collectOpportunities();
+        $opportunities->merge($this->gitHubMessages->collectOpportunities());
+        $opportunities->merge($this->comoQueTaLaMessages->collectOpportunities());
 
-        $opportunities = array_map(function ($rawOpportunity) {
-            return $this->createOrUpdateOpportunity($rawOpportunity);
-        }, $opportunitiesRaw);
+        $opportunities->map(function (Opportunity $opportunity) {
+            $opportunity->save();
+        });
 
-        return collect($opportunities);
+        return $opportunities;
     }
 
     /**
@@ -248,7 +215,8 @@ class BotPopulateChannel extends AbstractCommand
             $link = "https://t.me/VagasBrasil_TI/{$opportunity->telegram_id}";
             $this->telegram->sendMessage([
                 'chat_id' => $opportunity->telegram_user_id,
-                'text' => "Sua vaga '$link' foi publicada no canal @VagasBrasil_TI.",
+                'parse_mode' => 'Markdown',
+                'text' => "Sua vaga '[{$opportunity->title}]($link)' foi publicada no canal @VagasBrasil_TI.",
             ]);
         }
     }
@@ -258,6 +226,7 @@ class BotPopulateChannel extends AbstractCommand
      * @param int $chatId
      * @param array $options
      * @return array
+     * @throws TelegramSDKException
      * @todo Move to communicate-telegram class
      */
     protected function sendOpportunity(Opportunity $opportunity, $chatId, array $options = []): array
@@ -282,16 +251,13 @@ class BotPopulateChannel extends AbstractCommand
                 $messageSentIds[] = $messageSent->messageId;
             } catch (Exception $exception) {
                 if ($exception->getCode() === 400) {
-                    try {
-                        $sendMsg['text'] = SanitizerHelper::removeMarkdown($messageText);
-                        unset($sendMsg['Markdown']);
-                        $messageSent = $this->telegram->sendMessage($sendMsg);
-                        $messageSentIds[] = $messageSent->messageId;
-                    } catch (Exception $exception2) {
-                        $this->error(implode(': ', ['FALHA_AO_ENVIAR_TEXTPLAIN', $chatId, json_encode($sendMsg)]));
-                    }
+                    $sendMsg['text'] = SanitizerHelper::removeMarkdown($messageText);
+                    unset($sendMsg['Markdown']);
+                    $messageSent = $this->telegram->sendMessage($sendMsg);
+                    $messageSentIds[] = $messageSent->messageId;
+                } else {
+                    throw $exception;
                 }
-                $this->error(implode(': ', ['FALHA_AO_ENVIAR_MARKDOWN', $chatId, json_encode($sendMsg)]));
             }
 
             if ($messageSent) {
@@ -415,21 +381,22 @@ class BotPopulateChannel extends AbstractCommand
     /**
      * Send opportunity to approval
      *
-     * @param int $opportunityId
+     * @param Opportunity $opportunity
+     * @throws TelegramSDKException
      * @todo Move to communicate-telegram class
      */
-    protected function sendOpportunityToApproval(int $opportunityId): void
+    protected function sendOpportunityToApproval(Opportunity $opportunity): void
     {
         $keyboard = Keyboard::make()
             ->inline()
             ->row(
                 Keyboard::inlineButton([
                     'text' => 'Aprovar',
-                    'callback_data' => implode(' ', [Opportunity::CALLBACK_APPROVE, $opportunityId])
+                    'callback_data' => implode(' ', [Opportunity::CALLBACK_APPROVE, $opportunity->id])
                 ]),
                 Keyboard::inlineButton([
                     'text' => 'Remover',
-                    'callback_data' => implode(' ', [Opportunity::CALLBACK_REMOVE, $opportunityId])
+                    'callback_data' => implode(' ', [Opportunity::CALLBACK_REMOVE, $opportunity->id])
                 ])
             );
 
@@ -438,18 +405,17 @@ class BotPopulateChannel extends AbstractCommand
         ];
 
         /** @var Opportunity $opportunity */
-        $opportunity = Opportunity::find($opportunityId);
         $this->sendOpportunity($opportunity, $this->admin, $messageToSend);
     }
 
     /**
      * @param $opportunityId
+     * @throws TelegramSDKException
      * @todo Move to communicate-telegram class
      */
     protected function sendTelegramOpportunityToApproval($opportunityId)
     {
         $opportunity = Opportunity::find($opportunityId);
-        $opportunity = $this->createOrUpdateOpportunity($opportunity);
-        $this->sendOpportunityToApproval($opportunity->id);
+        $this->sendOpportunityToApproval($opportunity);
     }
 }

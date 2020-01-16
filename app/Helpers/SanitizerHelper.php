@@ -4,6 +4,7 @@ namespace App\Helpers;
 
 use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Support\Traits\Macroable;
+use League\HTMLToMarkdown\HtmlConverter;
 
 /**
  * Class Sanitizer
@@ -18,7 +19,6 @@ class SanitizerHelper
      *
      * @param string $message
      * @return string
-     * @todo Move to helper-format class
      */
     public static function removeMarkdown(string $message): string
     {
@@ -31,7 +31,6 @@ class SanitizerHelper
      *
      * @param string $message
      * @return string
-     * @todo Move to helper-format class
      */
     public static function removeBBCode(string $message): string
     {
@@ -44,7 +43,6 @@ class SanitizerHelper
      *
      * @param string $message
      * @return string
-     * @todo Move to helper-format class
      */
     public static function removeBrackets(string $message): string
     {
@@ -61,7 +59,6 @@ class SanitizerHelper
      *
      * @param string $message
      * @return string
-     * @todo Move to helper-format class
      */
     public static function escapeMarkdown(string $message): string
     {
@@ -74,7 +71,6 @@ class SanitizerHelper
      *
      * @param string $message
      * @return string
-     * @todo Move to helper-format class
      */
     public static function replaceMarkdown(string $message): string
     {
@@ -88,14 +84,13 @@ class SanitizerHelper
      *
      * @param string $message
      * @return string
-     * @todo Move to helper-format class
      */
     public static function sanitizeSubject(string $message): string
     {
-        $message = preg_replace('/^(RE|FW|FWD|ENC|VAGA|Oportunidade)S?:?/im', '', $message, -1);
+        $message = preg_replace('/^(RE|FWD|FW|ENC|VAGA|Oportunidade)S?:?/im', '', $message, -1);
         $message = preg_replace('/(\d{0,999} (view|application)s?)/', '', $message);
         $message = str_replace(
-            ['[ClubInfoBSB]', '[leonardoti]', '[NVagas]', '[ProfissãoFuturo]', '[GEBE Oportunidades]'],
+            ['[ClubInfoBSB]', '[leonardoti]', '[NVagas]', '[ProfissãoFuturo]', '[GEBE Oportunidades]', '[N]'],
             '',
             $message
         );
@@ -110,7 +105,6 @@ class SanitizerHelper
      *
      * @param string $message
      * @return string
-     * @todo Move to helper-format class
      */
     public static function sanitizeBody(string $message): string
     {
@@ -145,30 +139,36 @@ class SanitizerHelper
 
             $message = $messageArray[0];
 
-            $message = self::removeTagsAttributes($message);
-            $message = self::removeEmptyTagsRecursive($message);
-            $message = self::closeOpenTags($message);
+//            $message = self::removeTagsAttributes($message);
+//            $message = self::removeTagsAttributes($message);
+//            $message = self::removeEmptyTagsRecursive($message);
+//            $message = self::closeOpenTags($message);
 
-            $message = self::removeMarkdown($message);
-
-            $message = str_ireplace(['<3'], '❤️', $message);
-            $message = str_ireplace(['<strong>', '<b>', '</b>', '</strong>'], '*', $message);
-            $message = str_ireplace(['<i>', '</i>', '<em>', '</em>'], '_', $message);
             $message = str_ireplace([
                 '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
             ], '`', $message);
-            $message = str_replace(['<ul>', '<ol>', '</ul>', '</ol>'], '', $message);
-            $message = str_replace('<li>', '•', $message);
-            $message = preg_replace('/<br(\s+)?\/?>/i', "\n", $message);
-            $message = preg_replace('/<p[^>]*?>/', "\n", $message);
-            $message = str_replace(['</p>', '</li>'], "\n", $message);
-            $message = strip_tags($message);
 
-            $message = str_replace(['**', '__', '``'], '', $message);
-            $message = str_replace(['* *', '_ _', '` `', '*  *', '_  _', '`  `'], '', $message);
+            $converter = new HtmlConverter([
+                'bold_style' => '*',
+                'italic_style' => '_',
+                'strip_tags' => true,
+                'hard_break' => true
+            ]);
+
+            $message = $converter->convert($message);
+
+            $message = str_ireplace(['<3'], '❤️', $message);
+            $message = preg_replace("/#{2,}/m", '#', $message);
+            $message = preg_replace("/_{2,}/m", '_', $message);
+            $message = preg_replace("/`{2,}/m", '`', $message);
+
+            $message = preg_replace('/\s*$^\s*/m', "\n", $message);
+            $message = preg_replace('/[ \t]+/', ' ', $message);
+            $message = preg_replace("/\s{2,}/m", "\n", $message);
+
             $message = preg_replace("/([\r\n])+/m", "\n", $message);
             $message = preg_replace("/\n{2,}/m", "\n", $message);
-            $message = preg_replace("/\s{2,}/m", ' ', $message);
+
             $message = trim($message, " \t\n\r\0\x0B--");
 
             $message = preg_replace('/cid:image(.+)/m', '', $message);
@@ -185,7 +185,6 @@ class SanitizerHelper
      *
      * @param string $message
      * @return string
-     * @todo Move to helper-format class
      */
     public static function removeTagsAttributes(string $message): string
     {
@@ -197,7 +196,6 @@ class SanitizerHelper
      *
      * @param string $message
      * @return string
-     * @todo Move to helper-format class
      */
     public static function closeOpenTags(string $message): string
     {
@@ -219,7 +217,6 @@ class SanitizerHelper
      * @param string $str
      * @param string $repto
      * @return string
-     * @todo Move to helper-format class
      */
     public static function removeEmptyTagsRecursive(string $str, string $repto = ''): string
     {

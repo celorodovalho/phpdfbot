@@ -2,11 +2,13 @@
 
 namespace App\Contracts;
 
+use Illuminate\Database\Eloquent\Collection;
+
 interface CollectInterface
 {
-    public function collectMessages(): array;
+    public function collectOpportunities(): Collection;
 
-    public function createMessageFormat($message);
+    public function createOpportunity($message);
 
     public function extractTitle($message): string;
 
