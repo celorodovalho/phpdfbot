@@ -111,7 +111,7 @@ class BotPopulateChannel extends AbstractCommand
         $this->channels = Config::get('telegram.channels');
         $this->appUrl = env('APP_URL');
         $this->groups = Config::get('telegram.groups');
-        $this->mailing = Config::get('telegram.mailing');
+        $this->mailing = Config::get('constants.mailing');
         $this->admin = Config::get('telegram.admin');
 
         switch ($this->argument('type')) {
