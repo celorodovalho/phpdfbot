@@ -96,23 +96,23 @@ class Handler extends ExceptionHandler
      */
     public function log(Exception $exception, $message = '', $context = null): void
     {
-        $referenceLog = $message . time() . '.log';
-        Log::error($message, [$exception->getLine(), $exception, $context]);
-        Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
-        $referenceLog = Storage::disk('logs')->url($referenceLog);
-
-        $logMessage = json_encode([
-            'message' => $message,
-            'exceptionMessage' => $exception->getMessage(),
-            'file' => $exception->getFile(),
-            'line' => $exception->getLine(),
-            'referenceLog' => $referenceLog,
-        ]);
-
-        $username = env('GITHUB_USERNAME');
-        $repo = env('GITHUB_REPO');
-
         try {
+            $referenceLog = $message . time() . '.log';
+            Log::error($message, [$exception->getLine(), $exception, $context]);
+            Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
+            $referenceLog = Storage::disk('logs')->url($referenceLog);
+
+            $logMessage = json_encode([
+                'message' => $message,
+                'exceptionMessage' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'referenceLog' => $referenceLog,
+            ]);
+
+            $username = env('GITHUB_USERNAME');
+            $repo = env('GITHUB_REPO');
+
             $issues = $this->gitHubManager->issues()->find(
                 $username,
                 $repo,
@@ -147,11 +147,15 @@ class Handler extends ExceptionHandler
                 );
             }
         } catch (Exception $exception2) {
-            Telegram::sendDocument([
-                'chat_id' => config('telegram.admin'),
-                'document' => InputFile::create($referenceLog),
-                'caption' => $logMessage
-            ]);
+            try {
+                Telegram::sendDocument([
+                    'chat_id' => config('telegram.admin'),
+                    'document' => InputFile::create($referenceLog),
+                    'caption' => $logMessage
+                ]);
+            } catch (Exception $exception3) {
+                Log::error('EXC3', [$exception3]);
+            }
         }
     }
 }
