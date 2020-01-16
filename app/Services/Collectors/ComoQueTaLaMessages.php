@@ -174,7 +174,7 @@ class ComoQueTaLaMessages implements CollectInterface
      */
     public function extractTags($message): array
     {
-        return ExtractorHelper::extractTags($message);
+        return implode(' ', ExtractorHelper::extractTags($message));
     }
 
     /**

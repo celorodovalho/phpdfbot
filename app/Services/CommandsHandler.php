@@ -200,7 +200,7 @@ class CommandsHandler
                 Opportunity::URL => implode(', ', ExtractorHelper::extractUrls($text)),
                 Opportunity::ORIGIN => $this->botName,
                 Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
-                Opportunity::TAGS => ExtractorHelper::extractTags($text),
+                Opportunity::TAGS => implode(' ', ExtractorHelper::extractTags($text)),
                 Opportunity::EMAILS => implode(', ', ExtractorHelper::extractEmail($text)),
                 Opportunity::POSITION => null,
                 Opportunity::SALARY => null,
