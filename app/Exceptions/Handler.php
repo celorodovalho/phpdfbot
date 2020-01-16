@@ -7,8 +7,11 @@ use Exception;
 use GrahamCampbell\GitHub\GitHubManager;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Console\Output\OutputInterface;
 use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
@@ -66,9 +69,9 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @param  \Exception  $exception
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function render($request, Exception $exception)
     {
@@ -76,15 +79,16 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * @param \Symfony\Component\Console\Output\OutputInterface $output
-     * @param Exception $e
+     * @param OutputInterface $output
+     * @param Exception $exception
      */
-    public function renderForConsole($output, Exception $e)
+    public function renderForConsole($output, Exception $exception)
     {
         $output->writeln('<error>Something wrong!</error>', 32);
-        $output->writeln("<error>{$e->getMessage()}</error>", 32);
+        $output->writeln("<error>{$exception->getMessage()}</error>", 32);
+        $this->log($exception);
 
-        parent::renderForConsole($output, $e);
+        parent::renderForConsole($output, $exception);
     }
 
     /**
@@ -149,7 +153,7 @@ class Handler extends ExceptionHandler
         } catch (Exception $exception2) {
             try {
                 Telegram::sendDocument([
-                    'chat_id' => config('telegram.admin'),
+                    'chat_id' => Config::get('telegram.admin'),
                     'document' => InputFile::create($referenceLog),
                     'caption' => $logMessage
                 ]);

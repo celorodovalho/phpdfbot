@@ -219,7 +219,9 @@ class CommandsHandler
         }
 
         $newMembers = $message->newChatMembers;
-        Log::info('NEW_MEMBER', [$newMembers]);
+        if (filled($newMembers)) {
+            Log::info('NEW_MEMBER', [$newMembers]);
+        }
 
         // TODO: Think more about this
         /*if (filled($newMembers)) {
