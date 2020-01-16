@@ -215,8 +215,11 @@ class BotPopulateChannel extends AbstractCommand
             $link = "https://t.me/VagasBrasil_TI/{$opportunity->telegram_id}";
             $this->telegram->sendMessage([
                 'chat_id' => $opportunity->telegram_user_id,
-                'parse_mode' => 'Markdown',
-                'text' => "Sua vaga '[{$opportunity->title}]($link)' foi publicada no canal @VagasBrasil_TI.",
+                'text' => sprintf(
+                    "Sua vaga [%s](%s) foi publicada.",
+                    SanitizerHelper::sanitizeSubject(SanitizerHelper::removeBrackets($opportunity->title)),
+                    $link
+                )
             ]);
         }
     }
