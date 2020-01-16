@@ -230,7 +230,7 @@ class GMailMessages implements CollectInterface
      */
     public function extractTags($message): array
     {
-        return implode(' ', ExtractorHelper::extractTags($message));
+        return ExtractorHelper::extractTags($message);
     }
 
     /**

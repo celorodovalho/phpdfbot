@@ -103,7 +103,7 @@ class Opportunity extends Model implements Transformable
                 self::POSITION => $data[self::POSITION],
                 self::COMPANY => $data[self::COMPANY],
                 self::LOCATION => $data[self::LOCATION],
-                self::TAGS => $data[self::TAGS],
+                self::TAGS => implode(' ', $data[self::TAGS]),
                 self::SALARY => $data[self::SALARY],
                 self::URL => $data[self::URL],
                 self::ORIGIN => $data[self::ORIGIN],
