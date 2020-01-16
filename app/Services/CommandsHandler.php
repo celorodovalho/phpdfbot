@@ -110,7 +110,7 @@ class CommandsHandler
                     Artisan::call(
                         'bot:populate:channel',
                         [
-                            'process' => 'send',
+                            'type' => BotPopulateChannel::TYPE_SEND,
                             'opportunity' => $opportunity->id
                         ]
                     );
@@ -237,7 +237,7 @@ class CommandsHandler
         Artisan::call(
             'bot:populate:channel',
             [
-                'process' => 'approval',
+                'type' => BotPopulateChannel::TYPE_APPROVAL,
                 'opportunity' => $opportunity->id,
             ]
         );
