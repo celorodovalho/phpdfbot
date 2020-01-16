@@ -235,7 +235,7 @@ class BotPopulateChannel extends AbstractCommand
         $messageSentIds = [];
         $lastSentID = null;
         $messageSent = null;
-        foreach ($messageTexts['body'] as $messageText) {
+        foreach ($messageTexts['data']['body'] as $messageText) {
             $sendMsg = array_merge([
                 'chat_id' => $chatId,
                 'parse_mode' => 'Markdown',
@@ -277,7 +277,7 @@ class BotPopulateChannel extends AbstractCommand
     protected function mailOpportunity(Opportunity $opportunity, string $email, array $options = [])
     {
         $messageTexts = fractal()->item($opportunity)->transformWith(new FormattedOpportunityTransformer(true))->toArray();
-        $messageTexts = Markdown::convertToHtml($messageTexts['body']);
+        $messageTexts = Markdown::convertToHtml($messageTexts['data']['body']);
         $messageTexts = nl2br($messageTexts);
 
         $mail = new Mail();
