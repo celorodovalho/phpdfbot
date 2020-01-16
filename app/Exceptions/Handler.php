@@ -112,8 +112,6 @@ class Handler extends ExceptionHandler
         $username = env('GITHUB_USERNAME');
         $repo = env('GITHUB_REPO');
 
-        return;
-
         try {
             $issues = $this->gitHubManager->issues()->find(
                 $username,

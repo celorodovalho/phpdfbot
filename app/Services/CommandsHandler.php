@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Commands\NewOpportunityCommand;
 use App\Commands\OptionsCommand;
 use App\Console\Commands\BotPopulateChannel;
+use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
 use App\Models\Opportunity;
 use Exception;
@@ -171,7 +172,10 @@ class CommandsHandler
 
         Log::info('NEW_MESSAGE', [$message]);
 
-        if (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) {
+        if (
+            (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) ||
+            (!$message->from->isBot && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE)
+        ) {
             if (blank($message->text) && blank($caption)) {
                 throw new Exception('Envie um texto para a vaga, ou o nome da vaga na legenda da imagem/documento.');
             }
@@ -210,6 +214,7 @@ class CommandsHandler
 
             $this->sendOpportunityToApproval($opportunity);
         }
+
         $newMembers = $message->newChatMembers;
         Log::info('NEW_MEMBER', [$newMembers]);
 

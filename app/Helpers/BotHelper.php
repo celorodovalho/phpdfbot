@@ -17,6 +17,12 @@ class BotHelper
     public const TELEGRAM_LIMIT = 4096;
 
     /**
+     * Other types: 'private', 'group', 'supergroup' or 'channel'.
+     * @var string
+     */
+    public const TG_CHAT_TYPE_PRIVATE = 'private';
+
+    /**
      * Build the footer sign to the messages
      *
      * @param bool $isWeb
