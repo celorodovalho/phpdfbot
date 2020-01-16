@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Bot;
 
+use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
 use App\Services\CommandsHandler;
 
@@ -21,14 +22,20 @@ class DefaultController extends Controller
      * @var BotsManager
      */
     private $botsManager;
+    /**
+     * @var Handler
+     */
+    private $handler;
 
     /**
      * DefaultController constructor.
      * @param BotsManager $botsManager
+     * @param Handler $handler
      */
-    public function __construct(BotsManager $botsManager)
+    public function __construct(BotsManager $botsManager, Handler $handler)
     {
         $this->botsManager = $botsManager;
+        $this->handler = $handler;
     }
 
     /**
@@ -64,12 +71,15 @@ class DefaultController extends Controller
      * @param $token
      * @param $botName
      * @return string
-     * @throws TelegramSDKException
      */
     public function webhook($token, $botName): string
     {
-        $update = Telegram::getWebhookUpdate();
-        CommandsHandler::make($this->botsManager, $botName, $update);
+        try {
+            $update = Telegram::getWebhookUpdate();
+            CommandsHandler::make($this->botsManager, $botName, $update);
+        } catch (\Exception $exception) {
+            $this->handler->log($exception);
+        }
         return 'ok';
     }
 }

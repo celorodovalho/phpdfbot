@@ -94,7 +94,7 @@ class Handler extends ExceptionHandler
      * @param string $message
      * @param null $context
      */
-    protected function log(Exception $exception, $message = '', $context = null): void
+    public function log(Exception $exception, $message = '', $context = null): void
     {
         $referenceLog = $message . time() . '.log';
         Log::error($message, [$exception->getLine(), $exception, $context]);
