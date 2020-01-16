@@ -64,15 +64,12 @@ class DefaultController extends Controller
      * @param $token
      * @param $botName
      * @return string
+     * @throws TelegramSDKException
      */
     public function webhook($token, $botName): string
     {
-        try {
-            $update = Telegram::getWebhookUpdate();
-            CommandsHandler::make($this->botsManager, $botName, $update);
-        } catch (Exception $exception) {
-            return $exception->getMessage();
-        }
+        $update = Telegram::getWebhookUpdate();
+        CommandsHandler::make($this->botsManager, $botName, $update);
         return 'ok';
     }
 }
