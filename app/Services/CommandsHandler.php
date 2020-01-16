@@ -173,8 +173,11 @@ class CommandsHandler
         Log::info('NEW_MESSAGE', [$message]);
 
         if (
-            (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) ||
-            (!$message->from->isBot && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE)
+            !in_array($message->text, $this->telegram->getCommands()) &&
+            (
+                (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) ||
+                (!$message->from->isBot && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE)
+            )
         ) {
             if (blank($message->text) && blank($caption)) {
                 throw new Exception('Envie um texto para a vaga, ou o nome da vaga na legenda da imagem/documento.');
