@@ -4,6 +4,7 @@ namespace App\Services\Collectors;
 
 use App\Contracts\CollectInterface;
 use App\Helpers\ExtractorHelper;
+use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
 use Carbon\Carbon;
 use Exception;
@@ -110,7 +111,7 @@ class GitHubMessages implements CollectInterface
      */
     public function extractDescription($message): string
     {
-        return $message['body'];
+        return SanitizerHelper::sanitizeBody($message['body']);
     }
 
     /**
@@ -128,7 +129,7 @@ class GitHubMessages implements CollectInterface
      */
     public function extractTitle($message): string
     {
-        return $message['title'];
+        return SanitizerHelper::sanitizeSubject($message['title']);
     }
 
     /**

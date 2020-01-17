@@ -249,6 +249,24 @@ class BotPopulateChannel extends AbstractCommand
         $messageSentIds = [];
         $lastSentID = null;
         $messageSent = null;
+
+        if ($this->admin === $chatId && Str::contains($opportunity->origin, [$this->botName])) {
+            $userNames = explode('|', $opportunity->origin);
+            $userName = end($userNames);
+            if (!blank($userName)) {
+                if (Str::contains($userName, ' ')) {
+                    $text = "[$userName](tg://user?id={$opportunity->telegram_user_id}) enviou:";
+                } else {
+                    $text = '@' . $userName . ' enviou:';
+                }
+                $this->telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'parse_mode' => 'Markdown',
+                    'text' => $text
+                ]);
+            }
+        }
+
         foreach ($messageTexts['data']['body'] as $messageText) {
             $sendMsg = array_merge([
                 'chat_id' => $chatId,

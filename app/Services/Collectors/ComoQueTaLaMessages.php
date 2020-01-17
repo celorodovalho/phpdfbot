@@ -4,6 +4,7 @@ namespace App\Services\Collectors;
 
 use App\Contracts\CollectInterface;
 use App\Helpers\ExtractorHelper;
+use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
 use DateTime;
 use DateTimeZone;
@@ -138,7 +139,7 @@ class ComoQueTaLaMessages implements CollectInterface
      */
     public function extractDescription($message): string
     {
-        return $message[Opportunity::DESCRIPTION];
+        return SanitizerHelper::sanitizeBody($message[Opportunity::DESCRIPTION]);
     }
 
     /**
@@ -156,7 +157,7 @@ class ComoQueTaLaMessages implements CollectInterface
      */
     public function extractTitle($message): string
     {
-        return $message[Opportunity::TITLE];
+        return SanitizerHelper::sanitizeSubject($message[Opportunity::TITLE]);
     }
 
     /**

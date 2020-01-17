@@ -97,12 +97,12 @@ class Opportunity extends Model implements Transformable
     {
         return new self(
             [
-                self::TITLE => SanitizerHelper::sanitizeSubject($data[self::TITLE]),
-                self::DESCRIPTION => SanitizerHelper::sanitizeBody($data[self::DESCRIPTION]),
+                self::TITLE => $data[self::TITLE],
+                self::DESCRIPTION => $data[self::DESCRIPTION],
                 self::FILES => new Collection($data[self::FILES]),
                 self::POSITION => $data[self::POSITION],
                 self::COMPANY => $data[self::COMPANY],
-                self::LOCATION => $data[self::LOCATION],
+                self::LOCATION => mb_strtoupper($data[self::LOCATION]),
                 self::TAGS => implode(' ', $data[self::TAGS]),
                 self::SALARY => $data[self::SALARY],
                 self::URL => $data[self::URL],

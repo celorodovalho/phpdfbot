@@ -165,6 +165,8 @@ class SanitizerHelper
 
             $message = $converter->convert($message);
 
+            $message = preg_replace("/^# (.+)$/m", '`$1`', $message);
+
             $message = str_ireplace(['<3'], '❤️', $message);
             $message = preg_replace("/#{2,}/m", '#', $message);
             $message = preg_replace("/_{2,}/m", '_', $message);

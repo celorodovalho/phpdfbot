@@ -223,7 +223,8 @@ class CommandsHandler
                 Opportunity::DESCRIPTION => $text,
                 Opportunity::FILES => $files,
                 Opportunity::URL => implode(', ', $urls),
-                Opportunity::ORIGIN => $this->botName,
+                Opportunity::ORIGIN => $this->botName . '|' . (blank($message->from->username) ?
+                        $message->from->username : ($message->from->firstName . ' ' . $message->from->lastName)),
                 Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
                 Opportunity::TAGS => ExtractorHelper::extractTags($text),
                 Opportunity::EMAILS => implode(', ', $emails),

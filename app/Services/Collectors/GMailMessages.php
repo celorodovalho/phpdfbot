@@ -5,6 +5,7 @@ namespace App\Services\Collectors;
 use App\Contracts\CollectInterface;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\Helper;
+use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
 use App\Services\GmailService;
 use Dacastro4\LaravelGmail\Exceptions\AuthException;
@@ -190,7 +191,7 @@ class GMailMessages implements CollectInterface
                 $htmlBody = $message->getDecodedBody($body);
             }
         }
-        return $htmlBody;
+        return SanitizerHelper::sanitizeBody($htmlBody);
     }
 
     /**
@@ -212,7 +213,7 @@ class GMailMessages implements CollectInterface
      */
     public function extractTitle($message): string
     {
-        return $message->getSubject();
+        return SanitizerHelper::sanitizeSubject($message->getSubject());
     }
 
     /**
