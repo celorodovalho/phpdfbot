@@ -170,6 +170,7 @@ class Handler extends ExceptionHandler
                 );
             }
         } catch (Exception $exception2) {
+            Log::error('EXC2', [$exception2]);
             try {
                 Telegram::sendDocument([
                     'chat_id' => Config::get('telegram.admin'),
