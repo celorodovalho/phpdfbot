@@ -25,13 +25,17 @@ class ExtractorHelper
      */
     public static function extractTags(string $text): array
     {
-        return self::extractWords($text, array_merge(
+        $tags = self::extractWords($text, array_merge(
             Config::get('constants.requiredWords'),
             Arr::flatten(Config::get('constants.cities')),
             Config::get('constants.commonWords'),
             BrazilianStates::toArray(),
             Countries::toArray()
         ));
+        array_walk($tags, function ($item, $key) use (&$tags) {
+            $tags[$key] = '#' . mb_strtolower(str_replace([' ', '-'], '', $item));
+        });
+        return $tags;
     }
 
     /**
@@ -48,10 +52,7 @@ class ExtractorHelper
 
         $tags = [];
         if (preg_match_all($pattern, mb_strtolower($text), $matches)) {
-            array_walk($matches[0], function ($item, $key) use (&$tags) {
-                $tags[$key] = '#' . mb_strtolower(str_replace([' ', '-'], '', $item));
-            });
-            $tags = array_unique($tags);
+            $tags = array_unique($matches[0]);
         }
         return $tags;
     }

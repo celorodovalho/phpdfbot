@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Bot;
 
+use App\Contracts\Repositories\OpportunityRepository;
 use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
 use App\Services\CommandsHandler;
-
-use Exception;
-
+use App\Validators\OpportunityValidator;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Laravel\Facades\Telegram;
@@ -31,11 +30,19 @@ class DefaultController extends Controller
      * DefaultController constructor.
      * @param BotsManager $botsManager
      * @param Handler $handler
+     * @param OpportunityRepository $repository
+     * @param OpportunityValidator $validator
      */
-    public function __construct(BotsManager $botsManager, Handler $handler)
+    public function __construct(
+        BotsManager $botsManager,
+        Handler $handler,
+        OpportunityRepository $repository,
+        OpportunityValidator $validator
+    )
     {
         $this->botsManager = $botsManager;
         $this->handler = $handler;
+        parent::__construct($repository, $validator);
     }
 
     /**

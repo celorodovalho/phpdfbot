@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Commands\NewOpportunityCommand;
 use App\Commands\OptionsCommand;
 use App\Console\Commands\BotPopulateChannel;
+use App\Exceptions\TelegramOpportunityException;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
 use App\Models\Opportunity;
@@ -73,19 +74,23 @@ class CommandsHandler
      */
     private function processUpdate(Update $update): void
     {
-        /** @var Message $message */
-        $message = $update->getMessage();
-        /** @var CallbackQuery $callbackQuery */
-        $callbackQuery = $update->get('callback_query');
+        try {
+            /** @var Message $message */
+            $message = $update->getMessage();
+            /** @var CallbackQuery $callbackQuery */
+            $callbackQuery = $update->get('callback_query');
 
-        if (strpos($message->text, '/') === 0) {
-            $command = explode(' ', $message->text);
-            $this->processCommand($command[0]);
-        }
-        if (filled($callbackQuery)) {
-            $this->processCallbackQuery($callbackQuery);
-        } elseif (filled($message)) {
-            $this->processMessage($message);
+            if (strpos($message->text, '/') === 0) {
+                $command = explode(' ', $message->text);
+                $this->processCommand($command[0]);
+            }
+            if (filled($callbackQuery)) {
+                $this->processCallbackQuery($callbackQuery);
+            } elseif (filled($message)) {
+                $this->processMessage($message);
+            }
+        } catch (TelegramOpportunityException $exception) {
+            $this->sendMessage($exception->getMessage());
         }
     }
 
@@ -99,6 +104,7 @@ class CommandsHandler
     {
         $data = $callbackQuery->get('data');
         $data = explode(' ', $data);
+        $opportunity = null;
         if (is_numeric($data[1])) {
             $opportunity = Opportunity::find($data[1]);
         }
@@ -156,7 +162,7 @@ class CommandsHandler
      * Process the messages coming from bot interface
      *
      * @param Message $message
-     * @throws Exception
+     * @throws Exception|TelegramOpportunityException
      */
     private function processMessage(Message $message): void
     {
@@ -170,17 +176,34 @@ class CommandsHandler
         /** @var string $caption */
         $caption = $message->caption;
 
-        Log::info('NEW_MESSAGE', [$message]);
+        Log::info('MESSAGE', [$message]);
+        Log::info('REPLY', [$reply]);
+        Log::info('PHOTOS', [$photos]);
+        Log::info('DOCUMENT', [$document]);
+        Log::info('CAPTION', [$caption]);
 
         if (
-            !in_array($message->text, $this->telegram->getCommands()) &&
             (
                 (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) ||
                 (!$message->from->isBot && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE)
-            )
+            ) &&
+            !in_array($message->text, $this->telegram->getCommands(), true)
         ) {
             if (blank($message->text) && blank($caption)) {
-                throw new Exception('Envie um texto para a vaga, ou o nome da vaga na legenda da imagem/documento.');
+                throw new TelegramOpportunityException(
+                    'Envie um texto da vaga, ou o nome da vaga na legenda da imagem/documento.'
+                );
+            }
+
+            $text = $message->text ?? $caption;
+
+            $urls = ExtractorHelper::extractUrls($text);
+            $emails = ExtractorHelper::extractEmail($text);
+
+            if (blank($urls) && blank($emails)) {
+                throw new TelegramOpportunityException(
+                    'Envie o texto da vaga, contendo uma URL ou E-mail para se candidatar.'
+                );
             }
 
             $files = [];
@@ -193,18 +216,17 @@ class CommandsHandler
                 $files[] = $document->first();
             }
 
-            $text = $message->text ?? $caption;
             $title = str_replace("\n", ' ', $text);
 
             $opportunity = Opportunity::make([
                 Opportunity::TITLE => Str::limit($title, 50),
                 Opportunity::DESCRIPTION => $text,
                 Opportunity::FILES => $files,
-                Opportunity::URL => implode(', ', ExtractorHelper::extractUrls($text)),
+                Opportunity::URL => implode(', ', $urls),
                 Opportunity::ORIGIN => $this->botName,
                 Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
                 Opportunity::TAGS => ExtractorHelper::extractTags($text),
-                Opportunity::EMAILS => implode(', ', ExtractorHelper::extractEmail($text)),
+                Opportunity::EMAILS => implode(', ', $emails),
                 Opportunity::POSITION => null,
                 Opportunity::SALARY => null,
                 Opportunity::COMPANY => null,

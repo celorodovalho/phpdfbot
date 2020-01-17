@@ -14,7 +14,7 @@ class AlterTableOpportunitiesAddTags extends Migration
     public function up()
     {
         Schema::table('opportunities', function (Blueprint $table) {
-            $table->string('tags')->nullable();
+            $table->text('tags')->nullable();
         });
     }
 

@@ -14,7 +14,7 @@ class AlterTableOpportunitiesAddSource extends Migration
     public function up()
     {
         Schema::table('opportunities', function (Blueprint $table) {
-            $table->string('url')->nullable();
+            $table->text('url')->nullable();
             $table->string('origin')->nullable();
         });
     }

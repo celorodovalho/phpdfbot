@@ -14,7 +14,7 @@ class AlterTableOpportunitiesAddEmails extends Migration
     public function up()
     {
         Schema::table('opportunities', function (Blueprint $table) {
-            $table->string('emails')->nullable();
+            $table->text('emails')->nullable();
         });
     }
 
