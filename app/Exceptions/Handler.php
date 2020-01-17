@@ -70,8 +70,8 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  Request  $request
-     * @param  \Exception  $exception
+     * @param Request $request
+     * @param \Exception $exception
      * @return Response
      */
     public function render($request, Exception $exception)
@@ -103,7 +103,13 @@ class Handler extends ExceptionHandler
     {
         try {
             $referenceLog = $message . time() . '.log';
-            Log::error($message, [$exception->getLine(), $exception, $context]);
+
+            Log::error('ERROR', [$exception->getMessage()]);
+            Log::error('FILE', [$exception->getFile()]);
+            Log::error('LINE', [$exception->getLine()]);
+            Log::error('CODE', [$exception->getCode()]);
+            Log::error('TRACE', [$exception->getTrace()]);
+
             Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
             $referenceLog = Storage::disk('logs')->url($referenceLog);
 
@@ -118,20 +124,24 @@ class Handler extends ExceptionHandler
             $username = env('GITHUB_USERNAME');
             $repo = env('GITHUB_REPO');
 
-            $issues = $this->gitHubManager->issues()->find(
-                $username,
-                $repo,
-                'open',
-                $exception->getMessage()
+            $issues = $this->gitHubManager->search()->issues(
+                '"'.$exception->getMessage().'"+repo:'.$username.'/'.$repo
             );
 
-            $issueBody = sprintf("```json\n%s\n```\n\n```json\n%s\n```", $logMessage, json_encode([
-                'referenceLog' => $referenceLog,
-                'code' => $exception->getCode(),
-                'trace' => $exception->getTrace(),
-            ]));
+            $issueBody = sprintf(
+                "###Message:\n```\n%s\n```\n\n" .
+                "###File/Line```\n%s\n```" .
+                "###Code:\n```php\n%s\n```\n" .
+                "###Trace:\n```php\n%s\n```\n" .
+                "###Log:\n```php\n%s\n```\n",
+                $exception->getMessage(),
+                $exception->getFile() . '::' . $exception->getLine(),
+                $exception->getCode(),
+                $exception->getTraceAsString(),
+                $referenceLog
+            );
 
-            if (blank($issues['issues'])) {
+            if (blank($issues['items'])) {
                 $this->gitHubManager->issues()->create(
                     $username,
                     $repo,
@@ -141,13 +151,21 @@ class Handler extends ExceptionHandler
                     ]
                 );
             } else {
-                $issueNumber = $issues['issues'][0]['number'];
+                $issueNumber = $issues['items'][0]['number'];
                 $this->gitHubManager->issues()->comments()->create(
                     $username,
                     $repo,
                     $issueNumber,
                     [
                         'body' => $issueBody
+                    ]
+                );
+                $this->gitHubManager->issues()->update(
+                    $username,
+                    $repo,
+                    $issueNumber,
+                    [
+                        'state' => 'open'
                     ]
                 );
             }

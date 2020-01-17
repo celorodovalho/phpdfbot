@@ -4,6 +4,7 @@ namespace App\Helpers;
 
 use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Support\Traits\Macroable;
+use League\CommonMark\CommonMarkConverter;
 use League\HTMLToMarkdown\HtmlConverter;
 
 /**
@@ -148,6 +149,12 @@ class SanitizerHelper
                 '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
             ], '`', $message);
 
+//            $message = nl2br($message);
+
+            $converter = new CommonMarkConverter();
+
+            $message = $converter->convertToHtml($message);
+
             $converter = new HtmlConverter([
                 'bold_style' => '*',
                 'italic_style' => '_',
@@ -162,12 +169,13 @@ class SanitizerHelper
             $message = preg_replace("/_{2,}/m", '_', $message);
             $message = preg_replace("/`{2,}/m", '`', $message);
 
-            $message = preg_replace('/\s*$^\s*/m', "\n", $message);
+
             $message = preg_replace('/[ \t]+/', ' ', $message);
             $message = preg_replace("/\s{2,}/m", "\n", $message);
 
-            $message = preg_replace("/([\r\n])+/m", "\n", $message);
-            $message = preg_replace("/\n{2,}/m", "\n", $message);
+//            $message = preg_replace('/\s*$^\s*/m', "\n", $message);
+//            $message = preg_replace("/([\r\n])+/m", "\n", $message);
+//            $message = preg_replace("/\n{2,}/m", "\n", $message);
 
             $message = trim($message, " \t\n\r\0\x0B--");
 

@@ -18,6 +18,7 @@ use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
+use Spatie\Emoji\Emoji;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Keyboard\Keyboard;
@@ -214,13 +215,22 @@ class BotPopulateChannel extends AbstractCommand
     {
         if ($opportunity->telegram_user_id) {
             $link = "https://t.me/VagasBrasil_TI/{$opportunity->telegram_id}";
+
             $this->telegram->sendMessage([
                 'chat_id' => $opportunity->telegram_user_id,
+                'parse_mode' => 'Markdown',
                 'text' => sprintf(
-                    "Sua vaga [%s](%s) foi publicada.",
-                    SanitizerHelper::sanitizeSubject(SanitizerHelper::removeBrackets($opportunity->title)),
-                    $link
-                )
+                    "A vaga abaixo foi publicada:\n\n%s",
+                    SanitizerHelper::sanitizeSubject(SanitizerHelper::removeBrackets($opportunity->title))
+                ),
+                'reply_markup' => Keyboard::make()
+                    ->inline()
+                    ->row(
+                        Keyboard::inlineButton([
+                            'text' => 'Conferir no canal ' . Emoji::rightArrow(),
+                            'url' => $link,
+                        ])
+                    ),
             ]);
         }
     }
