@@ -147,7 +147,8 @@ class Handler extends ExceptionHandler
                     $repo,
                     [
                         'title' => $exception->getMessage(),
-                        'body' => $issueBody
+                        'body' => $issueBody,
+                        'labels' => ['bug']
                     ]
                 );
             } else {

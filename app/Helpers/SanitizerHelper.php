@@ -140,7 +140,12 @@ class SanitizerHelper
 
             $message = $messageArray[0];
 
-            $message = preg_replace('/<img src="cid:(.+)>/m', '', $message);
+            $message = preg_replace('/<img (.+)src="cid:(.+)>/m', '', $message);
+            $message = preg_replace(
+                '#<(head|script|style)(.*?)>(.*?)</(head|script|style)>#is',
+                '',
+                $message
+            );
             $message = self::removeEmptyTagsRecursive($message);
 
 //            $message = self::removeTagsAttributes($message);
@@ -182,7 +187,7 @@ class SanitizerHelper
 
             $message = trim($message, " \t\n\r\0\x0B--");
 
-            $message = preg_replace('/cid:image(.+)/m', '', $message);
+            $message = preg_replace('/cid:(.+)/m', '', $message);
 
             $message = str_replace('GrupoClubedeVagas', '', $message);
             $message = preg_replace('/(.+)(chat\.whatsapp\.com\/)(.+)/m', 'http://bit.ly/phpdf-official', $message);
