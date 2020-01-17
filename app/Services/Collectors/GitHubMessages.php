@@ -70,7 +70,7 @@ class GitHubMessages implements CollectInterface
                 Opportunity::SALARY => $this->extractSalary($title . $description),
                 Opportunity::URL => $this->extractUrl($description . $message['html_url']),
                 Opportunity::ORIGIN => $this->extractOrigin($message['html_url']),
-                Opportunity::EMAILS => $this->extractEmails($message),
+                Opportunity::EMAILS => $this->extractEmails($description),
             ]
         ));
     }
