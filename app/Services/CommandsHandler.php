@@ -11,6 +11,7 @@ use App\Helpers\ExtractorHelper;
 use App\Models\Opportunity;
 use Exception;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Telegram\Bot\Api;
@@ -140,10 +141,11 @@ class CommandsHandler
         }
         try {
             $this->telegram->deleteMessage([
-                'chat_id' => config('telegram.admin'),
+                'chat_id' => Config::get('telegram.admin'),
                 'message_id' => $callbackQuery->message->messageId
             ]);
         } catch (TelegramResponseException $exception) {
+            Log::info('COMMAND', $data);
             Log::info('DELETE_MESSAGE', [$exception, $callbackQuery->message]);
             /**
              * A message can only be deleted if it was sent less than 48 hours ago.
