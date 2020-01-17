@@ -314,10 +314,12 @@ class CommandsHandler
      */
     private function sendMessage($message)
     {
-        $this->telegram->sendMessage([
-            'chat_id' => $this->update->getChat()->id,
-            'reply_to_message_id' => $this->update->getMessage()->messageId,
-            'text' => $message
-        ]);
+        if (filled($message)) {
+            $this->telegram->sendMessage([
+                'chat_id' => $this->update->getChat()->id,
+                'reply_to_message_id' => $this->update->getMessage()->messageId,
+                'text' => $message
+            ]);
+        }
     }
 }
