@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Commands\NewOpportunityCommand;
 use App\Commands\OptionsCommand;
 use App\Console\Commands\BotPopulateChannel;
-use App\Exceptions\Handler;
 use App\Exceptions\TelegramOpportunityException;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
@@ -40,23 +39,18 @@ class CommandsHandler
     /** @var Update */
     private $update;
 
-    /** @var Handler */
-    private $handler;
-
     /**
      * CommandsHandler constructor.
      * @param BotsManager $botsManager
      * @param string $botName
      * @param Update $update
-     * @param Handler $handler
      * @throws TelegramSDKException
      */
-    public function __construct(BotsManager $botsManager, string $botName, Update $update, Handler $handler)
+    public function __construct(BotsManager $botsManager, string $botName, Update $update)
     {
         $this->botName = $botName;
         $this->update = $update;
         $this->telegram = $botsManager->bot($botName);
-        $this->handler = $handler;
         $this->processUpdate($update);
     }
 
@@ -64,13 +58,12 @@ class CommandsHandler
      * @param BotsManager $botsManager
      * @param string $botName
      * @param Update $update
-     * @param Handler $handler
      * @return CommandsHandler
      * @throws TelegramSDKException
      */
-    public static function make(BotsManager $botsManager, string $botName, Update $update, Handler $handler)
+    public static function make(BotsManager $botsManager, string $botName, Update $update)
     {
-        return new static($botsManager, $botName, $update, $handler);
+        return new static($botsManager, $botName, $update);
     }
 
     /**
@@ -100,7 +93,6 @@ class CommandsHandler
         } catch (TelegramOpportunityException $exception) {
             $this->sendMessage($exception->getMessage());
         } catch (Exception $exception) {
-            $this->handler->log($exception);
             throw $exception;
         }
     }
