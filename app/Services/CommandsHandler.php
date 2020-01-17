@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Commands\NewOpportunityCommand;
 use App\Commands\OptionsCommand;
 use App\Console\Commands\BotPopulateChannel;
+use App\Exceptions\Handler;
 use App\Exceptions\TelegramOpportunityException;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
@@ -39,18 +40,23 @@ class CommandsHandler
     /** @var Update */
     private $update;
 
+    /** @var Handler */
+    private $handler;
+
     /**
      * CommandsHandler constructor.
      * @param BotsManager $botsManager
      * @param string $botName
      * @param Update $update
+     * @param Handler $handler
      * @throws TelegramSDKException
      */
-    public function __construct(BotsManager $botsManager, string $botName, Update $update)
+    public function __construct(BotsManager $botsManager, string $botName, Update $update, Handler $handler)
     {
         $this->botName = $botName;
         $this->update = $update;
         $this->telegram = $botsManager->bot($botName);
+        $this->handler = $handler;
         $this->processUpdate($update);
     }
 
@@ -58,12 +64,13 @@ class CommandsHandler
      * @param BotsManager $botsManager
      * @param string $botName
      * @param Update $update
+     * @param Handler $handler
      * @return CommandsHandler
      * @throws TelegramSDKException
      */
-    public static function make(BotsManager $botsManager, string $botName, Update $update)
+    public static function make(BotsManager $botsManager, string $botName, Update $update, Handler $handler)
     {
-        return new static($botsManager, $botName, $update);
+        return new static($botsManager, $botName, $update, $handler);
     }
 
     /**
@@ -92,6 +99,9 @@ class CommandsHandler
             }
         } catch (TelegramOpportunityException $exception) {
             $this->sendMessage($exception->getMessage());
+        } catch (Exception $exception) {
+            $this->handler->log($exception);
+            throw $exception;
         }
     }
 
@@ -121,6 +131,7 @@ class CommandsHandler
                             'opportunity' => $opportunity->id
                         ]
                     );
+                    $this->sendMessage(Artisan::output());
                 }
                 break;
             case Opportunity::CALLBACK_REMOVE:
@@ -131,7 +142,7 @@ class CommandsHandler
             case OptionsCommand::OPTIONS_COMMAND:
                 if (in_array($data[1], [BotPopulateChannel::TYPE_PROCESS, BotPopulateChannel::TYPE_NOTIFY], true)) {
                     Artisan::call('bot:populate:channel', ['type' => $data[1]]);
-                    $this->sendMessage('Done!');
+                    $this->sendMessage(Artisan::output());
                 }
                 break;
             default:
@@ -225,8 +236,8 @@ class CommandsHandler
                 Opportunity::DESCRIPTION => $text,
                 Opportunity::FILES => $files,
                 Opportunity::URL => implode(', ', $urls),
-                Opportunity::ORIGIN => $this->botName . '|' . (blank($message->from->username) ?
-                        $message->from->username : ($message->from->firstName . ' ' . $message->from->lastName)),
+                Opportunity::ORIGIN => implode('|', [$this->botName, (blank($message->from->username) ?
+                    $message->from->username : ($message->from->firstName . ' ' . $message->from->lastName))]),
                 Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
                 Opportunity::TAGS => ExtractorHelper::extractTags($text),
                 Opportunity::EMAILS => implode(', ', $emails),

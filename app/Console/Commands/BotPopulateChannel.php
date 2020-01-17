@@ -17,6 +17,7 @@ use Exception;
 use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Spatie\Emoji\Emoji;
 use Telegram\Bot\BotsManager;
@@ -402,6 +403,7 @@ class BotPopulateChannel extends AbstractCommand
                     ]);
                 } catch (Exception $exception) {
                     $this->error(implode(': ', ['ERRO_AO_DELETAR_NOTIFICACAO', $exception->getMessage()]));
+                    Log::info('ERRO_AO_DELETAR_NOTIFICACAO', [$exception->getMessage()]);
                 }
                 $lastNotification->delete();
             }

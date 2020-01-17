@@ -77,13 +77,14 @@ class DefaultController extends Controller
      *
      * @param $token
      * @param $botName
+     * @param Handler $handler
      * @return string
      */
-    public function webhook($token, $botName): string
+    public function webhook($token, $botName, Handler $handler): string
     {
         try {
             $update = Telegram::getWebhookUpdate();
-            CommandsHandler::make($this->botsManager, $botName, $update);
+            CommandsHandler::make($this->botsManager, $botName, $update, $handler);
         } catch (\Exception $exception) {
             $this->handler->log($exception);
         }
