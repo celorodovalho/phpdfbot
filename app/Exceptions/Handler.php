@@ -129,11 +129,11 @@ class Handler extends ExceptionHandler
             );
 
             $issueBody = sprintf(
-                "###Message:\n```\n%s\n```\n\n" .
-                "###File/Line```\n%s\n```" .
-                "###Code:\n```php\n%s\n```\n" .
-                "###Trace:\n```php\n%s\n```\n" .
-                "###Log:\n```php\n%s\n```\n",
+                "### Message:\n```\n%s\n```\n\n" .
+                "### File/Line:\n```\n%s\n```\n\n" .
+                "### Code:\n```php\n%s\n```\n\n" .
+                "### Trace:\n```php\n%s\n```\n\n" .
+                "### Log:\n```php\n%s\n```\n",
                 $exception->getMessage(),
                 $exception->getFile() . '::' . $exception->getLine(),
                 $exception->getCode(),
