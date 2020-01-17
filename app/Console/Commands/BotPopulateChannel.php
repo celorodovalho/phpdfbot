@@ -362,19 +362,20 @@ class BotPopulateChannel extends AbstractCommand
                 "%s\n\n[%s](%s)",
                 "Há novas vagas no canal!\nConfira: " .
                 SanitizerHelper::escapeMarkdown(implode(
-                    ' | ',
-                    array_merge(array_keys($this->channels), array_keys($this->groups)))
+                        ' | ',
+                        array_merge(array_keys($this->channels), array_keys($this->groups)))
                 ),
                 '🄿🄷🄿🄳🄵',
                 str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp'
             );
 
             $listOpportunities->prepend($text);
+            $total = $listOpportunities->count();
             $length = 0;
             $opportunitiesText = collect();
-            $listOpportunities->map(function ($opportunity) use ($mainGroup, $keyboard, &$length, &$opportunitiesText) {
+            $listOpportunities->map(function ($opportunity, $key) use ($mainGroup, $keyboard, &$length, &$opportunitiesText, &$total) {
                 $length += strlen($opportunity);
-                if ($length >= BotHelper::TELEGRAM_LIMIT) {
+                if ($length >= BotHelper::TELEGRAM_LIMIT || ($key + 1) >= $total) {
                     $notificationMessage = [
                         'chat_id' => $mainGroup,
                         'parse_mode' => 'Markdown',
