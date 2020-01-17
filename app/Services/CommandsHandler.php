@@ -86,7 +86,7 @@ class CommandsHandler
             }
             if (filled($callbackQuery)) {
                 $this->processCallbackQuery($callbackQuery);
-            } elseif (filled($message)) {
+            } elseif (filled($message) && strpos($message->text, '/') !== 0) {
                 $this->processMessage($message);
             }
         } catch (TelegramOpportunityException $exception) {
@@ -129,7 +129,7 @@ class CommandsHandler
                 break;
             case OptionsCommand::OPTIONS_COMMAND:
                 if (in_array($data[1], [BotPopulateChannel::TYPE_PROCESS, BotPopulateChannel::TYPE_NOTIFY], true)) {
-                    Artisan::call('bot:populate:channel', ['process' => $data[1]]);
+                    Artisan::call('bot:populate:channel', ['type' => $data[1]]);
                     $this->sendMessage('Done!');
                 }
                 break;
