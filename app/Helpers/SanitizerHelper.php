@@ -140,9 +140,10 @@ class SanitizerHelper
 
             $message = $messageArray[0];
 
+            $message = preg_replace('/<img src="cid:(.+)>/m', '', $message);
+            $message = self::removeEmptyTagsRecursive($message);
+
 //            $message = self::removeTagsAttributes($message);
-//            $message = self::removeTagsAttributes($message);
-//            $message = self::removeEmptyTagsRecursive($message);
 //            $message = self::closeOpenTags($message);
 
             $message = str_ireplace([
