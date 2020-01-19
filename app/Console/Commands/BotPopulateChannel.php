@@ -2,20 +2,21 @@
 
 namespace App\Console\Commands;
 
+use App\Contracts\CollectorInterface;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
+use App\Helpers\Helper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Notification;
 use App\Models\Opportunity;
-use App\Services\Collectors\ComoQueTaLaMessages;
-use App\Services\Collectors\GitHubMessages;
-use App\Services\Collectors\GMailMessages;
 use App\Transformers\FormattedOpportunityTransformer;
 use Dacastro4\LaravelGmail\Exceptions\AuthException;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
 use Exception;
 use GrahamCampbell\Markdown\Facades\Markdown;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -75,39 +76,24 @@ class BotPopulateChannel extends AbstractCommand
     /** @var string */
     protected $admin;
 
-    /** @var GMailMessages */
-    private $gMailMessages;
-
-    /** @var GitHubMessages */
-    private $gitHubMessages;
-
-    /** @var ComoQueTaLaMessages */
-    private $comoQueTaLaMessages;
+    /** @var array */
+    private $collectors;
 
     /**
      * BotPopulateChannel constructor.
      * @param BotsManager $botsManager
-     * @param GMailMessages $gMailMessages
-     * @param GitHubMessages $gitHubMessages
-     * @param ComoQueTaLaMessages $comoQueTaLaMessages
      */
     public function __construct(
-        BotsManager $botsManager,
-        GMailMessages $gMailMessages,
-        GitHubMessages $gitHubMessages,
-        ComoQueTaLaMessages $comoQueTaLaMessages
+        BotsManager $botsManager
     ) {
         parent::__construct($botsManager);
-        $this->gMailMessages = $gMailMessages;
-        $this->gitHubMessages = $gitHubMessages;
-        $this->comoQueTaLaMessages = $comoQueTaLaMessages;
+        $this->collectors = Helper::getNamespaceClasses('App\\Services\\Collectors');
     }
 
     /**
      * Execute the console command.
      *
      * @throws TelegramSDKException
-     * @throws AuthException
      */
     public function handle(): void
     {
@@ -139,7 +125,6 @@ class BotPopulateChannel extends AbstractCommand
     /**
      * Retrieve the Opportunities objects and send them to approval
      *
-     * @throws AuthException
      * @throws TelegramSDKException
      */
     protected function processOpportunities(): void
@@ -154,13 +139,23 @@ class BotPopulateChannel extends AbstractCommand
      * Get messages from source and create objects from them
      *
      * @return Collection
-     * @throws AuthException
      */
     protected function collectOpportunities(): Collection
     {
-        $opportunities = $this->gMailMessages->collectOpportunities();
-        $opportunities->merge($this->gitHubMessages->collectOpportunities());
-        $opportunities->merge($this->comoQueTaLaMessages->collectOpportunities());
+        $opportunities = new EloquentCollection();
+        foreach ($this->collectors as $collector) {
+            $collector = App::make($collector);
+            if ($collector instanceof CollectorInterface) {
+                $collectorOpportunities = $collector->collectOpportunities();
+                if ($collectorOpportunities->isEmpty()) {
+                    $this->info(sprintf(
+                        '%s não contém novas oportunidades',
+                        get_class($collector)
+                    ));
+                }
+                $opportunities->merge($collectorOpportunities);
+            }
+        }
 
         $opportunities->map(function (Opportunity $opportunity) {
             $opportunity->save();
