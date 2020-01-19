@@ -3,6 +3,7 @@
 namespace App\Services\Collectors;
 
 use App\Contracts\CollectorInterface;
+use App\Contracts\Repositories\OpportunityRepository;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
@@ -20,18 +21,20 @@ class ComoQueTaLaMessages implements CollectorInterface
     /** @var Collection */
     private $opportunities;
 
-    /** @var GitHubManager */
-    private $gitHubManager;
+    /** @var OpportunityRepository */
+    private $repository;
 
     /**
      * ComoQueTaLaMessages constructor.
      * @param Collection $opportunities
-     * @param GitHubManager $gitHubManager
+     * @param OpportunityRepository $repository
      */
-    public function __construct(Collection $opportunities, GitHubManager $gitHubManager)
-    {
-        $this->gitHubManager = $gitHubManager;
+    public function __construct(
+        Collection $opportunities,
+        OpportunityRepository $repository
+    ) {
         $this->opportunities = $opportunities;
+        $this->repository = $repository;
     }
 
     /**
@@ -57,7 +60,7 @@ class ComoQueTaLaMessages implements CollectorInterface
     {
         $title = $this->extractTitle($message);
         $description = $this->extractDescription($message);
-        $this->opportunities->add(Opportunity::make(
+        $this->opportunities->add($this->repository->make(
             [
                 Opportunity::TITLE => $title,
                 Opportunity::DESCRIPTION => $description,

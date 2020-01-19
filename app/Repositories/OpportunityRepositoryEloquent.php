@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use Illuminate\Support\Collection;
 use Prettus\Repository\Eloquent\BaseRepository;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Contracts\Repositories\OpportunityRepository;
@@ -10,8 +11,6 @@ use App\Validators\OpportunityValidator;
 
 /**
  * Class OpportunityRepositoryEloquent.
- *
- * @package namespace App\Repositories;
  */
 class OpportunityRepositoryEloquent extends BaseRepository implements OpportunityRepository
 {
@@ -32,10 +31,8 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
     */
     public function validator()
     {
-
         return OpportunityValidator::class;
     }
-
 
     /**
      * Boot up the repository, pushing criteria
@@ -44,5 +41,21 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
     {
         $this->pushCriteria(app(RequestCriteria::class));
     }
-    
+
+    public function make(array $data)
+    {
+        return $this->firstOrNew([
+            Opportunity::TITLE => $data[Opportunity::TITLE],
+            Opportunity::DESCRIPTION => $data[Opportunity::DESCRIPTION],
+            Opportunity::FILES => new Collection($data[Opportunity::FILES]),
+            Opportunity::POSITION => $data[Opportunity::POSITION],
+            Opportunity::COMPANY => $data[Opportunity::COMPANY],
+            Opportunity::LOCATION => mb_strtoupper($data[Opportunity::LOCATION]),
+            Opportunity::TAGS => implode(' ', $data[Opportunity::TAGS]),
+            Opportunity::SALARY => $data[Opportunity::SALARY],
+            Opportunity::URL => $data[Opportunity::URL],
+            Opportunity::ORIGIN => $data[Opportunity::ORIGIN],
+            Opportunity::EMAILS => $data[Opportunity::EMAILS],
+        ]);
+    }
 }

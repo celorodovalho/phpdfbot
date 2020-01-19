@@ -3,6 +3,7 @@
 namespace App\Services\Collectors;
 
 use App\Contracts\CollectorInterface;
+use App\Contracts\Repositories\OpportunityRepository;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\Helper;
 use App\Helpers\SanitizerHelper;
@@ -34,20 +35,28 @@ class GMailMessages implements CollectorInterface
     protected const LABEL_STILL_UNREAD = 'Label_3143736512522239870';
 
     /** @var Collection */
-    private $opportunities = [];
+    private $opportunities;
 
     /** @var GmailService */
     private $gMailService;
+
+    /** @var OpportunityRepository */
+    private $repository;
 
     /**
      * GMailMessages constructor.
      * @param Collection $opportunities
      * @param GmailService $gMailService
+     * @param OpportunityRepository $repository
      */
-    public function __construct(Collection $opportunities, GmailService $gMailService)
-    {
+    public function __construct(
+        Collection $opportunities,
+        GmailService $gMailService,
+        OpportunityRepository $repository
+    ) {
         $this->gMailService = $gMailService;
         $this->opportunities = $opportunities;
+        $this->repository = $repository;
     }
 
     /**
@@ -78,7 +87,7 @@ class GMailMessages implements CollectorInterface
     {
         $title = $this->extractTitle($message);
         $description = $this->extractDescription($message);
-        $this->opportunities->add(Opportunity::make(
+        $this->opportunities->add($this->repository->make(
             [
                 Opportunity::TITLE => $title,
                 Opportunity::DESCRIPTION => $description,

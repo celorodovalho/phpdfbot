@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Contracts\CollectorInterface;
+use App\Contracts\Repositories\OpportunityRepository;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\Helper;
@@ -10,7 +11,6 @@ use App\Helpers\SanitizerHelper;
 use App\Models\Notification;
 use App\Models\Opportunity;
 use App\Transformers\FormattedOpportunityTransformer;
-use Dacastro4\LaravelGmail\Exceptions\AuthException;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
 use Exception;
 use GrahamCampbell\Markdown\Facades\Markdown;
@@ -79,15 +79,21 @@ class BotPopulateChannel extends AbstractCommand
     /** @var array */
     private $collectors;
 
+    /** @var OpportunityRepository */
+    private $repository;
+
     /**
      * BotPopulateChannel constructor.
      * @param BotsManager $botsManager
+     * @param OpportunityRepository $repository
      */
     public function __construct(
-        BotsManager $botsManager
+        BotsManager $botsManager,
+        OpportunityRepository $repository
     ) {
         parent::__construct($botsManager);
         $this->collectors = Helper::getNamespaceClasses('App\\Services\\Collectors');
+        $this->repository = $repository;
     }
 
     /**
@@ -150,7 +156,7 @@ class BotPopulateChannel extends AbstractCommand
                 if ($collectorOpportunities->isEmpty()) {
                     $this->info(sprintf(
                         '%s não contém novas oportunidades',
-                        get_class($collector)
+                        basename(get_class($collector))
                     ));
                 }
                 $opportunities->merge($collectorOpportunities);
@@ -174,7 +180,7 @@ class BotPopulateChannel extends AbstractCommand
     protected function sendOpportunityToChannels(int $opportunityId): void
     {
         /** @var Opportunity $opportunity */
-        $opportunity = Opportunity::find($opportunityId);
+        $opportunity = $this->repository->find($opportunityId);
 
         foreach ($this->channels as $channel => $config) {
             if (blank($config['tags']) || ExtractorHelper::hasTags($config['tags'], $opportunity->getText())) {
@@ -332,9 +338,10 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected function notifyGroup()
     {
-        $opportunities = Opportunity::whereNotNull('telegram_id');
+        $opportunities = $this->repository->findWhere([['telegram_id', '<>', null]]);
         $opportunitiesArr = $opportunities->get();
         if ($opportunitiesArr->isNotEmpty()) {
+            /** @todo Usar repository no lugar da model */
             $lastNotifications = Notification::all();
 
             $firstOpportunityId = null;
@@ -452,9 +459,9 @@ class BotPopulateChannel extends AbstractCommand
      * @throws TelegramSDKException
      * @todo Move to communicate-telegram class
      */
-    protected function sendTelegramOpportunityToApproval($opportunityId)
+    protected function sendTelegramOpportunityToApproval($opportunityId): void
     {
-        $opportunity = Opportunity::find($opportunityId);
+        $opportunity = $this->repository->find($opportunityId);
         $this->sendOpportunityToApproval($opportunity);
     }
 }

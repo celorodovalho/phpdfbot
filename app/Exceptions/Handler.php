@@ -173,6 +173,7 @@ class Handler extends ExceptionHandler
         } catch (Exception $exception2) {
             Log::error('EXC2', [$exception2]);
             try {
+                /** @todo Usar DI ao inves de static */
                 Telegram::sendDocument([
                     'chat_id' => Config::get('telegram.admin'),
                     'document' => InputFile::create($referenceLog),

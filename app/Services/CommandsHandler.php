@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Commands\NewOpportunityCommand;
 use App\Commands\OptionsCommand;
 use App\Console\Commands\BotPopulateChannel;
+use App\Contracts\Repositories\OpportunityRepository;
 use App\Exceptions\TelegramOpportunityException;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Prettus\Repository\Contracts\RepositoryInterface;
 use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramResponseException;
@@ -38,32 +40,25 @@ class CommandsHandler
 
     /** @var Update */
     private $update;
+    /**
+     * @var OpportunityRepository
+     */
+    private $repository;
 
     /**
      * CommandsHandler constructor.
      * @param BotsManager $botsManager
      * @param string $botName
-     * @param Update $update
-     * @throws TelegramSDKException
+     * @param OpportunityRepository|RepositoryInterface $repository
      */
-    public function __construct(BotsManager $botsManager, string $botName, Update $update)
-    {
+    public function __construct(
+        BotsManager $botsManager,
+        string $botName,
+        OpportunityRepository $repository
+    ) {
         $this->botName = $botName;
-        $this->update = $update;
         $this->telegram = $botsManager->bot($botName);
-        $this->processUpdate($update);
-    }
-
-    /**
-     * @param BotsManager $botsManager
-     * @param string $botName
-     * @param Update $update
-     * @return CommandsHandler
-     * @throws TelegramSDKException
-     */
-    public static function make(BotsManager $botsManager, string $botName, Update $update)
-    {
-        return new static($botsManager, $botName, $update);
+        $this->repository = $repository;
     }
 
     /**
@@ -73,8 +68,9 @@ class CommandsHandler
      * @return mixed
      * @throws TelegramSDKException
      */
-    private function processUpdate(Update $update): void
+    public function processUpdate(Update $update): void
     {
+        $this->update = $update;
         try {
             /** @var Message $message */
             $message = $update->getMessage();
@@ -109,7 +105,7 @@ class CommandsHandler
         $data = explode(' ', $data);
         $opportunity = null;
         if (is_numeric($data[1])) {
-            $opportunity = Opportunity::find($data[1]);
+            $opportunity = $this->repository->find($data[1]);
         }
         switch ($data[0]) {
             case Opportunity::CALLBACK_APPROVE:
@@ -223,13 +219,13 @@ class CommandsHandler
 
             $title = str_replace("\n", ' ', $text);
 
-            $opportunity = Opportunity::make([
+            $opportunity = $this->repository->make([
                 Opportunity::TITLE => Str::limit($title, 50),
                 Opportunity::DESCRIPTION => $text,
                 Opportunity::FILES => $files,
                 Opportunity::URL => implode(', ', $urls),
-                Opportunity::ORIGIN => implode('|', [$this->botName, (blank($message->from->username) ?
-                    $message->from->username : ($message->from->firstName . ' ' . $message->from->lastName))]),
+                Opportunity::ORIGIN => implode('|', [$this->botName, $message->from->username ?:
+                    $message->from->firstName . ' ' . $message->from->lastName]),
                 Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
                 Opportunity::TAGS => ExtractorHelper::extractTags($text),
                 Opportunity::EMAILS => implode(', ', $emails),
