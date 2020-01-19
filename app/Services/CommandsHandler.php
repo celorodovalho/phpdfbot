@@ -9,6 +9,7 @@ use App\Contracts\Repositories\OpportunityRepository;
 use App\Exceptions\TelegramOpportunityException;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
+use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
 use Exception;
 use Illuminate\Support\Facades\Artisan;
@@ -221,7 +222,7 @@ class CommandsHandler
 
             $opportunity = $this->repository->make([
                 Opportunity::TITLE => Str::limit($title, 50),
-                Opportunity::DESCRIPTION => $text,
+                Opportunity::DESCRIPTION => SanitizerHelper::sanitizeBody($text),
                 Opportunity::FILES => $files,
                 Opportunity::URL => implode(', ', $urls),
                 Opportunity::ORIGIN => implode('|', [$this->botName, $message->from->username ?:
