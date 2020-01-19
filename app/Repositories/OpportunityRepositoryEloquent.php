@@ -25,10 +25,10 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
     }
 
     /**
-    * Specify Validator class name
-    *
-    * @return mixed
-    */
+     * Specify Validator class name
+     *
+     * @return mixed
+     */
     public function validator()
     {
         return OpportunityValidator::class;
@@ -44,18 +44,21 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
 
     public function make(array $data)
     {
-        return $this->firstOrNew([
+        $opportunity = $this->firstOrNew([
             Opportunity::TITLE => $data[Opportunity::TITLE],
             Opportunity::DESCRIPTION => $data[Opportunity::DESCRIPTION],
-            Opportunity::FILES => new Collection($data[Opportunity::FILES]),
-            Opportunity::POSITION => $data[Opportunity::POSITION],
-            Opportunity::COMPANY => $data[Opportunity::COMPANY],
-            Opportunity::LOCATION => mb_strtoupper($data[Opportunity::LOCATION]),
-            Opportunity::TAGS => implode(' ', $data[Opportunity::TAGS]),
-            Opportunity::SALARY => $data[Opportunity::SALARY],
-            Opportunity::URL => $data[Opportunity::URL],
-            Opportunity::ORIGIN => $data[Opportunity::ORIGIN],
-            Opportunity::EMAILS => $data[Opportunity::EMAILS],
         ]);
+
+        $opportunity->{Opportunity::FILES} = new Collection($data[Opportunity::FILES]);
+        $opportunity->{Opportunity::POSITION} = $data[Opportunity::POSITION];
+        $opportunity->{Opportunity::COMPANY} = $data[Opportunity::COMPANY];
+        $opportunity->{Opportunity::LOCATION} = mb_strtoupper($data[Opportunity::LOCATION]);
+        $opportunity->{Opportunity::TAGS} = implode(' ', $data[Opportunity::TAGS]);
+        $opportunity->{Opportunity::SALARY} = $data[Opportunity::SALARY];
+        $opportunity->{Opportunity::URL} = $data[Opportunity::URL];
+        $opportunity->{Opportunity::ORIGIN} = $data[Opportunity::ORIGIN];
+        $opportunity->{Opportunity::EMAILS} = $data[Opportunity::EMAILS];
+
+        return $opportunity;
     }
 }
