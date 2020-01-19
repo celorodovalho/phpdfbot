@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Helpers\SanitizerHelper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
-use Telegram\Bot\Objects\PhotoSize;
+use Prettus\Repository\Contracts\Transformable;
+use Prettus\Repository\Traits\TransformableTrait;
 
 /**
  * Class Opportunity
@@ -25,11 +26,13 @@ use Telegram\Bot\Objects\PhotoSize;
  * @property Collection $files
  * @property string $url
  * @property string $origin
+ * @property string $tags
+ * @property string $emails
  */
-class Opportunity extends Model
+class Opportunity extends Model implements Transformable
 {
 
-    use SoftDeletes;
+    use SoftDeletes, TransformableTrait;
 
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE = 1;
@@ -43,12 +46,16 @@ class Opportunity extends Model
     public const TITLE = 'title';
     public const URL = 'url';
     public const ORIGIN = 'origin';
+    public const TAGS = 'tags';
+    public const POSITION = 'position';
+    public const SALARY = 'salary';
+    public const EMAILS = 'emails';
 
     protected $fillable = [
         self::TITLE,
-        'position',
+        self::POSITION,
         self::DESCRIPTION,
-        'salary',
+        self::SALARY,
         self::COMPANY,
         self::LOCATION,
         self::FILES,
@@ -57,6 +64,8 @@ class Opportunity extends Model
         'telegram_user_id',
         self::URL,
         self::ORIGIN,
+        self::TAGS,
+        self::EMAILS,
     ];
 
     protected $guarded = ['id'];
@@ -78,7 +87,28 @@ class Opportunity extends Model
         return implode(', ', [
             $this->title,
             $this->position,
+            $this->location,
             $this->description,
+            $this->tags,
         ]);
+    }
+
+    public static function make(array $data)
+    {
+        return new self(
+            [
+                self::TITLE => $data[self::TITLE],
+                self::DESCRIPTION => $data[self::DESCRIPTION],
+                self::FILES => new Collection($data[self::FILES]),
+                self::POSITION => $data[self::POSITION],
+                self::COMPANY => $data[self::COMPANY],
+                self::LOCATION => mb_strtoupper($data[self::LOCATION]),
+                self::TAGS => implode(' ', $data[self::TAGS]),
+                self::SALARY => $data[self::SALARY],
+                self::URL => $data[self::URL],
+                self::ORIGIN => $data[self::ORIGIN],
+                self::EMAILS => $data[self::EMAILS],
+            ]
+        );
     }
 }

@@ -42,11 +42,11 @@ class OptionsCommand extends Command
             ->row(
                 Keyboard::inlineButton([
                     'text' => 'Notificar Grupo',
-                    'callback_data' => $this->name . ' ' . BotPopulateChannel::COMMAND_NOTIFY
+                    'callback_data' => $this->name . ' ' . BotPopulateChannel::TYPE_NOTIFY
                 ]),
                 Keyboard::inlineButton([
                     'text' => 'Realizar Coleta',
-                    'callback_data' => $this->name . ' ' . BotPopulateChannel::COMMAND_PROCESS
+                    'callback_data' => $this->name . ' ' . BotPopulateChannel::TYPE_PROCESS
                 ])
             );
 

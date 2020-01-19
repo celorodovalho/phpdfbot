@@ -5,10 +5,15 @@ namespace App\Services;
 use App\Commands\NewOpportunityCommand;
 use App\Commands\OptionsCommand;
 use App\Console\Commands\BotPopulateChannel;
+use App\Exceptions\TelegramOpportunityException;
+use App\Helpers\BotHelper;
+use App\Helpers\ExtractorHelper;
 use App\Models\Opportunity;
 use Exception;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramResponseException;
@@ -70,19 +75,25 @@ class CommandsHandler
      */
     private function processUpdate(Update $update): void
     {
-        /** @var Message $message */
-        $message = $update->getMessage();
-        /** @var CallbackQuery $callbackQuery */
-        $callbackQuery = $update->get('callback_query');
+        try {
+            /** @var Message $message */
+            $message = $update->getMessage();
+            /** @var CallbackQuery $callbackQuery */
+            $callbackQuery = $update->get('callback_query');
 
-        if (strpos($message->text, '/') === 0) {
-            $command = explode(' ', $message->text);
-            $this->processCommand($command[0]);
-        }
-        if (filled($callbackQuery)) {
-            $this->processCallbackQuery($callbackQuery);
-        } elseif (filled($message)) {
-            $this->processMessage($message);
+            if (strpos($message->text, '/') === 0) {
+                $command = explode(' ', $message->text);
+                $this->processCommand($command[0]);
+            }
+            if (filled($callbackQuery)) {
+                $this->processCallbackQuery($callbackQuery);
+            } elseif (filled($message) && strpos($message->text, '/') !== 0) {
+                $this->processMessage($message);
+            }
+        } catch (TelegramOpportunityException $exception) {
+            $this->sendMessage($exception->getMessage());
+        } catch (Exception $exception) {
+            throw $exception;
         }
     }
 
@@ -96,6 +107,7 @@ class CommandsHandler
     {
         $data = $callbackQuery->get('data');
         $data = explode(' ', $data);
+        $opportunity = null;
         if (is_numeric($data[1])) {
             $opportunity = Opportunity::find($data[1]);
         }
@@ -107,10 +119,11 @@ class CommandsHandler
                     Artisan::call(
                         'bot:populate:channel',
                         [
-                            'process' => 'send',
+                            'type' => BotPopulateChannel::TYPE_SEND,
                             'opportunity' => $opportunity->id
                         ]
                     );
+                    $this->sendMessage(Artisan::output());
                 }
                 break;
             case Opportunity::CALLBACK_REMOVE:
@@ -119,9 +132,9 @@ class CommandsHandler
                 }
                 break;
             case OptionsCommand::OPTIONS_COMMAND:
-                if (in_array($data[1], [BotPopulateChannel::COMMAND_PROCESS, BotPopulateChannel::COMMAND_NOTIFY], true)) {
-                    Artisan::call('bot:populate:channel', ['process' => $data[1]]);
-                    $this->sendMessage('Done!');
+                if (in_array($data[1], [BotPopulateChannel::TYPE_PROCESS, BotPopulateChannel::TYPE_NOTIFY], true)) {
+                    Artisan::call('bot:populate:channel', ['type' => $data[1]]);
+                    $this->sendMessage(Artisan::output());
                 }
                 break;
             default:
@@ -131,11 +144,12 @@ class CommandsHandler
         }
         try {
             $this->telegram->deleteMessage([
-                'chat_id' => config('telegram.admin'),
+                'chat_id' => Config::get('telegram.admin'),
                 'message_id' => $callbackQuery->message->messageId
             ]);
         } catch (TelegramResponseException $exception) {
-            Log::info('DELETE_MESSAGE', [$callbackQuery->message]);
+            Log::info('COMMAND', $data);
+            Log::info('DELETE_MESSAGE', [$exception, $callbackQuery->message]);
             /**
              * A message can only be deleted if it was sent less than 48 hours ago.
              * Bots can delete outgoing messages in groups and supergroups.
@@ -153,7 +167,7 @@ class CommandsHandler
      * Process the messages coming from bot interface
      *
      * @param Message $message
-     * @throws Exception
+     * @throws Exception|TelegramOpportunityException
      */
     private function processMessage(Message $message): void
     {
@@ -167,36 +181,75 @@ class CommandsHandler
         /** @var string $caption */
         $caption = $message->caption;
 
-        if (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) {
-            $opportunity = new Opportunity();
-            if (blank($message->text) && blank($caption)) {
-                throw new Exception('Envie um texto para a vaga, ou o nome da vaga na legenda da imagem/documento.');
-            }
-            $text = $message->text ?? $caption;
-            $title = str_replace("\n", ' ', $text);
-            $opportunity->title = substr($title, 0, 50);
-            $opportunity->description = $text;
-            $opportunity->status = Opportunity::STATUS_INACTIVE;
-            $opportunity->files = collect();
-            $opportunity->telegram_user_id = $message->from->id;
-            $opportunity->url = $this->botName;
-            $opportunity->origin = 'telegram';
+        Log::info('MESSAGE', [$message]);
+        Log::info('REPLY', [$reply]);
+        Log::info('PHOTOS', [$photos]);
+        Log::info('DOCUMENT', [$document]);
+        Log::info('CAPTION', [$caption]);
 
+        if (
+            (
+                (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) ||
+                (!$message->from->isBot && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE)
+            ) &&
+            !in_array($message->text, $this->telegram->getCommands(), true)
+        ) {
+            if (blank($message->text) && blank($caption)) {
+                throw new TelegramOpportunityException(
+                    'Envie um texto da vaga, ou o nome da vaga na legenda da imagem/documento.'
+                );
+            }
+
+            $text = $message->text ?? $caption;
+
+            $urls = ExtractorHelper::extractUrls($text);
+            $emails = ExtractorHelper::extractEmail($text);
+
+            if (blank($urls) && blank($emails)) {
+                throw new TelegramOpportunityException(
+                    'Envie o texto da vaga, contendo uma URL ou E-mail para se candidatar.'
+                );
+            }
+
+            $files = [];
             if (filled($photos)) {
                 foreach ($photos as $photo) {
-                    $opportunity->addFile($photo);
+                    $files[] = $photo;
                 }
             }
             if (filled($document)) {
-                $opportunity->addFile($document->first());
+                $files[] = $document->first();
             }
+
+            $title = str_replace("\n", ' ', $text);
+
+            $opportunity = Opportunity::make([
+                Opportunity::TITLE => Str::limit($title, 50),
+                Opportunity::DESCRIPTION => $text,
+                Opportunity::FILES => $files,
+                Opportunity::URL => implode(', ', $urls),
+                Opportunity::ORIGIN => implode('|', [$this->botName, (blank($message->from->username) ?
+                    $message->from->username : ($message->from->firstName . ' ' . $message->from->lastName))]),
+                Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
+                Opportunity::TAGS => ExtractorHelper::extractTags($text),
+                Opportunity::EMAILS => implode(', ', $emails),
+                Opportunity::POSITION => null,
+                Opportunity::SALARY => null,
+                Opportunity::COMPANY => null,
+            ]);
+
+            $opportunity->status = Opportunity::STATUS_INACTIVE;
+            $opportunity->telegram_user_id = $message->from->id;
 
             $opportunity->save();
 
             $this->sendOpportunityToApproval($opportunity);
         }
+
         $newMembers = $message->newChatMembers;
-        Log::info('NEW_MEMBER', [$newMembers]);
+        if (filled($newMembers)) {
+            Log::info('NEW_MEMBER', [$newMembers]);
+        }
 
         // TODO: Think more about this
         /*if (filled($newMembers)) {
@@ -217,7 +270,7 @@ class CommandsHandler
         Artisan::call(
             'bot:populate:channel',
             [
-                'process' => 'approval',
+                'type' => BotPopulateChannel::TYPE_APPROVAL,
                 'opportunity' => $opportunity->id,
             ]
         );
@@ -261,10 +314,12 @@ class CommandsHandler
      */
     private function sendMessage($message)
     {
-        $this->telegram->sendMessage([
-            'chat_id' => $this->update->getChat()->id,
-            'reply_to_message_id' => $this->update->getMessage()->messageId,
-            'text' => $message
-        ]);
+        if (filled($message)) {
+            $this->telegram->sendMessage([
+                'chat_id' => $this->update->getChat()->id,
+                'reply_to_message_id' => $this->update->getMessage()->messageId,
+                'text' => $message
+            ]);
+        }
     }
 }

@@ -7,8 +7,12 @@ use Exception;
 use GrahamCampbell\GitHub\GitHubManager;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Console\Output\OutputInterface;
 use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
@@ -66,9 +70,9 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $exception
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param \Exception $exception
+     * @return Response
      */
     public function render($request, Exception $exception)
     {
@@ -76,15 +80,16 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * @param \Symfony\Component\Console\Output\OutputInterface $output
-     * @param Exception $e
+     * @param OutputInterface $output
+     * @param Exception $exception
      */
-    public function renderForConsole($output, Exception $e)
+    public function renderForConsole($output, Exception $exception)
     {
         $output->writeln('<error>Something wrong!</error>', 32);
-        $output->writeln("<error>{$e->getMessage()}</error>", 32);
+        $output->writeln("<error>{$exception->getMessage()}</error>", 32);
+        $this->log($exception);
 
-        parent::renderForConsole($output, $e);
+        parent::renderForConsole($output, $exception);
     }
 
     /**
@@ -94,51 +99,60 @@ class Handler extends ExceptionHandler
      * @param string $message
      * @param null $context
      */
-    protected function log(Exception $exception, $message = '', $context = null): void
+    public function log(Exception $exception, $message = '', $context = null): void
     {
-        $referenceLog = $message . time() . '.log';
-        Log::error($message, [$exception->getLine(), $exception, $context]);
-        Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
-        $referenceLog = Storage::disk('logs')->url($referenceLog);
-
-        $logMessage = json_encode([
-            'message' => $message,
-            'exceptionMessage' => $exception->getMessage(),
-            'file' => $exception->getFile(),
-            'line' => $exception->getLine(),
-            'referenceLog' => $referenceLog,
-        ]);
-
-        $username = env('GITHUB_USERNAME');
-        $repo = env('GITHUB_REPO');
-
-        return;
-
         try {
-            $issues = $this->gitHubManager->issues()->find(
-                $username,
-                $repo,
-                'open',
-                $exception->getMessage()
+            $referenceLog = $message . time() . '.log';
+
+            Log::error('ERROR', [$exception->getMessage()]);
+            Log::error('FILE', [$exception->getFile()]);
+            Log::error('LINE', [$exception->getLine()]);
+            Log::error('CODE', [$exception->getCode()]);
+            Log::error('TRACE', [$exception->getTrace()]);
+
+            Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
+            $referenceLog = Storage::disk('logs')->url($referenceLog);
+
+            $logMessage = json_encode([
+                'message' => $message,
+                'exceptionMessage' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'referenceLog' => $referenceLog,
+            ]);
+
+            $username = env('GITHUB_USERNAME');
+            $repo = env('GITHUB_REPO');
+
+            $issues = $this->gitHubManager->search()->issues(
+                '"'.$exception->getMessage().'"+repo:'.$username.'/'.$repo
             );
 
-            $issueBody = sprintf("```json\n%s\n```\n\n```json\n%s\n```", $logMessage, json_encode([
-                'referenceLog' => $referenceLog,
-                'code' => $exception->getCode(),
-                'trace' => $exception->getTrace(),
-            ]));
+            $issueBody = sprintf(
+                "### Message:\n```\n%s\n```\n\n" .
+                "### File/Line:\n```\n%s\n```\n\n" .
+                "### Code:\n```php\n%s\n```\n\n" .
+                "### Trace:\n```php\n%s\n```\n\n" .
+                "### Log:\n```php\n%s\n```\n",
+                $exception->getMessage(),
+                $exception->getFile() . '::' . $exception->getLine(),
+                $exception->getCode(),
+                $exception->getTraceAsString(),
+                $referenceLog
+            );
 
-            if (blank($issues['issues'])) {
+            if (blank($issues['items'])) {
                 $this->gitHubManager->issues()->create(
                     $username,
                     $repo,
                     [
                         'title' => $exception->getMessage(),
-                        'body' => $issueBody
+                        'body' => $issueBody,
+                        'labels' => ['bug']
                     ]
                 );
             } else {
-                $issueNumber = $issues['issues'][0]['number'];
+                $issueNumber = $issues['items'][0]['number'];
                 $this->gitHubManager->issues()->comments()->create(
                     $username,
                     $repo,
@@ -147,13 +161,26 @@ class Handler extends ExceptionHandler
                         'body' => $issueBody
                     ]
                 );
+                $this->gitHubManager->issues()->update(
+                    $username,
+                    $repo,
+                    $issueNumber,
+                    [
+                        'state' => 'open'
+                    ]
+                );
             }
         } catch (Exception $exception2) {
-            Telegram::sendDocument([
-                'chat_id' => config('telegram.admin'),
-                'document' => InputFile::create($referenceLog),
-                'caption' => $logMessage
-            ]);
+            Log::error('EXC2', [$exception2]);
+            try {
+                Telegram::sendDocument([
+                    'chat_id' => Config::get('telegram.admin'),
+                    'document' => InputFile::create($referenceLog),
+                    'caption' => $logMessage
+                ]);
+            } catch (Exception $exception3) {
+                Log::error('EXC3', [$exception3]);
+            }
         }
     }
 }

@@ -46,11 +46,6 @@ class StartCommand extends Command
             'reply_markup' => $keyboard
         ]);
 
-        $this->telegram->sendMessage([
-            'chat_id' => config('telegram.admin'),
-            'text' => 'NOVO USUARIO USANDO O BOT NO PVT: '.json_encode($this->getUpdate())
-        ]);
-
         $this->triggerCommand('help');
     }
 }

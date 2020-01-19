@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Bot;
 
+use App\Contracts\Repositories\OpportunityRepository;
+use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
 use App\Services\CommandsHandler;
-
-use Exception;
-
+use App\Validators\OpportunityValidator;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Laravel\Facades\Telegram;
@@ -21,14 +21,28 @@ class DefaultController extends Controller
      * @var BotsManager
      */
     private $botsManager;
+    /**
+     * @var Handler
+     */
+    private $handler;
 
     /**
      * DefaultController constructor.
      * @param BotsManager $botsManager
+     * @param Handler $handler
+     * @param OpportunityRepository $repository
+     * @param OpportunityValidator $validator
      */
-    public function __construct(BotsManager $botsManager)
+    public function __construct(
+        BotsManager $botsManager,
+        Handler $handler,
+        OpportunityRepository $repository,
+        OpportunityValidator $validator
+    )
     {
         $this->botsManager = $botsManager;
+        $this->handler = $handler;
+        parent::__construct($repository, $validator);
     }
 
     /**
@@ -63,15 +77,16 @@ class DefaultController extends Controller
      *
      * @param $token
      * @param $botName
+     * @param Handler $handler
      * @return string
      */
-    public function webhook($token, $botName): string
+    public function webhook($token, $botName, Handler $handler): string
     {
         try {
             $update = Telegram::getWebhookUpdate();
             CommandsHandler::make($this->botsManager, $botName, $update);
-        } catch (Exception $exception) {
-            return $exception->getMessage();
+        } catch (\Exception $exception) {
+            $this->handler->log($exception);
         }
         return 'ok';
     }

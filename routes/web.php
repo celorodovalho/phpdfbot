@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Web\OpportunityController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -34,4 +36,29 @@ Route::get('me', function (){
         'chat_id' => 50,
         'text' => 'sdfadfas'
     ]));
+});
+
+Route::get('/', 'Web\OpportunityController@index');
+
+Route::group(['namespace' => 'Web',], function () {
+    Route::resource('opportunities', 'OpportunityController');
+});
+
+Route::get('test', function (\GrahamCampbell\GitHub\GitHubManager $github){
+    try {
+//        dump($github->me());https://github.com/phpdevbr/vagas/issues
+//        $github->issues()->create('php-df', 'phpdfbot', array('title' => 'The issue title', 'body' => 'The issue body'));
+//        $issues = $github->issues()->all('phpdevbr', 'vagas', [
+//            'state' => 'open',
+//            'since' => '2019-12-19'
+//        ]);
+//        repo:USERNAME/REPOSITORY
+        $issues = $github->search()->issues('"Undefined property: App\Console\Commands\BotPopulateChannel::$rejectMessages"+repo:php-df/phpdfbot');
+        dump($issues);
+//        $github->issues()->comments()->create('php-df', 'phpdfbot', $issues['issues'][0]['number'], [
+//            'body' => '```'.$issues['issues'][0]['body'].'```'
+//        ]);
+    } catch (\Exception $exception) {
+        dump($exception);die;
+    }
 });
