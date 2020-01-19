@@ -2,7 +2,7 @@
 
 namespace App\Services\Collectors;
 
-use App\Contracts\CollectInterface;
+use App\Contracts\CollectorInterface;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
@@ -12,7 +12,7 @@ use GrahamCampbell\GitHub\GitHubManager;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Config;
 
-class GitHubMessages implements CollectInterface
+class GitHubMessages implements CollectorInterface
 {
 
     /** @var Collection */

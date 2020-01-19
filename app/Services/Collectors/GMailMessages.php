@@ -2,7 +2,7 @@
 
 namespace App\Services\Collectors;
 
-use App\Contracts\CollectInterface;
+use App\Contracts\CollectorInterface;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\Helper;
 use App\Helpers\SanitizerHelper;
@@ -24,7 +24,7 @@ use JD\Cloudder\Facades\Cloudder;
 /**
  * Class GMailMessages
  */
-class GMailMessages implements CollectInterface
+class GMailMessages implements CollectorInterface
 {
 
     /**

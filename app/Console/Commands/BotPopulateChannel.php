@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Spatie\Emoji\Emoji;
 use Telegram\Bot\BotsManager;
+use Telegram\Bot\Exceptions\TelegramResponseException;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Keyboard\Keyboard;
 
@@ -286,7 +287,15 @@ class BotPopulateChannel extends AbstractCommand
                 if ($exception->getCode() === 400) {
                     $sendMsg['text'] = SanitizerHelper::removeMarkdown($messageText);
                     unset($sendMsg['Markdown']);
-                    $messageSent = $this->telegram->sendMessage($sendMsg);
+                    try {
+                        $messageSent = $this->telegram->sendMessage($sendMsg);
+                    } catch (TelegramResponseException $exception2) {
+                        if ($exception2->getCode() === 400) {
+                            Log::error('THROW_MESSAGE2', [$sendMsg]);
+                        }
+                        throw $exception;
+                    }
+                    Log::error('THROW_MESSAGE1', [$sendMsg]);
                     $messageSentIds[] = $messageSent->messageId;
                 } else {
                     throw $exception;

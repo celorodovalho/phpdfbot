@@ -2,7 +2,7 @@
 
 namespace App\Services\Collectors;
 
-use App\Contracts\CollectInterface;
+use App\Contracts\CollectorInterface;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Config;
 use Symfony\Component\DomCrawler\Crawler;
 
-class ComoQueTaLaMessages implements CollectInterface
+class ComoQueTaLaMessages implements CollectorInterface
 {
     /** @var Collection */
     private $opportunities;

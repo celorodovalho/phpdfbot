@@ -4,7 +4,7 @@ namespace App\Contracts;
 
 use Illuminate\Database\Eloquent\Collection;
 
-interface CollectInterface
+interface CollectorInterface
 {
     public function collectOpportunities(): Collection;
 
