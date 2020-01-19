@@ -309,15 +309,14 @@ class BotPopulateChannel extends AbstractCommand
     protected function notifyGroup()
     {
         $opportunities = $this->repository->findWhere([['telegram_id', '<>', null]]);
-        $opportunitiesArr = $opportunities->get();
-        if ($opportunitiesArr->isNotEmpty()) {
+        if ($opportunities->isNotEmpty()) {
             /** @todo Usar repository no lugar da model */
             $lastNotifications = Notification::all();
 
             $firstOpportunityId = null;
 
             /** @var Collection $listOpportunities */
-            $listOpportunities = $opportunitiesArr->map(function ($opportunity) use (&$firstOpportunityId) {
+            $listOpportunities = $opportunities->map(function ($opportunity) use (&$firstOpportunityId) {
                 $firstOpportunityId = $firstOpportunityId ?? $opportunity->telegram_id;
                 return sprintf(
                     '➩ [%s](%s)',
