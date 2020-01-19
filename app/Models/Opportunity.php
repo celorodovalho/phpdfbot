@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Prettus\Repository\Contracts\Transformable;
 use Prettus\Repository\Traits\TransformableTrait;
@@ -31,7 +32,7 @@ use Prettus\Repository\Traits\TransformableTrait;
 class Opportunity extends Model implements Transformable
 {
 
-    use SoftDeletes, TransformableTrait;
+    use SoftDeletes, TransformableTrait, Notifiable;
 
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE = 1;

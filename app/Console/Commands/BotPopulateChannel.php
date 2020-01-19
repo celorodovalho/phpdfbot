@@ -10,11 +10,13 @@ use App\Helpers\Helper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Notification;
 use App\Models\Opportunity;
+use App\Notifications\PublishedOpportunity;
 use App\Transformers\FormattedOpportunityTransformer;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
 use Exception;
 use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Notifications\ChannelManager;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
@@ -191,8 +193,7 @@ class BotPopulateChannel extends AbstractCommand
                 $opportunity->telegram_id = $messageSentId;
                 $opportunity->status = Opportunity::STATUS_ACTIVE;
                 $opportunity->save();
-
-                $this->notifyUser($opportunity);
+                $opportunity->notify(new PublishedOpportunity);
             }
         }
 
@@ -204,37 +205,6 @@ class BotPopulateChannel extends AbstractCommand
             ) {
                 $this->mailOpportunity($opportunity, $mail);
             }
-        }
-    }
-
-    /**
-     * Notify the send user, that opportunity was published on channel
-     *
-     * @param Opportunity $opportunity
-     * @throws TelegramSDKException
-     * @todo Move to communicate-telegram class
-     */
-    protected function notifyUser(Opportunity $opportunity): void
-    {
-        if ($opportunity->telegram_user_id) {
-            $link = "https://t.me/VagasBrasil_TI/{$opportunity->telegram_id}";
-
-            $this->telegram->sendMessage([
-                'chat_id' => $opportunity->telegram_user_id,
-                'parse_mode' => 'Markdown',
-                'text' => sprintf(
-                    "A vaga abaixo foi publicada:\n\n%s",
-                    SanitizerHelper::sanitizeSubject(SanitizerHelper::removeBrackets($opportunity->title))
-                ),
-                'reply_markup' => Keyboard::make()
-                    ->inline()
-                    ->row(
-                        Keyboard::inlineButton([
-                            'text' => 'Conferir no canal ' . Emoji::rightArrow(),
-                            'url' => $link,
-                        ])
-                    ),
-            ]);
         }
     }
 
