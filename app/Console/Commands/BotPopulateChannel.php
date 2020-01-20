@@ -388,7 +388,9 @@ class BotPopulateChannel extends AbstractCommand
                 }
                 $lastNotification->delete();
             }
-            $opportunities->delete();
+            $opportunities->each(function ($opportunity) {
+                $opportunity->delete();
+            });
         }
         $this->info('The group was notified!');
     }
