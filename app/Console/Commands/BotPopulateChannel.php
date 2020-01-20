@@ -193,7 +193,9 @@ class BotPopulateChannel extends AbstractCommand
                 $opportunity->telegram_id = $messageSentId;
                 $opportunity->status = Opportunity::STATUS_ACTIVE;
                 $opportunity->save();
-                $opportunity->notify(new PublishedOpportunity);
+                if ($opportunity->telegram_user_id) {
+                    $opportunity->notify(new PublishedOpportunity);
+                }
             }
         }
 
