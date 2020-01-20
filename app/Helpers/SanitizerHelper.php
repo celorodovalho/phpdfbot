@@ -64,6 +64,7 @@ class SanitizerHelper
     public static function escapeMarkdown(string $message): string
     {
         $message = str_replace(['*', '_', '`', '[', ']'], ["\\*", "\\_", "\\`", "\\[", '\\]'], $message);
+//        $message = preg_replace('/(\*_`\[)/', "\\$1", $message);
         return trim($message);
     }
 
@@ -75,7 +76,7 @@ class SanitizerHelper
      */
     public static function replaceMarkdown(string $message): string
     {
-        $message = str_replace(['*', '_', '`', '[', ']'], ' ', $message);
+        $message = str_replace(['*', '_', '`', '[', ']'], ['٭', '—', '′', '｢', '｣'], $message);
         $message = preg_replace('#( ){2,}#', ' ', $message);
         return trim($message);
     }
@@ -160,6 +161,8 @@ class SanitizerHelper
             $converter = new CommonMarkConverter();
 
             $message = $converter->convertToHtml($message);
+
+            $message = self::replaceMarkdown($message);
 
             $converter = new HtmlConverter([
                 'bold_style' => '*',
