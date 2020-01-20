@@ -4,9 +4,9 @@ namespace App\Notifications;
 
 use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
+use App\Notifications\Channels\TelegramChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use NotificationChannels\Telegram\TelegramChannel;
 use NotificationChannels\Telegram\TelegramMessage;
 use Spatie\Emoji\Emoji;
 
@@ -17,7 +17,7 @@ class PublishedOpportunity extends Notification
     /**
      * Get the notification's delivery channels.
      *
-     * @param  mixed  $notifiable
+     * @param  mixed $notifiable
      * @return array
      */
     public function via($notifiable)
@@ -31,7 +31,7 @@ class PublishedOpportunity extends Notification
      */
     public function toTelegram($notifiable)
     {
-        $telegramMessage = TelegramMessage::create();
+        $telegramMessage = new TelegramMessage;
         if ($notifiable->telegram_user_id) {
             $link = "https://t.me/VagasBrasil_TI/{$notifiable->telegram_id}";
             $telegramMessage
@@ -51,7 +51,7 @@ class PublishedOpportunity extends Notification
     /**
      * Get the array representation of the notification.
      *
-     * @param  mixed  $notifiable
+     * @param  mixed $notifiable
      * @return array
      */
     public function toArray($notifiable)
