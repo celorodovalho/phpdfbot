@@ -31,9 +31,10 @@ class PublishedOpportunity extends Notification
      */
     public function toTelegram($notifiable)
     {
+        $telegramMessage = TelegramMessage::create();
         if ($notifiable->telegram_user_id) {
             $link = "https://t.me/VagasBrasil_TI/{$notifiable->telegram_id}";
-            return TelegramMessage::create()
+            $telegramMessage
                 // Optional recipient user id.
                 ->to($notifiable->telegram_user_id)
                 // Markdown supported.
@@ -44,6 +45,7 @@ class PublishedOpportunity extends Notification
                 // (Optional) Inline Buttons
                 ->button('Conferir no canal ' . Emoji::rightArrow(), $link);
         }
+        return $telegramMessage;
     }
 
     /**
