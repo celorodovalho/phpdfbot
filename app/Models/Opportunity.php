@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
+use App\Notifications\RoutesNotifications;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\HasDatabaseNotifications;
 use Illuminate\Support\Collection;
 use Prettus\Repository\Contracts\Transformable;
 use Prettus\Repository\Traits\TransformableTrait;
@@ -32,7 +33,7 @@ use Prettus\Repository\Traits\TransformableTrait;
 class Opportunity extends Model implements Transformable
 {
 
-    use SoftDeletes, TransformableTrait, Notifiable;
+    use SoftDeletes, TransformableTrait, HasDatabaseNotifications, RoutesNotifications;
 
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE = 1;

@@ -10,7 +10,7 @@ use Illuminate\Notifications\Notification;
 use NotificationChannels\Telegram\TelegramMessage;
 use Spatie\Emoji\Emoji;
 
-class PublishedOpportunity extends Notification
+class SendOpportunity extends Notification
 {
     use Queueable;
 
@@ -22,7 +22,7 @@ class PublishedOpportunity extends Notification
      */
     public function via($notifiable)
     {
-        return [TelegramChannel::class, 'database'];
+        return [TelegramChannel::class, 'database', 'mail'];
     }
 
     /**
