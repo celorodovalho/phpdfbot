@@ -158,7 +158,7 @@ class BotPopulateChannel extends AbstractCommand
                 if ($collectorOpportunities->isEmpty()) {
                     $this->info(sprintf(
                         '%s não contém novas oportunidades',
-                        basename(get_class($collector))
+                        class_basename(get_class($collector))
                     ));
                 }
                 $opportunities = $opportunities->merge($collectorOpportunities);
