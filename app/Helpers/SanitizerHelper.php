@@ -77,7 +77,7 @@ class SanitizerHelper
      */
     public static function replaceMarkdown(string $message): string
     {
-        $message = str_replace(['*', '_', '`', '[', ']'], ['٭', "\\_", '′', '｢', '｣'], $message);
+        $message = str_replace(['*', '_', '`', '[', ']'], ['٭', "\_", '′', '｢', '｣'], $message);
         $message = preg_replace('#( ){2,}#', ' ', $message);
         return trim($message);
     }
@@ -163,14 +163,14 @@ class SanitizerHelper
 
             $message = $converter->convertToHtml($message);
 
-            $message = self::replaceMarkdown($message);
-
             $converter = new HtmlConverter([
                 'bold_style' => '*',
                 'italic_style' => '_',
                 'strip_tags' => true,
                 'hard_break' => true
             ]);
+
+            $message = nl2br($message);
 
             $message = $converter->convert($message);
 
