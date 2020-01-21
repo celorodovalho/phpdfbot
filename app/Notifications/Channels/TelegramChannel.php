@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Channels;
 
+use App\Helpers\BotHelper;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\Telegram\Exceptions\CouldNotSendNotification;
 use NotificationChannels\Telegram\Telegram;
@@ -54,6 +55,30 @@ class TelegramChannel
         $params = $message->toArray();
 
         if ($message instanceof TelegramMessage) {
+            $body = $params['text'];
+
+            if (strlen($body) > BotHelper::TELEGRAM_LIMIT) {
+                $body = str_split(
+                    $body,
+                    BotHelper::TELEGRAM_LIMIT - strlen("\n1/1\n")
+                );
+
+                $count = count($body);
+
+                $body = array_map(function ($part, $index) use ($count) {
+                    $index++;
+                    return $part . "\n{$index}/{$count}\n";
+                }, $body, array_keys($body));
+
+                $messageIds = [];
+                foreach ($body as $text) {
+                    $params['text'] = $text;
+                    $messageIds[] = $this->telegram->sendMessage($params);
+                }
+
+                return reset($messageIds);
+            }
+
             $messageId = $this->telegram->sendMessage($params);
         } elseif ($message instanceof TelegramLocation) {
             $messageId = $this->telegram->sendLocation($params);
