@@ -188,6 +188,7 @@ class BotPopulateChannel extends AbstractCommand
         foreach ($this->channels as $channel => $config) {
             if (blank($config['tags']) || ExtractorHelper::hasTags($config['tags'], $opportunity->getText())) {
                 $messageSentId = $opportunity->notify(new SendOpportunity($channel));
+                dump($messageSentId);
                 if ($messageSentId && $config['main']) {
                     $opportunity->telegram_id = $messageSentId;
                     $opportunity->status = Opportunity::STATUS_ACTIVE;
@@ -198,91 +199,6 @@ class BotPopulateChannel extends AbstractCommand
                 }
             }
         }
-
-        foreach ($this->mailing as $mail => $config) {
-            if (
-                $config &&
-                !Str::contains($opportunity->origin, $mail) &&
-                (blank($config['tags']) || ExtractorHelper::hasTags($config['tags'], $opportunity->getText()))
-            ) {
-                $this->mailOpportunity($opportunity, $mail);
-            }
-        }
-    }
-
-    /**
-     * @param Opportunity $opportunity
-     * @param int $chatId
-     * @param array $options
-     * @return array
-     * @throws TelegramSDKException
-     * @todo Move to communicate-telegram class
-     */
-    protected function sendOpportunity(Opportunity $opportunity, $chatId, array $options = []): array
-    {
-        $messageTexts = fractal()->item($opportunity)->transformWith(new FormattedOpportunityTransformer())->toArray();
-        $messageSentIds = [];
-        $lastSentID = null;
-        $messageSent = null;
-
-        foreach ($messageTexts['data']['body'] as $messageText) {
-            $sendMsg = array_merge([
-                'chat_id' => $chatId,
-                'parse_mode' => 'Markdown',
-                'text' => $messageText,
-            ], $options);
-
-            if ($lastSentID) {
-                $sendMsg['reply_to_message_id'] = $lastSentID;
-            }
-
-            try {
-                $messageSent = $this->telegram->sendMessage($sendMsg);
-                $messageSentIds[] = $messageSent->messageId;
-            } catch (Exception $exception) {
-                if ($exception->getCode() === 400) {
-                    $sendMsg['text'] = SanitizerHelper::removeMarkdown($messageText);
-                    unset($sendMsg['Markdown']);
-                    try {
-                        $messageSent = $this->telegram->sendMessage($sendMsg);
-                    } catch (TelegramResponseException $exception2) {
-                        if ($exception2->getCode() === 400) {
-                            Log::error('THROW_MESSAGE2', [$sendMsg]);
-                        }
-                        throw $exception;
-                    }
-                    Log::error('THROW_MESSAGE1', [$sendMsg]);
-                    $messageSentIds[] = $messageSent->messageId;
-                } else {
-                    throw $exception;
-                }
-            }
-
-            if ($messageSent) {
-                $lastSentID = $messageSent->messageId;
-            }
-        }
-        return $messageSentIds;
-    }
-
-    /**
-     * @param Opportunity $opportunity
-     * @param string $email
-     * @param array $options
-     * @throws Exception
-     * @todo Move to communicate-email class
-     */
-    protected function mailOpportunity(Opportunity $opportunity, string $email, array $options = [])
-    {
-        $messageTexts = fractal()->item($opportunity)->transformWith(new FormattedOpportunityTransformer(true))->toArray();
-        $messageTexts = Markdown::convertToHtml($messageTexts['data']['body']);
-        $messageTexts = nl2br($messageTexts);
-
-        $mail = new Mail();
-        $mail->to($email)
-            ->message($messageTexts)
-            ->subject($opportunity->title)
-            ->send();
     }
 
     /**
@@ -402,18 +318,17 @@ class BotPopulateChannel extends AbstractCommand
                 ])
             );
 
-        $messageToSend = [
+        $options = [
             'reply_markup' => $keyboard,
         ];
 
         /** @var Opportunity $opportunity */
-        $this->sendOpportunity($opportunity, $this->admin, $messageToSend);
+        $opportunity->notify(new SendOpportunity($this->admin, $options));
     }
 
     /**
      * @param $opportunityId
      * @throws TelegramSDKException
-     * @todo Move to communicate-telegram class
      */
     protected function sendTelegramOpportunityToApproval($opportunityId): void
     {
