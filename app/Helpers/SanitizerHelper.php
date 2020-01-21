@@ -77,7 +77,7 @@ class SanitizerHelper
      */
     public static function replaceMarkdown(string $message): string
     {
-        $message = str_replace(['*', '_', '`', '[', ']'], ['٭', "\_", '′', '｢', '｣'], $message);
+        $message = str_replace(['*', '`', '[', ']'], ['٭', '′', '｢', '｣'], $message);
         $message = preg_replace('#( ){2,}#', ' ', $message);
         return trim($message);
     }
