@@ -138,6 +138,8 @@ class SanitizerHelper
                 'Com lisura,',
             ];
 
+            $message = trim($message, '\\');
+
             $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
 
             $message = $messageArray[0];
