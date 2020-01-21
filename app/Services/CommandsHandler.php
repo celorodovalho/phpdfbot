@@ -220,6 +220,10 @@ class CommandsHandler
 
             $title = str_replace("\n", ' ', $text);
 
+            Log::info('SANITIZED_BODY', [SanitizerHelper::sanitizeBody($text)]);
+            Log::info($text, []);
+            Log::info(SanitizerHelper::sanitizeBody($text), []);
+
             $opportunity = $this->repository->make([
                 Opportunity::TITLE => Str::limit($title, 50),
                 Opportunity::DESCRIPTION => SanitizerHelper::sanitizeBody($text),
