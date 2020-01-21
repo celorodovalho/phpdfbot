@@ -146,7 +146,8 @@ class CommandsHandler
             ]);
         } catch (TelegramResponseException $exception) {
             Log::info('COMMAND', $data);
-            Log::info('DELETE_MESSAGE', [$exception, $callbackQuery->message]);
+            Log::info('DELETE_MESSAGE', [$exception]);
+            Log::info('CALLBACK_MESSAGE', [$callbackQuery->message]);
             /**
              * A message can only be deleted if it was sent less than 48 hours ago.
              * Bots can delete outgoing messages in groups and supergroups.
@@ -178,7 +179,7 @@ class CommandsHandler
         /** @var string $caption */
         $caption = $message->caption;
 
-        Log::info('MESSAGE', [$message]);
+        Log::info('MESSAGE_TEXT', [$message->text,]);
         Log::info('REPLY', [$reply]);
         Log::info('PHOTOS', [$photos]);
         Log::info('DOCUMENT', [$document]);
@@ -229,7 +230,7 @@ class CommandsHandler
                     $message->from->firstName . ' ' . $message->from->lastName]),
                 Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
                 Opportunity::TAGS => ExtractorHelper::extractTags($text),
-                Opportunity::EMAILS => implode(', ', $emails),
+                Opportunity::EMAILS => SanitizerHelper::replaceMarkdown(implode(', ', $emails)),
                 Opportunity::POSITION => null,
                 Opportunity::SALARY => null,
                 Opportunity::COMPANY => null,
