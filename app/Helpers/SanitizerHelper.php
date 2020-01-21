@@ -6,6 +6,7 @@ use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Support\Traits\Macroable;
 use League\CommonMark\CommonMarkConverter;
 use League\HTMLToMarkdown\HtmlConverter;
+use Spatie\Emoji\Emoji;
 
 /**
  * Class Sanitizer
@@ -76,7 +77,7 @@ class SanitizerHelper
      */
     public static function replaceMarkdown(string $message): string
     {
-        $message = str_replace(['*', '_', '`', '[', ']'], ['٭', "\\_", '′', '｢', '｣'], $message);
+        $message = str_replace(['*', '_', '`', '[', ']'], ['٭', "\_", '′', '｢', '｣'], $message);
         $message = preg_replace('#( ){2,}#', ' ', $message);
         return trim($message);
     }
@@ -149,14 +150,12 @@ class SanitizerHelper
             );
             $message = self::removeEmptyTagsRecursive($message);
 
-//            $message = self::removeTagsAttributes($message);
-//            $message = self::closeOpenTags($message);
+            $message = self::removeTagsAttributes($message);
+            $message = self::closeOpenTags($message);
 
             $message = str_ireplace([
                 '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
             ], '`', $message);
-
-//            $message = nl2br($message);
 
             $converter = new CommonMarkConverter();
 
@@ -175,7 +174,7 @@ class SanitizerHelper
 
             $message = preg_replace("/^# (.+)$/m", '`$1`', $message);
 
-            $message = str_ireplace(['<3'], '❤️', $message);
+            $message = str_ireplace(['<3'], Emoji::blueHeart(), $message);
             $message = preg_replace("/#{2,}/m", '#', $message);
             $message = preg_replace("/_{2,}/m", '_', $message);
             $message = preg_replace("/`{2,}/m", '`', $message);
