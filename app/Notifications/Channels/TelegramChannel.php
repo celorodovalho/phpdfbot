@@ -65,14 +65,19 @@ class TelegramChannel
 
                 $count = count($body);
 
-                $body = array_map(function ($part, $index) use ($count) {
-                    $index++;
-                    return $part . "\n{$index}/{$count}\n";
-                }, $body, array_keys($body));
+                if ($count > 1) {
+                    $body = array_map(function ($part, $index) use ($count) {
+                        $index++;
+                        return $part . "\n{$index}/{$count}\n";
+                    }, $body, array_keys($body));
+                }
 
                 $messageIds = [];
                 foreach ($body as $text) {
                     $params['text'] = $text;
+                    if (count($messageIds) > 1) {
+                        $params['reply_to_message_id'] = reset($messageIds);
+                    }
                     $messageIds[] = $this->telegram->sendMessage($params);
                 }
 

@@ -11,6 +11,7 @@ use App\Helpers\SanitizerHelper;
 use App\Models\Notification;
 use App\Models\Opportunity;
 use App\Notifications\PublishedOpportunity;
+use App\Notifications\SendOpportunity;
 use App\Transformers\FormattedOpportunityTransformer;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
 use Exception;
@@ -186,15 +187,14 @@ class BotPopulateChannel extends AbstractCommand
 
         foreach ($this->channels as $channel => $config) {
             if (blank($config['tags']) || ExtractorHelper::hasTags($config['tags'], $opportunity->getText())) {
-                $messageSentIds = $this->sendOpportunity($opportunity, $channel);
-            }
-            $messageSentId = reset($messageSentIds);
-            if ($messageSentId && $config['main']) {
-                $opportunity->telegram_id = $messageSentId;
-                $opportunity->status = Opportunity::STATUS_ACTIVE;
-                $opportunity->save();
-                if ($opportunity->telegram_user_id) {
-                    $opportunity->notify(new PublishedOpportunity);
+                $messageSentId = $opportunity->notify(new SendOpportunity($channel));
+                if ($messageSentId && $config['main']) {
+                    $opportunity->telegram_id = $messageSentId;
+                    $opportunity->status = Opportunity::STATUS_ACTIVE;
+                    $opportunity->save();
+                    if ($opportunity->telegram_user_id) {
+                        $opportunity->notify(new PublishedOpportunity);
+                    }
                 }
             }
         }
@@ -224,23 +224,6 @@ class BotPopulateChannel extends AbstractCommand
         $messageSentIds = [];
         $lastSentID = null;
         $messageSent = null;
-
-        if ($this->admin === $chatId && Str::contains($opportunity->origin, [$this->botName])) {
-            $userNames = explode('|', $opportunity->origin);
-            $userName = end($userNames);
-            if (!blank($userName)) {
-                if (Str::contains($userName, ' ')) {
-                    $text = "[$userName](tg://user?id={$opportunity->telegram_user_id}) enviou:";
-                } else {
-                    $text = '@' . $userName . ' enviou:';
-                }
-                $this->telegram->sendMessage([
-                    'chat_id' => $chatId,
-                    'parse_mode' => 'Markdown',
-                    'text' => $text
-                ]);
-            }
-        }
 
         foreach ($messageTexts['data']['body'] as $messageText) {
             $sendMsg = array_merge([

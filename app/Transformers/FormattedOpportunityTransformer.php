@@ -3,12 +3,9 @@
 namespace App\Transformers;
 
 use App\Helpers\BotHelper;
-use App\Helpers\SanitizerHelper;
-use Illuminate\Support\Facades\Config;
+use App\Models\Opportunity;
 use Illuminate\Support\Str;
 use League\Fractal\TransformerAbstract;
-use App\Models\Opportunity;
-use Spatie\Emoji\Emoji;
 
 /**
  * Class OpportunityTransformer.
@@ -31,7 +28,7 @@ class FormattedOpportunityTransformer extends TransformerAbstract
      *
      * @param Opportunity $opportunity
      *
-     * @return array
+     * @return string
      */
     public function transform(Opportunity $opportunity)
     {
@@ -108,12 +105,6 @@ class FormattedOpportunityTransformer extends TransformerAbstract
             );
         }
 
-        $body .= BotHelper::getGroupSign($this->isEmail);
-
-
-
-        return [
-            'body' => $body
-        ];
+        return $body . BotHelper::getGroupSign($this->isEmail);
     }
 }

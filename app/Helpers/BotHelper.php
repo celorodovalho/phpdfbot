@@ -30,7 +30,7 @@ class BotHelper
      */
     public static function getGroupSign(bool $isWeb = false): string
     {
-        $sign = "\n\n" .
+        $sign =
             Emoji::megaphone() . ' ' . SanitizerHelper::escapeMarkdown(implode(' | ', array_keys(Config::get('telegram.channels')))) . "\n" .
             Emoji::houses() . ' ' . SanitizerHelper::escapeMarkdown(implode(' | ', array_keys(Config::get('telegram.groups')))) . "\n";
 
