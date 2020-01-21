@@ -229,7 +229,7 @@ class CommandsHandler
                     $message->from->firstName . ' ' . $message->from->lastName]),
                 Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
                 Opportunity::TAGS => ExtractorHelper::extractTags($text),
-                Opportunity::EMAILS => implode(', ', $emails),
+                Opportunity::EMAILS => SanitizerHelper::replaceMarkdown(implode(', ', $emails)),
                 Opportunity::POSITION => null,
                 Opportunity::SALARY => null,
                 Opportunity::COMPANY => null,
