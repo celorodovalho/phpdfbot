@@ -106,6 +106,21 @@ class BotPopulateChannel extends AbstractCommand
         $this->collectors = Helper::getNamespaceClasses('App\\Services\\Collectors');
         $this->repository = $repository;
         $this->groupRepository = $groupRepository;
+
+        $this->mailing = $this->groupRepository->findWhere([
+            ['type', '=', GroupTypes::TYPE_MAILING],
+            ['main', '=', true],
+        ]);
+
+        $this->groups = $this->groupRepository->findWhere([
+            ['type', '=', GroupTypes::TYPE_GROUP],
+            ['main', '=', true],
+        ]);
+
+        $this->channels = $this->groupRepository->findWhere([
+            ['type', '=', GroupTypes::TYPE_CHANNEL],
+            ['main', '=', true],
+        ]);
     }
 
     /**
@@ -113,10 +128,7 @@ class BotPopulateChannel extends AbstractCommand
      */
     public function handle(): void
     {
-        $this->channels = Config::get('telegram.channels');
         $this->appUrl = env('APP_URL');
-        $this->groups = Config::get('telegram.groups');
-        $this->mailing = Config::get('constants.mailing');
         $this->admin = Config::get('telegram.admin');
 
         switch ($this->argument('type')) {
@@ -188,10 +200,10 @@ class BotPopulateChannel extends AbstractCommand
         /** @var Opportunity $opportunity */
         $opportunity = $this->repository->find($opportunityId);
 
-        foreach ($this->channels as $channel => $config) {
-            if (blank($config['tags']) || ExtractorHelper::hasTags($config['tags'], $opportunity->getText())) {
-                $opportunity->notify(new SendOpportunity($channel));
-                if ($config['main'] && $opportunity->telegram_id && $opportunity->telegram_user_id) {
+        foreach ($this->channels as $channel) {
+            if (blank($channel->tags) || ExtractorHelper::hasTags($channel->tags, $opportunity->getText())) {
+                $opportunity->notify(new SendOpportunity($channel, $this->mailing));
+                if ($channel->main && $opportunity->telegram_id && $opportunity->telegram_user_id) {
                     $opportunity->notify(new PublishedOpportunity);
                 }
             }
@@ -357,7 +369,7 @@ class BotPopulateChannel extends AbstractCommand
         ];
 
         /** @var Opportunity $opportunity */
-        $opportunity->notify(new SendOpportunity($this->admin, $options));
+        $opportunity->notify(new SendOpportunity($this->admin, null, $options));
     }
 
     /**

@@ -3,7 +3,9 @@
 namespace App\Services\Collectors;
 
 use App\Contracts\CollectorInterface;
+use App\Contracts\Repositories\GroupRepository;
 use App\Contracts\Repositories\OpportunityRepository;
+use App\Enums\GroupTypes;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
@@ -25,20 +27,26 @@ class GitHubMessages implements CollectorInterface
     /** @var OpportunityRepository */
     private $repository;
 
+    /**@var GroupRepository */
+    private $groupRepository;
+
     /**
      * GitHubMessages constructor.
      * @param Collection $opportunities
      * @param GitHubManager $gitHubManager
      * @param OpportunityRepository $repository
+     * @param GroupRepository $groupRepository
      */
     public function __construct(
         Collection $opportunities,
         GitHubManager $gitHubManager,
-        OpportunityRepository $repository
+        OpportunityRepository $repository,
+        GroupRepository $groupRepository
     ) {
         $this->gitHubManager = $gitHubManager;
         $this->opportunities = $opportunities;
         $this->repository = $repository;
+        $this->groupRepository = $groupRepository;
     }
 
     /**
@@ -49,11 +57,15 @@ class GitHubMessages implements CollectorInterface
      */
     public function collectOpportunities(): Collection
     {
-        $githubSources = Config::get('constants.gitHubSources');
+        $githubSources = $this->groupRepository->findWhere([['type', '=', GroupTypes::TYPE_GITHUB]]);
         $messages = [];
-        foreach ($githubSources as $username => $repo) {
+        foreach ($githubSources as $source) {
+            $username = explode('/', $source->name);
+            $repo = end($username);
+            $username = reset($username);
             $messages = array_merge($messages, $this->fetchMessages($username, $repo));
         }
+        dump(count($messages));
         foreach ($messages as $message) {
             $this->createOpportunity($message);
         }

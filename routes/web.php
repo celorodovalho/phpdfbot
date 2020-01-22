@@ -48,6 +48,8 @@ Route::group(['namespace' => 'Web',], function () {
 
 Route::get('test', function (\GrahamCampbell\GitHub\GitHubManager $github){
     try {
+        $opportunity = \App\Models\Opportunity::find(1);
+        $opportunity->notify(new \App\Notifications\SendOpportunity('@botphpdf'));
 //        dump($github->me());https://github.com/phpdevbr/vagas/issues
 //        $github->issues()->create('php-df', 'phpdfbot', array('title' => 'The issue title', 'body' => 'The issue body'));
 //        $issues = $github->issues()->all('phpdevbr', 'vagas', [

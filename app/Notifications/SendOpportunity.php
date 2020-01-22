@@ -2,12 +2,14 @@
 
 namespace App\Notifications;
 
+use App\Helpers\ExtractorHelper;
+use App\Mail\SendOpportunity as Mailable;
 use App\Models\Opportunity;
 use App\Notifications\Channels\TelegramChannel;
 use App\Services\TelegramMessage;
 use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
@@ -28,17 +30,22 @@ class SendOpportunity extends Notification
     /** @var string */
     private $botName;
 
+    /** @var array */
+    private $mailing;
+
     /**
      * SendOpportunity constructor.
      * @param $chatId
+     * @param Collection $mailing
      * @param array $options
      */
-    public function __construct($chatId, array $options = [])
+    public function __construct($chatId, ?Collection $mailing, array $options = [])
     {
         $this->chatId = $chatId;
         $this->options = $options;
         $this->admin = Config::get('telegram.admin');
         $this->botName = Config::get('telegram.default');
+        $this->mailing = $mailing;
     }
 
     /**
@@ -86,23 +93,41 @@ class SendOpportunity extends Notification
         if (filled($messageText)) {
             $telegramMessage
                 ->to($this->chatId)
-                ->content($messageText);
+                ->content($messageText)
+                ->options($this->options);
         }
         return $telegramMessage;
     }
 
+    /**
+     * @param Opportunity $opportunity
+     * @return Mailable
+     * @throws \Throwable
+     */
     public function toMail($opportunity)
     {
-        $messageText = view('notifications.opportunity', [
-            'opportunity' => $opportunity,
-            'isEmail' => true
-        ])->render();
+        if ($this->mailing) {
+            $mailable = new Mailable;
+            foreach ($this->mailing as $mail) {
+                if (
+                    !Str::contains($opportunity->origin, $mail->name) &&
+                    (blank($mail->tags) || ExtractorHelper::hasTags($mail->tags, $opportunity->getText()))
+                ) {
+                    $mailable->to($mail);
+                }
+            }
 
-        $messageText = Markdown::convertToHtml($messageText);
+            $messageText = view('notifications.opportunity', [
+                'opportunity' => $opportunity,
+                'isEmail' => true
+            ])->render();
 
-        return (new MailMessage)
-            ->subject($opportunity->title)
-            ->view($messageText);
+            $messageText = Markdown::convertToHtml($messageText);
+
+            $mailable->subject($opportunity->title)
+                ->html($messageText);
+            return $mailable;
+        }
     }
 
     /**

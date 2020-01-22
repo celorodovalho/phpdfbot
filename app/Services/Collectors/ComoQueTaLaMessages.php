@@ -46,6 +46,7 @@ class ComoQueTaLaMessages implements CollectorInterface
     public function collectOpportunities(): Collection
     {
         $messages = $this->fetchMessages();
+        dump(count($messages));
         foreach ($messages as $message) {
             $this->createOpportunity($message);
         }

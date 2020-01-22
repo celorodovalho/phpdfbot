@@ -2,7 +2,8 @@
 
 namespace App\Helpers;
 
-use Illuminate\Support\Facades\Config;
+use App\Enums\GroupTypes;
+use App\Models\Group;
 use Illuminate\Support\Traits\Macroable;
 use Spatie\Emoji\Emoji;
 
@@ -30,9 +31,14 @@ class BotHelper
      */
     public static function getGroupSign(bool $isWeb = false): string
     {
+        $groups = Group::whereIn('type', [GroupTypes::TYPE_CHANNEL, GroupTypes::TYPE_GROUP])->get();
+
+        $channels = $groups->where('type', GroupTypes::TYPE_CHANNEL)->pluck('name')->all();
+        $groups = $groups->where('type', GroupTypes::TYPE_GROUP)->pluck('name')->all();
+
         $sign =
-            Emoji::megaphone() . ' ' . SanitizerHelper::escapeMarkdown(implode(' | ', array_keys(Config::get('telegram.channels')))) . "\n" .
-            Emoji::houses() . ' ' . SanitizerHelper::escapeMarkdown(implode(' | ', array_keys(Config::get('telegram.groups')))) . "\n";
+            Emoji::megaphone() . ' ' . SanitizerHelper::escapeMarkdown(implode(' | ', $channels)) . "\n" .
+            Emoji::houses() . ' ' . SanitizerHelper::escapeMarkdown(implode(' | ', $groups)) . "\n";
 
         if ($isWeb) {
             $sign = str_replace('@', 'https://t.me/', $sign);

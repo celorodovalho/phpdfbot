@@ -3,7 +3,9 @@
 namespace App\Services\Collectors;
 
 use App\Contracts\CollectorInterface;
+use App\Contracts\Repositories\GroupRepository;
 use App\Contracts\Repositories\OpportunityRepository;
+use App\Enums\GroupTypes;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\Helper;
 use App\Helpers\SanitizerHelper;
@@ -42,21 +44,28 @@ class GMailMessages implements CollectorInterface
 
     /** @var OpportunityRepository */
     private $repository;
+    /**
+     * @var GroupRepository
+     */
+    private $groupRepository;
 
     /**
      * GMailMessages constructor.
      * @param Collection $opportunities
      * @param GmailService $gMailService
      * @param OpportunityRepository $repository
+     * @param GroupRepository $groupRepository
      */
     public function __construct(
         Collection $opportunities,
         GmailService $gMailService,
-        OpportunityRepository $repository
+        OpportunityRepository $repository,
+        GroupRepository $groupRepository
     ) {
         $this->gMailService = $gMailService;
         $this->opportunities = $opportunities;
         $this->repository = $repository;
+        $this->groupRepository = $groupRepository;
     }
 
     /**
@@ -69,6 +78,7 @@ class GMailMessages implements CollectorInterface
     {
         $messages = $this->fetchMessages();
         /** @var Mail $message */
+        dump(count($messages));
         foreach ($messages as $message) {
             $this->createOpportunity($message);
 //            $message->markAsRead();
@@ -120,12 +130,12 @@ class GMailMessages implements CollectorInterface
 
 //        $messageService->add($words);
 
-        $groups = array_keys(Config::get('constants.mailing'));
+        $mailing = $this->groupRepository->findWhere([['type', '=', GroupTypes::TYPE_MAILING]]);
         $fromTo = [];
-        foreach ($groups as $group) {
-            $fromTo[] = 'list:' . $group;
-            $fromTo[] = 'to:' . $group;
-            $fromTo[] = 'bcc:' . $group;
+        foreach ($mailing as $group) {
+            $fromTo[] = 'list:' . $group->name;
+            $fromTo[] = 'to:' . $group->name;
+            $fromTo[] = 'bcc:' . $group->name;
         }
 
         $fromTo = '{' . implode(' ', $fromTo) . '}';
