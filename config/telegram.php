@@ -43,33 +43,6 @@ return [
         ],
     ],
     'admin' => env('APP_ENV') === 'production' ? '@botphpdf' : '@phpdftestgroup',
-    'groups' => [
-        '@phpdf' => ['main' => true],
-        '@phpbrasil' => ['main' => false],
-    ],
-    'channels' => env('APP_ENV') === 'production' ?
-        [
-            '@VagasBrasil_TI' => [
-                'main' => true,
-                'tags' => [],
-            ],
-            '@phpbrasilvagas' => [
-                'main' => false,
-                'tags' => ['php'],
-            ],
-            '@GrupoClubedeVagas' => [
-                'main' => false,
-                'tags' => [],
-            ],
-        ] :
-        [
-            '@phpdftestgroup' => [
-                'main' => true,
-                'tags' => [],
-            ]
-        ]
-    ,
-
     /*
     |--------------------------------------------------------------------------
     | Default Bot Name

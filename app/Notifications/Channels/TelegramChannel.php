@@ -2,13 +2,17 @@
 
 namespace App\Notifications\Channels;
 
+use App\Contracts\IdentifiableNotification;
 use App\Helpers\BotHelper;
+use App\Models\Group;
+use App\Models\Opportunity;
+use App\Notifications\PublishedOpportunity;
+use App\Services\TelegramMessage;
 use Illuminate\Notifications\Notification;
-use NotificationChannels\Telegram\Exceptions\CouldNotSendNotification;
-use NotificationChannels\Telegram\Telegram;
-use NotificationChannels\Telegram\TelegramFile;
-use NotificationChannels\Telegram\TelegramLocation;
-use NotificationChannels\Telegram\TelegramMessage;
+use Illuminate\Support\Facades\Config;
+use Telegram\Bot\Api as Telegram;
+use Telegram\Bot\BotsManager;
+use Telegram\Bot\Exceptions\TelegramSDKException;
 
 class TelegramChannel
 {
@@ -20,11 +24,11 @@ class TelegramChannel
     /**
      * Channel constructor.
      *
-     * @param Telegram $telegram
+     * @param BotsManager $botsManager
      */
-    public function __construct(Telegram $telegram)
+    public function __construct(BotsManager $botsManager)
     {
-        $this->telegram = $telegram;
+        $this->telegram = $botsManager->bot(Config::get('telegram.default'));;
     }
 
     /**
@@ -33,20 +37,20 @@ class TelegramChannel
      * @param mixed $notifiable
      * @param Notification $notification
      *
-     * @return \Psr\Http\Message\ResponseInterface|null
-     * @throws CouldNotSendNotification
+     * @return void
+     * @throws TelegramSDKException
      */
     public function send($notifiable, Notification $notification)
     {
         $message = $notification->toTelegram($notifiable);
 
         if (is_string($message)) {
-            $message = TelegramMessage::create($message);
+            $message = new TelegramMessage($message);
         }
 
         if ($message->toNotGiven()) {
             if (!$to = $notifiable->routeNotificationFor('telegram')) {
-                throw CouldNotSendNotification::chatIdNotProvided();
+                throw new \Exception('Telegram notification chat ID was not provided. Please refer usage docs.');
             }
 
             $message->to($to);
@@ -78,19 +82,28 @@ class TelegramChannel
                     if (count($messageIds) > 1) {
                         $params['reply_to_message_id'] = reset($messageIds);
                     }
-                    $messageIds[] = $this->telegram->sendMessage($params);
+                    $messageResponse = $this->telegram->sendMessage($params);
+                    $messageIds[] = $messageResponse->messageId;
                 }
-
-                return reset($messageIds);
+            } else {
+                $messageResponse = $this->telegram->sendMessage($params);
+                $messageIds[] = $messageResponse->messageId;
             }
-
-            $messageId = $this->telegram->sendMessage($params);
-        } elseif ($message instanceof TelegramLocation) {
-            $messageId = $this->telegram->sendLocation($params);
-        } elseif ($message instanceof TelegramFile) {
-            $messageId = $this->telegram->sendFile($params, $message->type, $message->hasFile());
+            $messageId = reset($messageIds);
         }
 
-        return $messageId;
+        if ($notifiable instanceof Opportunity && !$notifiable->telegram_id) {
+            $chatId = $message->getPayloadValue('chat_id');
+            if (Config::get("telegram.channels.{$chatId}.main")) {
+                $notifiable->telegram_id = $messageId;
+                $notifiable->status = Opportunity::STATUS_ACTIVE;
+                $notifiable->save();
+            }
+        }
+
+        if ($notifiable instanceof Group) {
+            $notifiable->telegram_id = $messageId;
+            $notifiable->save();
+        }
     }
 }

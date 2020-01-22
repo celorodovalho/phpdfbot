@@ -127,34 +127,6 @@ return [
         'nativescript',
         'sass',
     ],
-    'mailing' => env('APP_ENV') === 'production' ?
-        [
-            'clubinfobsb@googlegroups.com' => [
-                'tags' => [
-                    'DF',
-                    'BSB',
-                    'Distrito Federal',
-                    'Brasília',
-                    'Águas Claras',
-                    'Asa Sul',
-                    'Asa Norte',
-                    'Taguatinga',
-                    'Goiânia',
-                ]
-            ],
-            'clubedevagas@googlegroups.com' => [
-                'tags' => []
-            ],
-            'gebeoportunidades@googlegroups.com' => false,
-            'profissaofuturowindows@googlegroups.com' => false,
-            'nvagas@googlegroups.com' => false,
-            'leonardoti@googlegroups.com' => false,
-        ] :
-        [
-            'clubinfobsb@googlegroups.com' => false,
-            'clubedevagas@googlegroups.com' => false,
-        ]
-    ,
     'cities' => [
         BrazilianStates::getKey('Distrito Federal') => [
             'BSB',
@@ -370,13 +342,4 @@ return [
             'Palmas',
         ],
     ],
-    'gitHubSources' => [
-        'frontendbr' => 'vagas',
-        'androiddevbr' => 'vagas',
-        'CangaceirosDevels' => 'vagas_de_emprego',
-        'CocoaHeadsBrasil' => 'vagas',
-        'phpdevbr' => 'vagas',
-        'vuejs-br' => 'vagas',
-        'backend-br' => 'vagas',
-    ]
 ];

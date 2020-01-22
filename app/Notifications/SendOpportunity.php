@@ -2,22 +2,15 @@
 
 namespace App\Notifications;
 
-use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
 use App\Notifications\Channels\TelegramChannel;
-use App\Transformers\FormattedOpportunityTransformer;
-use Dacastro4\LaravelGmail\Services\Message\Mail;
-use Exception;
+use App\Services\TelegramMessage;
 use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use NotificationChannels\Telegram\TelegramMessage;
-use Spatie\Emoji\Emoji;
-use Telegram\Bot\Exceptions\TelegramResponseException;
 
 class SendOpportunity extends Notification
 {
@@ -51,17 +44,22 @@ class SendOpportunity extends Notification
     /**
      * Get the notification's delivery channels.
      *
-     * @param  mixed $notifiable
+     * @param mixed $notifiable
      * @return array
      */
     public function via($notifiable)
     {
-        return [TelegramChannel::class, 'database', 'mail'];
+        return [
+            TelegramChannel::class,
+            'database',
+            'mail'
+        ];
     }
 
     /**
      * @param Opportunity $opportunity
      * @return TelegramMessage
+     * @throws \Throwable
      */
     public function toTelegram($opportunity)
     {
@@ -80,14 +78,15 @@ class SendOpportunity extends Notification
             }
         }
 
-        $messageTexts = fractal()->item($opportunity)->transformWith(new FormattedOpportunityTransformer())->toArray();
-        $lastSentID = null;
-        $messageSent = null;
+        $messageText = view('notifications.opportunity', [
+            'opportunity' => $opportunity,
+            'isEmail' => false
+        ])->render();
 
-        if (filled($messageTexts['data'])) {
+        if (filled($messageText)) {
             $telegramMessage
                 ->to($this->chatId)
-                ->content($messageTexts['data']);
+                ->content($messageText);
         }
         return $telegramMessage;
     }
@@ -109,13 +108,15 @@ class SendOpportunity extends Notification
     /**
      * Get the array representation of the notification.
      *
-     * @param  mixed $notifiable
+     * @param mixed $notifiable
      * @return array
      */
     public function toArray($notifiable)
     {
-        return [
-            //
-        ];
+        return $notifiable instanceof Opportunity ? [
+            'telegram_id' => $notifiable->telegram_id,
+            'chat_id' => $this->chatId,
+            'telegram_user_id' => $notifiable->telegram_user_id,
+        ] : [];
     }
 }

@@ -9,6 +9,7 @@ use Illuminate\Contracts\Container\Container;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -63,7 +64,10 @@ class Handler extends ExceptionHandler
      */
     public function report(Exception $exception)
     {
-        $this->log($exception);
+        if (App::environment('production')) {
+            $this->log($exception);
+        }
+
         parent::report($exception);
     }
 
@@ -87,7 +91,9 @@ class Handler extends ExceptionHandler
     {
         $output->writeln('<error>Something wrong!</error>', 32);
         $output->writeln("<error>{$exception->getMessage()}</error>", 32);
-        $this->log($exception);
+        if (App::environment('production')) {
+            $this->log($exception);
+        }
 
         parent::renderForConsole($output, $exception);
     }

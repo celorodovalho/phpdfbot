@@ -71,10 +71,10 @@ class GMailMessages implements CollectorInterface
         /** @var Mail $message */
         foreach ($messages as $message) {
             $this->createOpportunity($message);
-            $message->markAsRead();
-            $message->addLabel(self::LABEL_ENVIADO_PRO_BOT);
-            $message->removeLabel(self::LABEL_STILL_UNREAD);
-            $message->sendToTrash();
+//            $message->markAsRead();
+//            $message->addLabel(self::LABEL_ENVIADO_PRO_BOT);
+//            $message->removeLabel(self::LABEL_STILL_UNREAD);
+//            $message->sendToTrash();
         }
         return $this->opportunities;
     }
@@ -118,7 +118,7 @@ class GMailMessages implements CollectorInterface
                 return Str::contains($word, ' ') ? '"' . $word . '"' : $word;
             }, Config::get('constants.requiredWords'))) . '}';
 
-        $messageService->add($words);
+//        $messageService->add($words);
 
         $groups = array_keys(Config::get('constants.mailing'));
         $fromTo = [];

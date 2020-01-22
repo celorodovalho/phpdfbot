@@ -38,6 +38,8 @@ Route::get('me', function (){
     ]));
 });
 
+Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
+
 Route::get('/', 'Web\OpportunityController@index');
 
 Route::group(['namespace' => 'Web',], function () {

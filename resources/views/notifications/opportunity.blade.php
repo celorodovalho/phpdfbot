@@ -26,7 +26,7 @@ $bold = $isEmail ? '**' : '*';
 @endif
 @if(filled($opportunity->salary))
 
-{{$bold}}Salario:{{$bold}}
+{{$bold}}Salário:{{$bold}}
 {{$opportunity->salary}}
 @endif
 @if(filled($opportunity->location))

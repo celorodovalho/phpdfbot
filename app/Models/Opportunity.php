@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Notifications\RoutesNotifications;
+use App\Traits\RoutesNotifications;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\HasDatabaseNotifications;
