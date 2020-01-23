@@ -36,11 +36,11 @@ class TelegramMessage implements JsonSerializable
     /**
      * Notification message (Supports Markdown).
      *
-     * @param string $content
+     * @param mixed $content
      *
      * @return $this
      */
-    public function content(string $content): self
+    public function content($content): self
     {
         $this->payload['text'] = $content;
 

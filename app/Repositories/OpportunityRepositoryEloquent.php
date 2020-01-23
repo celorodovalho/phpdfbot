@@ -53,7 +53,7 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
         $opportunity->{Opportunity::POSITION} = $data[Opportunity::POSITION];
         $opportunity->{Opportunity::COMPANY} = $data[Opportunity::COMPANY];
         $opportunity->{Opportunity::LOCATION} = mb_strtoupper($data[Opportunity::LOCATION]);
-        $opportunity->{Opportunity::TAGS} = implode(' ', $data[Opportunity::TAGS]);
+        $opportunity->{Opportunity::TAGS} = new Collection($data[Opportunity::TAGS]);
         $opportunity->{Opportunity::SALARY} = $data[Opportunity::SALARY];
         $opportunity->{Opportunity::URL} = $data[Opportunity::URL];
         $opportunity->{Opportunity::ORIGIN} = $data[Opportunity::ORIGIN];

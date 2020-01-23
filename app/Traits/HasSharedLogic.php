@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use App\Helpers\BotHelper;
+
 /**
  * Trait HasSharedLogic.
  */
@@ -82,6 +84,16 @@ trait HasSharedLogic
     public function toNotGiven(): bool
     {
         return ! isset($this->payload['chat_id']);
+    }
+
+    /**
+     * Determine if limit length was exceeded
+     *
+     * @return bool
+     */
+    public function sizeLimitExceed(): bool
+    {
+        return is_string($this->payload['text']) && strlen($this->payload['text']) > BotHelper::TELEGRAM_LIMIT;
     }
 
     /**

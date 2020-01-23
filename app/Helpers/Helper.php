@@ -68,4 +68,19 @@ class Helper
             return Str::startsWith($item, $namespace);
         });
     }
+
+    /**
+     * Reduces a string without breaking the words
+     *
+     * @param string $string
+     * @param $limit
+     * @return mixed
+     */
+    public static function excerpt(string $string, int $limit = 100, string $end = '...'): string
+    {
+        $limit = $limit - strlen($end);
+        $array = explode("\n", wordwrap($string, $limit));
+        $string = reset($array);
+        return $string . (strlen($string) < $limit ? '' : $end);
+    }
 }

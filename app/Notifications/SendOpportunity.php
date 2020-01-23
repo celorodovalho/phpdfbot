@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
 use App\Mail\SendOpportunity as Mailable;
 use App\Models\Opportunity;
@@ -90,6 +91,23 @@ class SendOpportunity extends Notification
             'isEmail' => false
         ])->render();
 
+
+        if (strlen($messageText) > BotHelper::TELEGRAM_LIMIT) {
+            $messageText = str_split(
+                $messageText,
+                BotHelper::TELEGRAM_LIMIT - strlen("\n1/1\n")
+            );
+
+            $count = count($messageText);
+
+            if ($count > 1) {
+                $messageText = array_map(function ($part, $index) use ($count) {
+                    $index++;
+                    return $part . "\n{$index}/{$count}\n";
+                }, $messageText, array_keys($messageText));
+            }
+        }
+
         if (filled($messageText)) {
             $telegramMessage
                 ->to($this->chatId)
@@ -106,6 +124,7 @@ class SendOpportunity extends Notification
      */
     public function toMail($opportunity)
     {
+        dump($this->mailing->first());
         if ($this->mailing) {
             $mailable = new Mailable;
             foreach ($this->mailing as $mail) {
@@ -113,7 +132,8 @@ class SendOpportunity extends Notification
                     !Str::contains($opportunity->origin, $mail->name) &&
                     (blank($mail->tags) || ExtractorHelper::hasTags($mail->tags, $opportunity->getText()))
                 ) {
-                    $mailable->to($mail);
+                    dump($mail->name);
+                    $mailable->to("phpdfbot+teste@gmail.com");
                 }
             }
 
@@ -138,10 +158,12 @@ class SendOpportunity extends Notification
      */
     public function toArray($notifiable)
     {
+        dump($this->mailing->first());
         return $notifiable instanceof Opportunity ? [
             'telegram_id' => $notifiable->telegram_id,
             'chat_id' => $this->chatId,
             'telegram_user_id' => $notifiable->telegram_user_id,
+            'mailing' => $this->mailing->chunk('name')->toArray(),
         ] : [];
     }
 }

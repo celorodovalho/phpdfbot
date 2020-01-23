@@ -41,7 +41,7 @@ class SeederGroupsTable extends Migration
             ],
             [
                 'name' => '@phpbrasil',
-                'main' => true,
+                'main' => false,
                 'type' => GroupTypes::TYPE_GROUP,
                 'tags' => json_encode([]),
             ],

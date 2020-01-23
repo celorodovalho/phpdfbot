@@ -65,7 +65,6 @@ class GitHubMessages implements CollectorInterface
             $username = reset($username);
             $messages = array_merge($messages, $this->fetchMessages($username, $repo));
         }
-        dump(count($messages));
         foreach ($messages as $message) {
             $this->createOpportunity($message);
         }

@@ -56,26 +56,16 @@ class TelegramChannel
             $message->to($to);
         }
 
+        if ($message->sizeLimitExceed()) {
+            throw new \Exception('Telegram text limit size was exceeded. Please refer usage docs.');
+        }
+
         $params = $message->toArray();
 
         if ($message instanceof TelegramMessage) {
             $body = $params['text'];
 
-            if (strlen($body) > BotHelper::TELEGRAM_LIMIT) {
-                $body = str_split(
-                    $body,
-                    BotHelper::TELEGRAM_LIMIT - strlen("\n1/1\n")
-                );
-
-                $count = count($body);
-
-                if ($count > 1) {
-                    $body = array_map(function ($part, $index) use ($count) {
-                        $index++;
-                        return $part . "\n{$index}/{$count}\n";
-                    }, $body, array_keys($body));
-                }
-
+            if (is_array($body)) {
                 $messageIds = [];
                 foreach ($body as $text) {
                     $params['text'] = $text;

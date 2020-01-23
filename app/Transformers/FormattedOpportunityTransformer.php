@@ -87,7 +87,7 @@ class FormattedOpportunityTransformer extends TransformerAbstract
         if (filled($opportunity->tags)) {
             $body .= sprintf(
                 "\n\n*Tags:*\n%s",
-                $opportunity->tags
+                $opportunity->tags->implode(' ')
             );
         }
 

@@ -27,7 +27,7 @@ use Prettus\Repository\Traits\TransformableTrait;
  * @property Collection $files
  * @property string $url
  * @property string $origin
- * @property string $tags
+ * @property Collection $tags
  * @property string $emails
  */
 class Opportunity extends Model implements Transformable
@@ -73,6 +73,7 @@ class Opportunity extends Model implements Transformable
 
     protected $casts = [
         'files' => 'collection',
+        'tags' => 'collection',
     ];
 
     /**

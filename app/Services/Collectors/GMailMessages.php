@@ -78,7 +78,6 @@ class GMailMessages implements CollectorInterface
     {
         $messages = $this->fetchMessages();
         /** @var Mail $message */
-        dump(count($messages));
         foreach ($messages as $message) {
             $this->createOpportunity($message);
 //            $message->markAsRead();

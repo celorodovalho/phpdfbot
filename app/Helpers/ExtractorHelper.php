@@ -97,11 +97,11 @@ class ExtractorHelper
     /**
      * Check if text contains specific tag
      *
-     * @param $tags
+     * @param iterable $tags
      * @param $text
      * @return bool
      */
-    public static function hasTags(array $tags, $text)
+    public static function hasTags(iterable $tags, $text)
     {
         $text = mb_strtolower($text);
         foreach ($tags as $tag) {

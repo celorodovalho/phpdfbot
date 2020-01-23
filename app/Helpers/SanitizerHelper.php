@@ -90,7 +90,7 @@ class SanitizerHelper
      */
     public static function sanitizeSubject(string $message): string
     {
-        $message = preg_replace('/^(RE|FWD|FW|ENC|VAGA|Oportunidade)S?:?/im', '', $message, -1);
+        $message = preg_replace('/^(RE:|FWD:|FW:|ENC:|VAGA|Oportunidade)S?:?/im', '', $message, -1);
         $message = preg_replace('/(\d{0,999} (view|application)s?)/', '', $message);
         $message = str_replace(
             ['[ClubInfoBSB]', '[leonardoti]', '[NVagas]', '[ProfissãoFuturo]', '[GEBE Oportunidades]', '[N]'],
@@ -137,6 +137,8 @@ class SanitizerHelper
                 '--',
                 'Com lisura,',
             ];
+
+            $message = html_entity_decode($message);
 
             $message = trim($message, '\\');
 
@@ -196,6 +198,7 @@ class SanitizerHelper
             $message = str_replace('GrupoClubedeVagas', '', $message);
             $message = preg_replace('/(.+)(chat\.whatsapp\.com\/)(.+)/m', 'http://bit.ly/phpdf-official', $message);
 
+            $message = strip_tags($message);
         }
         return trim($message);
     }

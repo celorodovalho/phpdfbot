@@ -2,26 +2,38 @@
 
 namespace App\Notifications;
 
-use App\Contracts\IdentifiableNotification;
+use App\Helpers\BotHelper;
+use App\Helpers\Helper;
+use App\Helpers\SanitizerHelper;
 use App\Models\Group;
-use App\Models\Opportunity;
 use App\Notifications\Channels\TelegramChannel;
-use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
 use App\Services\TelegramMessage;
+use Illuminate\Bus\Queueable;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Notifications\Notification;
 
-class NotifyGroup extends Notification implements IdentifiableNotification
+class NotifyGroup extends Notification
 {
     use Queueable;
 
     /** @var int */
     private $messageId;
 
+    /** @var Collection */
+    private $opportunities;
+
+    /** @var Collection */
+    private $channels;
+
     /**
      * SendOpportunity constructor.
+     * @param Collection $opportunities
+     * @param Collection $channels
      */
-    public function __construct()
+    public function __construct(Collection $opportunities, Collection $channels)
     {
+        $this->opportunities = $opportunities;
+        $this->channels = $channels;
     }
 
     /**
@@ -45,9 +57,44 @@ class NotifyGroup extends Notification implements IdentifiableNotification
     public function toTelegram($group)
     {
         $telegramMessage = new TelegramMessage;
+        if ($this->opportunities->isNotEmpty()) {
+            $listOpportunities = $this->opportunities->map(function ($opportunity) use ($group) {
+                return sprintf(
+                    '➩ [%s](%s)',
+                    Helper::excerpt(SanitizerHelper::sanitizeSubject(SanitizerHelper::removeBrackets($opportunity->title)), 41 - strlen($opportunity->telegram_id)),
+                    sprintf('https://t.me/%s/%s', $group->title, $opportunity->telegram_id)
+                );
+            });
+
+            $text = sprintf(
+                "[%s](%s)\n%s\n\n",
+                '🄿🄷🄿🄳🄵',
+                str_replace('/index.php', '', asset('/img/phpdf.webp')),
+                'Há novas vagas no canal!'
+            );
+
+            $listOpportunities->prepend($text);
+
+            $listSize = $listOpportunities->map(function ($title) {
+                return strlen($title);
+            });
+
+            $chunkSize = $listSize->sum() >= (BotHelper::TELEGRAM_LIMIT - $listSize->count())
+                ? (int)(BotHelper::TELEGRAM_LIMIT / $listSize->max())
+                : $listSize->count();
+            $listOpportunities = $listSize->chunk($chunkSize)
+                ->map(function ($item) use ($listOpportunities) {
+                    return $listOpportunities->only($item->keys())->implode("\n");
+                });
+
+            $telegramMessage->content($listOpportunities->toArray());
+
+            foreach($this->channels as $channel) {
+                $telegramMessage->button($channel->name, 'https://t.me/' . $channel->title);
+            }
+        }
 
         $telegramMessage->to($group->name);
-
         return $telegramMessage;
     }
 
@@ -60,27 +107,9 @@ class NotifyGroup extends Notification implements IdentifiableNotification
      */
     public function toArray($notifiable)
     {
-        dump($this);
-        dump($notifiable);
         return [
-            'telegram_id' => $notifiable->telegram_id
+            'telegram_id' => $notifiable->telegram_id,
+            'opportunities' => $this->opportunities->pluck('id')->toArray()
         ];
-    }
-
-    /**
-     * @return int
-     */
-    public function getMessageId(): ?int
-    {
-        return $this->messageId;
-    }
-
-    /**
-     * @param int $messageId
-     */
-    public function setMessageId(int $messageId): void
-    {
-        $this->messageId = $messageId;
-        dump($this);
     }
 }

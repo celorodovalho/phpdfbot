@@ -35,10 +35,10 @@ $bold = $isEmail ? '**' : '*';
 {{$bold}}Localização:{{$bold}}
 {{$opportunity->location}}
 @endif
-@if(filled($opportunity->tags))
+@if(filled($opportunity->tags) && $opportunity->tags->isNotEmpty())
 
 {{$bold}}Tags:{{$bold}}
-{{$opportunity->tags}}
+{{$opportunity->tags->implode(' ')}}
 @endif
 @if(filled($opportunity->emails) || filled($opportunity->url))
 

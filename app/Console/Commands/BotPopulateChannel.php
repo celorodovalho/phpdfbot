@@ -10,6 +10,7 @@ use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\Helper;
 use App\Helpers\SanitizerHelper;
+use App\Models\Group;
 use App\Notifications\NotifyGroup;
 use Illuminate\Notifications\DatabaseNotification as Notification;
 use App\Models\Opportunity;
@@ -101,7 +102,8 @@ class BotPopulateChannel extends AbstractCommand
         BotsManager $botsManager,
         OpportunityRepository $repository,
         GroupRepository $groupRepository
-    ) {
+    )
+    {
         parent::__construct($botsManager);
         $this->collectors = Helper::getNamespaceClasses('App\\Services\\Collectors');
         $this->repository = $repository;
@@ -118,8 +120,7 @@ class BotPopulateChannel extends AbstractCommand
         ]);
 
         $this->channels = $this->groupRepository->findWhere([
-            ['type', '=', GroupTypes::TYPE_CHANNEL],
-            ['main', '=', true],
+            ['type', '=', GroupTypes::TYPE_CHANNEL]
         ]);
     }
 
@@ -159,6 +160,7 @@ class BotPopulateChannel extends AbstractCommand
         foreach ($opportunities as $opportunity) {
             $this->sendOpportunityToApproval($opportunity);
         }
+        $this->info('Vagas enviadas para aprovação');
     }
 
     /**
@@ -179,7 +181,7 @@ class BotPopulateChannel extends AbstractCommand
                         class_basename(get_class($collector))
                     ));
                 }
-                $opportunities = $opportunities->merge($collectorOpportunities);
+                $opportunities = $opportunities->concat($collectorOpportunities);
             }
         }
 
@@ -202,7 +204,7 @@ class BotPopulateChannel extends AbstractCommand
 
         foreach ($this->channels as $channel) {
             if (blank($channel->tags) || ExtractorHelper::hasTags($channel->tags, $opportunity->getText())) {
-                $opportunity->notify(new SendOpportunity($channel, $this->mailing));
+                $opportunity->notify(new SendOpportunity($channel->name, $this->mailing));
                 if ($channel->main && $opportunity->telegram_id && $opportunity->telegram_user_id) {
                     $opportunity->notify(new PublishedOpportunity);
                 }
@@ -214,134 +216,45 @@ class BotPopulateChannel extends AbstractCommand
      * Notifies the group with the latest opportunities in channel
      * Get all the unnoticed opportunities, build a keyboard with the links, sends to the group, update the opportunity
      * and remove the previous notifications from group
-     * @todo Move to communicate-telegram class
      */
     protected function notifyGroup()
     {
         $opportunities = $this->repository->findWhere([['telegram_id', '<>', null]]);
 
-
-
-        $group = $this->groupRepository->findWhere([
+        $groups = $this->groupRepository->findWhere([
             ['type', '=', GroupTypes::TYPE_GROUP],
             ['main', '=', true],
-        ])->first();
+        ]);
 
-        $group->notify(new NotifyGroup());
+        if ($opportunities->isNotEmpty() && $groups->isNotEmpty()) {
+            /** @var Group $group */
+            foreach ($groups as $group) {
+                $lastNotifications = $group->unreadNotifications;
 
-        dump($group);die;
+                $channels = $this->channels->concat($this->groups);
+                $group->notify(new NotifyGroup($opportunities, $channels));
 
-//        \Illuminate\Support\Facades\Notification::send(collect([1,2,3]), new NotifyGroup($this->admin));
-
-        die;
-
-
-
-//
-//
-//        //        dump($opportunity);
-//
-//        foreach ($opportunities as $opportunity) {
-//            $notifications = $opportunity->notifications()
-//                ->where('type', SendOpportunity::class)
-//                ->where('data', 'not like', '%"telegram_id":null%')
-//                ->get();
-//            if ($notifications->isNotEmpty()) {
-//                dump($notifications->first()->data);
-//            }
-//            foreach ($opportunity->notifications as $notification) {
-////                dump($notification->type);
-//            }
-//        }
-//
-////        \Illuminate\Notifications\Notification::send([], new SendOpportunity());
-//
-//        die;
-//
-//        if ($opportunities->isNotEmpty()) {
-//            /** @todo Usar repository no lugar da model */
-//            $lastNotifications = Notification::all();
-//
-//            $firstOpportunityId = null;
-//
-//            /** @var Collection $listOpportunities */
-//            $listOpportunities = $opportunities->map(function ($opportunity) use (&$firstOpportunityId) {
-//                $firstOpportunityId = $firstOpportunityId ?? $opportunity->telegram_id;
-//                return sprintf(
-//                    '➩ [%s](%s)',
-//                    SanitizerHelper::sanitizeSubject(SanitizerHelper::removeBrackets($opportunity->title)),
-//                    'https://t.me/VagasBrasil_TI/' . $opportunity->telegram_id
-//                );
-//            });
-//
-//            $keyboard = Keyboard::make()->inline();
-//            $keyboard->row(Keyboard::inlineButton([
-//                'text' => 'Ver vagas',
-//                'url' => 'https://t.me/VagasBrasil_TI/' . $firstOpportunityId
-//            ]));
-//
-//            $mainGroup = $this->admin;
-//            foreach ($this->groups as $group => $config) {
-//                if ($config['main']) {
-//                    $mainGroup = $group;
-//                }
-//            }
-//
-//            $text = sprintf(
-//                "%s\n\n[%s](%s)",
-//                "Há novas vagas no canal!\nConfira: " .
-//                SanitizerHelper::escapeMarkdown(implode(
-//                        ' | ',
-//                        array_merge(array_keys($this->channels), array_keys($this->groups)))
-//                ),
-//                '🄿🄷🄿🄳🄵',
-//                str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp'
-//            );
-//
-//            $listOpportunities->prepend($text);
-//            $total = $listOpportunities->count();
-//            $length = 0;
-//            $opportunitiesText = collect();
-//            $listOpportunities->map(function ($opportunity, $key) use ($mainGroup, $keyboard, &$length, &$opportunitiesText, &$total) {
-//                $length += strlen($opportunity);
-//                if ($length >= BotHelper::TELEGRAM_LIMIT || ($key + 1) >= $total) {
-//                    $notificationMessage = [
-//                        'chat_id' => $mainGroup,
-//                        'parse_mode' => 'Markdown',
-//                        'reply_markup' => $keyboard,
-//                        'text' => $opportunitiesText->implode("\n")
-//                    ];
-//
-//                    $message = $this->telegram->sendMessage($notificationMessage);
-//
-//                    $notification = new Notification();
-//                    $notification->telegram_id = $message->messageId;
-//                    $notification->body = json_encode($notificationMessage);
-//                    $notification->save();
-//
-//                    $opportunitiesText = collect();
-//                    $length = 0;
-//                }
-//                $opportunitiesText->add($opportunity);
-//            });
-//
-//            foreach ($lastNotifications as $lastNotification) {
-//                try {
-//                    $this->telegram->deleteMessage([
-//                        'chat_id' => $mainGroup,
-//                        'message_id' => $lastNotification->telegram_id
-//                    ]);
-//                } catch (Exception $exception) {
-//                    $this->error(implode(': ', ['ERRO_AO_DELETAR_NOTIFICACAO', $exception->getMessage()]));
-//                    Log::info('ERRO_AO_DELETAR_NOTIFICACAO', [$exception->getMessage()]);
-//                }
-//                $lastNotification->delete();
-//            }
-//            $opportunities->each(function ($opportunity) {
-//                $opportunity->delete();
-//            });
-//        }
-//        $this->info('The group was notified!');
+                foreach ($lastNotifications as $lastNotification) {
+                    try {
+                        if ($lastNotification->data && $lastNotification->data['telegram_id']) {
+                            $this->telegram->deleteMessage([
+                                'chat_id' => $group->name,
+                                'message_id' => $lastNotification->data['telegram_id']
+                            ]);
+                            $lastNotification->markAsRead();
+                        }
+                    } catch (Exception $exception) {
+                        $this->error(implode(': ', ['ERRO_AO_DELETAR_NOTIFICACAO', $exception->getMessage()]));
+                    }
+                }
+            }
+            $opportunities->each(function ($opportunity) {
+                $opportunity->delete();
+            });
+            $this->info('The group was notified!');
+        } else {
+            $this->info(sprintf('There is no notification to send - Groups: %s - Opportunities: %s', $groups->count(), $opportunities->count()));
+        }
     }
 
     /**
