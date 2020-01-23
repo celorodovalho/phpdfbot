@@ -161,7 +161,7 @@ class BotPopulateChannel extends AbstractCommand
                         class_basename(get_class($collector))
                     ));
                 }
-                $opportunities = $opportunities->merge($collectorOpportunities);
+                $opportunities = $opportunities->concat($collectorOpportunities);
             }
         }
 
