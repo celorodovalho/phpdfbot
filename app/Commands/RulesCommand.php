@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Helpers\BotHelper;
 use App\Models\Config;
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
@@ -28,7 +29,7 @@ class RulesCommand extends Command
         $rules = Config::where('key', 'rules')->first();
 
         $this->replyWithMessage([
-            'parse_mode' => 'Markdown',
+            'parse_mode' => BotHelper::PARSE_MARKDOWN2,
             'text' => $rules
         ]);
     }

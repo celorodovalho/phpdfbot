@@ -111,8 +111,6 @@ class CommandsHandler
         switch ($data[0]) {
             case Opportunity::CALLBACK_APPROVE:
                 if ($opportunity) {
-                    $opportunity->status = Opportunity::STATUS_ACTIVE;
-                    $opportunity->save();
                     Artisan::call(
                         'bot:populate:channel',
                         [
@@ -262,6 +260,8 @@ class CommandsHandler
      * Send opportunity to approval
      *
      * @param Opportunity $opportunity
+     *
+     * @throws TelegramSDKException
      */
     private function sendOpportunityToApproval(Opportunity $opportunity): void
     {
@@ -272,6 +272,7 @@ class CommandsHandler
                 'opportunity' => $opportunity->id,
             ]
         );
+        $this->sendMessage('A vaga foi enviada para aprovação. Você receberá uma confirmação assim que for aprovada!');
     }
 
     /**

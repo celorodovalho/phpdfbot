@@ -34,13 +34,20 @@ trait HasSharedLogic
      *
      * @param string $text
      * @param string $url
+     * @param string $callbackData
      * @param int    $columns
      *
      * @return $this
      */
-    public function button($text, $url, $columns = 2): self
+    public function button($text, $url, $callbackData = null, $columns = 2): self
     {
-        $this->buttons[] = compact('text', 'url');
+        $button = array_filter([
+            'text' => $text,
+            'url' => $url,
+            'callback_data' => $callbackData,
+        ]);
+
+        $this->buttons[] = $button;
 
         $this->payload['reply_markup'] = json_encode([
             'inline_keyboard' => array_chunk($this->buttons, $columns),
@@ -81,9 +88,9 @@ trait HasSharedLogic
      *
      * @return bool
      */
-    public function toNotGiven(): bool
+    public function chatIdNotGiven(): bool
     {
-        return ! isset($this->payload['chat_id']);
+        return !isset($this->payload['chat_id']);
     }
 
     /**

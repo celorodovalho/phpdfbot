@@ -12,12 +12,17 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Notifications\Notification;
 
-class NotifyGroup extends Notification
+/**
+ * Class GroupSummaryOpportunities
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
+class GroupSummaryOpportunities extends Notification
 {
     use Queueable;
 
     /** @var int */
-    private $messageId;
+    public static $telegramId;
 
     /** @var Collection */
     private $opportunities;
@@ -27,6 +32,7 @@ class NotifyGroup extends Notification
 
     /**
      * SendOpportunity constructor.
+     *
      * @param Collection $opportunities
      * @param Collection $channels
      */
@@ -39,7 +45,8 @@ class NotifyGroup extends Notification
     /**
      * Get the notification's delivery channels.
      *
-     * @param  mixed $notifiable
+     * @param mixed $notifiable
+     *
      * @return array
      */
     public function via($notifiable)
@@ -52,16 +59,22 @@ class NotifyGroup extends Notification
 
     /**
      * @param Group $group
+     *
      * @return TelegramMessage
      */
     public function toTelegram($group)
     {
         $telegramMessage = new TelegramMessage;
         if ($this->opportunities->isNotEmpty()) {
-            $listOpportunities = $this->opportunities->map(function ($opportunity) use ($group) {
+            $listOpportunities = $this->opportunities->map(static function ($opportunity) use ($group) {
                 return sprintf(
                     '➩ [%s](%s)',
-                    Helper::excerpt(SanitizerHelper::sanitizeSubject(SanitizerHelper::removeBrackets($opportunity->title)), 41 - strlen($opportunity->telegram_id)),
+                    Helper::excerpt(
+                        SanitizerHelper::sanitizeSubject(
+                            SanitizerHelper::removeBrackets($opportunity->title)
+                        ),
+                        41 - strlen($opportunity->telegram_id)
+                    ),
                     sprintf('https://t.me/%s/%s', $group->title, $opportunity->telegram_id)
                 );
             });
@@ -89,7 +102,7 @@ class NotifyGroup extends Notification
 
             $telegramMessage->content($listOpportunities->toArray());
 
-            foreach($this->channels as $channel) {
+            foreach ($this->channels as $channel) {
                 $telegramMessage->button($channel->name, 'https://t.me/' . $channel->title);
             }
         }
@@ -102,13 +115,14 @@ class NotifyGroup extends Notification
     /**
      * Get the array representation of the notification.
      *
-     * @param  mixed $notifiable
+     * @param mixed $notifiable
+     *
      * @return array
      */
     public function toArray($notifiable)
     {
         return [
-            'telegram_id' => $notifiable->telegram_id,
+            'telegram_id' => self::$telegramId,
             'opportunities' => $this->opportunities->pluck('id')->toArray()
         ];
     }

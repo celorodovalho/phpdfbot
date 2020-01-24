@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Helpers\BotHelper;
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
 use Telegram\Bot\Keyboard\Keyboard;
@@ -30,7 +31,7 @@ class NewOpportunityCommand extends Command
         $replyMarkup = Keyboard::forceReply();
 
         $this->replyWithMessage([
-            'parse_mode' => 'Markdown',
+            'parse_mode' => BotHelper::PARSE_MARKDOWN2,
             'text' => self::TEXT,
             'reply_markup' => $replyMarkup
         ]);

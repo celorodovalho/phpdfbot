@@ -2,25 +2,29 @@
 
 namespace App\Notifications;
 
+use App\Enums\GroupTypes;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
 use App\Mail\SendOpportunity as Mailable;
+use App\Models\Group;
 use App\Models\Opportunity;
 use App\Notifications\Channels\TelegramChannel;
 use App\Services\TelegramMessage;
 use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Bus\Queueable;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
+use Telegram\Bot\Keyboard\Keyboard;
+use Throwable;
 
+/**
+ * Class SendOpportunity
+ */
 class SendOpportunity extends Notification
 {
     use Queueable;
-
-    /** @var string|int Telegram chat id */
-    private $chatId;
 
     /** @var array */
     private $options;
@@ -31,139 +35,165 @@ class SendOpportunity extends Notification
     /** @var string */
     private $botName;
 
-    /** @var array */
-    private $mailing;
+    /** @var Opportunity */
+    private $opportunity;
 
     /**
      * SendOpportunity constructor.
-     * @param $chatId
-     * @param Collection $mailing
-     * @param array $options
+     *
+     * @param Opportunity $opportunity
+     * @param array       $options
      */
-    public function __construct($chatId, ?Collection $mailing, array $options = [])
+    public function __construct(Opportunity $opportunity, array $options = [])
     {
-        $this->chatId = $chatId;
         $this->options = $options;
         $this->admin = Config::get('telegram.admin');
         $this->botName = Config::get('telegram.default');
-        $this->mailing = $mailing;
+        $this->opportunity = $opportunity;
     }
 
     /**
      * Get the notification's delivery channels.
      *
      * @param mixed $notifiable
+     *
      * @return array
      */
     public function via($notifiable)
     {
-        return [
-            TelegramChannel::class,
-            'database',
-            'mail'
-        ];
+        $channels = ['database'];
+        switch ($notifiable->type) {
+            case GroupTypes::TYPE_CHANNEL:
+            case GroupTypes::TYPE_GROUP:
+                $channels = Arr::prepend($channels, TelegramChannel::class);
+                break;
+            case GroupTypes::TYPE_MAILING:
+                $channels = Arr::prepend($channels, 'mail');
+                break;
+        }
+        return $channels;
     }
 
     /**
-     * @param Opportunity $opportunity
+     * @param Group $group
+     *
      * @return TelegramMessage
-     * @throws \Throwable
+     * @throws Throwable
      */
-    public function toTelegram($opportunity)
+    public function toTelegram($group): ?TelegramMessage
     {
         $telegramMessage = new TelegramMessage;
 
-        if ($this->admin === $this->chatId && Str::contains($opportunity->origin, [$this->botName])) {
-            $userNames = explode('|', $opportunity->origin);
+        if ($this->admin === $group->name && Str::contains($this->opportunity->origin, [$this->botName])) {
+            $userNames = explode('|', $this->opportunity->origin);
             $userName = end($userNames);
             if (!blank($userName)) {
                 if (Str::contains($userName, ' ')) {
-                    $userMention = "[$userName](tg://user?id={$opportunity->telegram_user_id})";
+                    $userMention = "[$userName](tg://user?id={$this->opportunity->telegram_user_id})";
                 } else {
                     $userMention = '@' . $userName;
                 }
-                $opportunity->description .= "\n\nby $userMention";
+                $this->opportunity->description .= "\n\nby $userMention";
             }
         }
 
         $messageText = view('notifications.opportunity', [
-            'opportunity' => $opportunity,
+            'opportunity' => $this->opportunity,
             'isEmail' => false
         ])->render();
-
 
         if (strlen($messageText) > BotHelper::TELEGRAM_LIMIT) {
             $messageText = str_split(
                 $messageText,
-                BotHelper::TELEGRAM_LIMIT - strlen("\n1/1\n")
+                BotHelper::TELEGRAM_LIMIT - strlen("\n00/00\n")
             );
 
             $count = count($messageText);
 
             if ($count > 1) {
-                $messageText = array_map(function ($part, $index) use ($count) {
+                $messageText = array_map(static function ($part, $index) use ($count) {
                     $index++;
                     return $part . "\n{$index}/{$count}\n";
                 }, $messageText, array_keys($messageText));
             }
         }
 
+        if ($group->admin) {
+            $telegramMessage->button(
+                'Aprovar',
+                null,
+                implode(' ', [Opportunity::CALLBACK_APPROVE, $this->opportunity->id])
+            );
+            $telegramMessage->button(
+                'Remover',
+                null,
+                implode(' ', [Opportunity::CALLBACK_REMOVE, $this->opportunity->id])
+            );
+        }
+
         if (filled($messageText)) {
             $telegramMessage
-                ->to($this->chatId)
+                ->to($group->name)
                 ->content($messageText)
                 ->options($this->options);
         }
+
         return $telegramMessage;
     }
 
     /**
-     * @param Opportunity $opportunity
+     * @param Group $group
+     *
      * @return Mailable
-     * @throws \Throwable
+     * @throws Throwable
      */
-    public function toMail($opportunity)
+    public function toMail($group): ?Mailable
     {
-        dump($this->mailing->first());
-        if ($this->mailing) {
-            $mailable = new Mailable;
-            foreach ($this->mailing as $mail) {
-                if (
-                    !Str::contains($opportunity->origin, $mail->name) &&
-                    (blank($mail->tags) || ExtractorHelper::hasTags($mail->tags, $opportunity->getText()))
-                ) {
-                    dump($mail->name);
-                    $mailable->to("phpdfbot+teste@gmail.com");
-                }
-            }
-
-            $messageText = view('notifications.opportunity', [
-                'opportunity' => $opportunity,
-                'isEmail' => true
-            ])->render();
-
-            $messageText = Markdown::convertToHtml($messageText);
-
-            $mailable->subject($opportunity->title)
-                ->html($messageText);
-            return $mailable;
+        $mailable = new Mailable;
+        if (!Str::contains($this->opportunity->origin, $group->name) &&
+            (blank($group->tags) || ExtractorHelper::hasTags($group->tags, $this->opportunity->getText()))
+        ) {
+            dump($group->name);
+            $mailable->to('phpdfbot+teste@gmail.com');
         }
+
+        $messageText = view('notifications.opportunity', [
+            'opportunity' => $this->opportunity,
+            'isEmail' => true
+        ])->render();
+
+        $messageText = Markdown::convertToHtml($messageText);
+
+        $mailable->subject($this->opportunity->title)
+            ->html($messageText);
+        return $mailable;
     }
 
     /**
      * Get the array representation of the notification.
      *
-     * @param mixed $notifiable
+     * @param Group $group
+     *
      * @return array
      */
-    public function toArray($notifiable)
+    public function toArray($group)
     {
-        dump($this->mailing->first());
-        return $notifiable instanceof Opportunity ? [
-            'telegram_id' => $notifiable->telegram_id,
-            'chat_id' => $this->chatId,
-            'telegram_user_id' => $notifiable->telegram_user_id,
-            'mailing' => $this->mailing->chunk('name')->toArray(),
-        ] : [];
+        $data = [
+            'group_name' => $group->name,
+            'telegram_user_id' => $this->opportunity->telegram_user_id,
+            'opportunity' => $this->opportunity->id,
+        ];
+
+        $data = array_filter($data);
+
+        return $data;
+    }
+
+    /**
+     * @return Opportunity
+     */
+    public function getOpportunity(): Opportunity
+    {
+        return $this->opportunity;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\BotHelper;
 use JsonSerializable;
 use App\Traits\HasSharedLogic;
 
@@ -30,7 +31,7 @@ class TelegramMessage implements JsonSerializable
     public function __construct(string $content = '')
     {
         $this->content($content);
-        $this->payload['parse_mode'] = 'Markdown';
+        $this->payload['parse_mode'] = BotHelper::PARSE_MARKDOWN2;
     }
 
     /**

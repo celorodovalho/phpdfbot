@@ -16,6 +16,10 @@ class SanitizerHelper
 {
     use Macroable;
 
+    public const TELEGRAM_CHARACTERS = [
+        '_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!'
+    ];
+
     /**
      * Remove the Telegram Markdown from messages
      *
@@ -179,12 +183,9 @@ class SanitizerHelper
             $message = preg_replace("/^# (.+)$/m", '`$1`', $message);
 
             $message = str_ireplace(['<3'], Emoji::blueHeart(), $message);
-            $message = preg_replace("/#{2,}/m", '#', $message);
-            $message = preg_replace("/_{2,}/m", '_', $message);
-            $message = preg_replace("/`{2,}/m", '`', $message);
+            $message = preg_replace("/([#_`]){2,}/m", '$1', $message);
 
-
-            $message = preg_replace('/[ \t]+/', ' ', $message);
+            $message = preg_replace('/([ \t])+/', ' ', $message);
             $message = preg_replace("/\s{2,}/m", "\n", $message);
 
 //            $message = preg_replace('/\s*$^\s*/m', "\n", $message);

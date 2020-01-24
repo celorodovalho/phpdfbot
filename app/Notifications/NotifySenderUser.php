@@ -5,12 +5,12 @@ namespace App\Notifications;
 use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
 use App\Notifications\Channels\TelegramChannel;
+use App\Services\TelegramMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use NotificationChannels\Telegram\TelegramMessage;
 use Spatie\Emoji\Emoji;
 
-class PublishedOpportunity extends Notification
+class NotifySenderUser extends Notification
 {
     use Queueable;
 

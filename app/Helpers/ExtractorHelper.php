@@ -33,9 +33,10 @@ class ExtractorHelper
             Countries::toArray()
         ));
         array_walk($tags, function ($item, $key) use (&$tags) {
-            $tags[$key] = '#' . mb_strtolower(str_replace([' ', '-'], '', $item));
+            $tag = '#' . mb_strtolower(str_replace([' ', '-'], '', $item));
+            $tags[$key] = iconv('UTF-8', 'ASCII//TRANSLIT', $tag);
         });
-        return $tags;
+        return array_values($tags);
     }
 
     /**

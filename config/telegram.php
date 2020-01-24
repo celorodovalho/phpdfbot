@@ -42,7 +42,6 @@ return [
             ],
         ],
     ],
-    'admin' => env('APP_ENV') === 'production' ? '@botphpdf' : '@phpdftestgroup',
     /*
     |--------------------------------------------------------------------------
     | Default Bot Name

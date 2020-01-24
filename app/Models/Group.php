@@ -16,6 +16,7 @@ use Prettus\Repository\Traits\TransformableTrait;
  * @property string $name
  * @property string $title
  * @property boolean $main
+ * @property boolean $admin
  * @property integer $type
  * @property Collection $tags
  */
@@ -31,6 +32,7 @@ class Group extends Model implements Transformable
     protected $fillable = [
         'name',
         'main',
+        'admin',
         'type',
         'tags',
     ];

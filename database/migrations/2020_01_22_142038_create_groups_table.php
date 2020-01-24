@@ -17,6 +17,7 @@ class CreateGroupsTable extends Migration
             $table->bigIncrements('id');
             $table->string('name', 150);
             $table->boolean('main');
+            $table->boolean('admin');
             $table->tinyInteger('type');
             $table->text('tags');
             $table->timestamps();
