@@ -42,15 +42,24 @@ class FormattedOpportunityTransformer extends TransformerAbstract
 
         if ($opportunity->files && $opportunity->files->isNotEmpty()) {
             foreach ($opportunity->files as $file) {
-                $file = "\n\n" .
-                    sprintf(
-                        '[Image](%s)',
-                        $file
-                    );
-                if ($this->isEmail) {
-                    $file = '!' . $file;
+                if(!is_string($file)) {
+                  /*$fileInfo = \Telegram::getFile($file);
+                    $file = sprintf(
+                      'https://api.telegram.org/file/bot%s/%s',
+                      env('TELEGRAM_BOT_TOKEN'),
+                      $fileInfo['file_path']
+                    );*/
+                  $file = $file['file_id'];
                 }
-                $body .= $file;
+              $file = "\n\n" .
+                      sprintf(
+                          '[Image](%s)',
+                          $file
+                      );
+                  if ($this->isEmail) {
+                      $file = '!' . $file;
+                  }
+                  $body .= $file;
             }
         }
 

@@ -138,6 +138,8 @@ class SanitizerHelper
                 'Com lisura,',
             ];
 
+            $message = html_entity_decode($message);
+
             $message = trim($message, '\\');
 
             $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
@@ -196,6 +198,7 @@ class SanitizerHelper
             $message = str_replace('GrupoClubedeVagas', '', $message);
             $message = preg_replace('/(.+)(chat\.whatsapp\.com\/)(.+)/m', 'http://bit.ly/phpdf-official', $message);
 
+            $message = strip_tags($message);
         }
         return trim($message);
     }
