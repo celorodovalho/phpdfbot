@@ -11,6 +11,7 @@ use App\Services\TelegramMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Notifications\Notification;
+use Illuminate\Session\Store;
 
 /**
  * Class GroupSummaryOpportunities
@@ -20,9 +21,6 @@ use Illuminate\Notifications\Notification;
 class GroupSummaryOpportunities extends Notification
 {
     use Queueable;
-
-    /** @var int */
-    public static $telegramId;
 
     /** @var Collection */
     private $opportunities;
@@ -121,8 +119,10 @@ class GroupSummaryOpportunities extends Notification
      */
     public function toArray($notifiable)
     {
+        $session = session();
+        $telegramId = $session->get($this->id);
         return [
-            'telegram_id' => self::$telegramId,
+            'telegram_id' => $telegramId,
             'opportunities' => $this->opportunities->pluck('id')->toArray()
         ];
     }

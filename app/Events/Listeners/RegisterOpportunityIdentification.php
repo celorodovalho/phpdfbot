@@ -3,9 +3,13 @@
 namespace App\Events\Listeners;
 
 use App\Enums\GroupTypes;
-use App\Events\TelegramMessageSent;
 use App\Models\Group;
+use App\Notifications\GroupSummaryOpportunities;
 use App\Notifications\SendOpportunity;
+use Illuminate\Notifications\Events\NotificationSent;
+use Illuminate\Session\SessionManager;
+use Illuminate\Session\Store;
+use Illuminate\Support\Collection;
 
 /**
  * Class RegisterOpportunityIdentification
@@ -14,36 +18,42 @@ use App\Notifications\SendOpportunity;
  */
 class RegisterOpportunityIdentification
 {
+
+    /**
+     * @var Store
+     */
+    private $store;
+
     /**
      * Create the event listener.
      *
-     * @return void
+     * @param Store $store
      */
-    public function __construct()
+    public function __construct(Store $store)
     {
-        //
+        $this->store = $store;
     }
 
     /**
      * Handle the event.
      *
-     * @param TelegramMessageSent $event
+     * @param NotificationSent $event
      *
      * @return void
      */
-    public function handle(TelegramMessageSent $event)
+    public function handle(NotificationSent $event)
     {
         if ($event->notification instanceof SendOpportunity
             && $event->notifiable instanceof Group
             && $event->notifiable->type === GroupTypes::TYPE_CHANNEL
             && $event->notifiable->main
-            && is_numeric($event->data)) {
+            && $event->response instanceof Collection) {
             $opportunity = $event->notification->getOpportunity();
-            $opportunity->update(['telegram_id' => $event->data]);
+            $opportunity->update(['telegram_id' => $event->response->first()->messageId]);
         }
 
-        if (property_exists($event->notification, 'telegramId') && is_numeric($event->data)) {
-            $event->notification::$telegramId = $event->data;
+        if ($event->notification instanceof GroupSummaryOpportunities) {
+            $this->store->push($event->notification->id, $event->response->first()->messageId);
         }
     }
 }

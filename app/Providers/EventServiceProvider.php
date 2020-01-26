@@ -3,10 +3,10 @@
 namespace App\Providers;
 
 use App\Events\Listeners\RegisterOpportunityIdentification;
-use App\Events\TelegramMessageSent;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Illuminate\Notifications\Events\NotificationSent;
 
 /**
  * Class EventServiceProvider
@@ -24,7 +24,7 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
-        TelegramMessageSent::class => [
+        NotificationSent::class => [
             RegisterOpportunityIdentification::class,
         ],
     ];
