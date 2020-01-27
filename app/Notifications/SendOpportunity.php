@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Enums\Callbacks;
 use App\Enums\GroupTypes;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
@@ -10,13 +11,12 @@ use App\Models\Group;
 use App\Models\Opportunity;
 use App\Notifications\Channels\TelegramChannel;
 use App\Services\TelegramMessage;
-use GrahamCampbell\Markdown\Facades\Markdown;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
-use Telegram\Bot\Keyboard\Keyboard;
+use League\CommonMark\Converter;
 use Throwable;
 
 /**
@@ -38,6 +38,9 @@ class SendOpportunity extends Notification
     /** @var Opportunity */
     private $opportunity;
 
+    /** @var Converter */
+    private $markdown;
+
     /**
      * SendOpportunity constructor.
      *
@@ -50,6 +53,7 @@ class SendOpportunity extends Notification
         $this->admin = Config::get('telegram.admin');
         $this->botName = Config::get('telegram.default');
         $this->opportunity = $opportunity;
+        $this->markdown = resolve(Converter::class);
     }
 
     /**
@@ -59,15 +63,15 @@ class SendOpportunity extends Notification
      *
      * @return array
      */
-    public function via($notifiable)
+    public function via($notifiable): array
     {
         $channels = ['database'];
         switch ($notifiable->type) {
-            case GroupTypes::TYPE_CHANNEL:
-            case GroupTypes::TYPE_GROUP:
+            case GroupTypes::CHANNEL:
+            case GroupTypes::GROUP:
                 $channels = Arr::prepend($channels, TelegramChannel::class);
                 break;
-            case GroupTypes::TYPE_MAILING:
+            case GroupTypes::MAILING:
                 $channels = Arr::prepend($channels, 'mail');
                 break;
         }
@@ -120,14 +124,14 @@ class SendOpportunity extends Notification
 
         if ($group->admin) {
             $telegramMessage->button(
-                'Aprovar',
+                Callbacks::APPROVE()->description,
                 null,
-                implode(' ', [Opportunity::CALLBACK_APPROVE, $this->opportunity->id])
+                implode(' ', [Callbacks::APPROVE, $this->opportunity->id])
             );
             $telegramMessage->button(
-                'Remover',
+                Callbacks::APPROVE,
                 null,
-                implode(' ', [Opportunity::CALLBACK_REMOVE, $this->opportunity->id])
+                implode(' ', [Callbacks::REMOVE, $this->opportunity->id])
             );
         }
 
@@ -162,7 +166,7 @@ class SendOpportunity extends Notification
             'isEmail' => true
         ])->render();
 
-        $messageText = Markdown::convertToHtml($messageText);
+        $messageText = $this->markdown->convertToHtml($messageText);
 
         $mailable->subject($this->opportunity->title)
             ->html($messageText);
@@ -176,24 +180,18 @@ class SendOpportunity extends Notification
      *
      * @return array
      */
-    public function toArray($group)
+    public function toArray($group): array
     {
+        $session = session();
+        $telegramIds = $session->get($this->id);
         $data = [
             'group_name' => $group->name,
-            'telegram_user_id' => $this->opportunity->telegram_user_id,
             'opportunity' => $this->opportunity->id,
+            'telegram_ids' => $telegramIds,
         ];
 
         $data = array_filter($data);
 
         return $data;
-    }
-
-    /**
-     * @return Opportunity
-     */
-    public function getOpportunity(): Opportunity
-    {
-        return $this->opportunity;
     }
 }

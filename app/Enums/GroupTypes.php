@@ -3,10 +3,19 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
+/**
+ * Class GroupTypes
+ *
+ * @method static static CHANNEL()
+ * @method static static GROUP()
+ * @method static static MAILING()
+ * @method static static GITHUB()
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 final class GroupTypes extends Enum
 {
-    const TYPE_CHANNEL  = 1;
-    const TYPE_GROUP    = 2;
-    const TYPE_MAILING  = 3;
-    const TYPE_GITHUB   = 4;
+    public const CHANNEL  = 1;
+    public const GROUP    = 2;
+    public const MAILING  = 3;
+    public const GITHUB   = 4;
 }

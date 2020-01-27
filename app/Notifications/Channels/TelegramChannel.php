@@ -76,12 +76,12 @@ class TelegramChannel
                     }
                     /** @var Message $telegramMessage */
                     $telegramMessage = $this->telegram->sendMessage($params);
-                    $messages->add($telegramMessage);
+                    $messages->add($telegramMessage->toArray());
                 }
             } else {
                 /** @var Message $telegramMessage */
                 $telegramMessage = $this->telegram->sendMessage($params);
-                $messages->add($telegramMessage);
+                $messages->add($telegramMessage->toArray());
             }
         }
         return $messages;

@@ -3,16 +3,36 @@
 namespace App\Notifications;
 
 use App\Helpers\SanitizerHelper;
+use App\Models\Group;
 use App\Models\Opportunity;
 use App\Notifications\Channels\TelegramChannel;
 use App\Services\TelegramMessage;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\Notification;
 use Spatie\Emoji\Emoji;
 
+/**
+ * Class NotifySenderUser
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class NotifySenderUser extends Notification
 {
     use Queueable;
+
+    /** @var Group */
+    private $group;
+
+    /**
+     * NotifySenderUser constructor.
+     *
+     * @param Group $group
+     */
+    public function __construct(Group $group)
+    {
+        $this->group = $group;
+    }
 
     /**
      * Get the notification's delivery channels.
@@ -33,7 +53,10 @@ class NotifySenderUser extends Notification
     {
         $telegramMessage = new TelegramMessage;
         if ($notifiable->telegram_user_id) {
-            $link = "https://t.me/VagasBrasil_TI/{$notifiable->telegram_id}";
+            /** @var DatabaseNotification $notification */
+            $notification = $this->group->notifications()->where('data->opportunity', $notifiable->id)->first();
+            $telegramIds = $notification->data['telegram_ids'];
+            $link = sprintf('https://t.me/%s/%s', $this->group->title, reset($telegramIds));
             $telegramMessage
                 // Optional recipient user id.
                 ->to($notifiable->telegram_user_id)
@@ -51,13 +74,20 @@ class NotifySenderUser extends Notification
     /**
      * Get the array representation of the notification.
      *
-     * @param  mixed $notifiable
+     * @param mixed $notifiable
+     *
      * @return array
      */
     public function toArray($notifiable)
     {
-        return [
-            //
+        $session = session();
+        $telegramIds = $session->get($this->id);
+        $data = [
+            'group_id' => $this->group->id,
+            'telegram_id' => reset($telegramIds),
         ];
+
+        $data = array_filter($data);
+        return $data;
     }
 }

@@ -37,8 +37,6 @@ class Opportunity extends Model implements Transformable
 
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE = 1;
-    public const CALLBACK_APPROVE = 'approve';
-    public const CALLBACK_REMOVE = 'remove';
 
     public const COMPANY = 'company';
     public const LOCATION = 'location';
@@ -51,6 +49,9 @@ class Opportunity extends Model implements Transformable
     public const POSITION = 'position';
     public const SALARY = 'salary';
     public const EMAILS = 'emails';
+    public const TELEGRAM_ID = 'telegram_id';
+    public const STATUS = 'status';
+    public const TELEGRAM_USER_ID = 'telegram_user_id';
 
     protected $fillable = [
         self::TITLE,
@@ -60,9 +61,9 @@ class Opportunity extends Model implements Transformable
         self::COMPANY,
         self::LOCATION,
         self::FILES,
-        'telegram_id',
-        'status',
-        'telegram_user_id',
+        self::TELEGRAM_ID,
+        self::STATUS,
+        self::TELEGRAM_USER_ID,
         self::URL,
         self::ORIGIN,
         self::TAGS,
@@ -84,7 +85,10 @@ class Opportunity extends Model implements Transformable
         $this->files = $this->files->concat([$file]);
     }
 
-    public function getText()
+    /**
+     * @return string
+     */
+    public function getText(): string
     {
         return implode(', ', [
             $this->title,

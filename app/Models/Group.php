@@ -44,12 +44,12 @@ class Group extends Model implements Transformable
     public function getTitleAttribute()
     {
         switch ($this->type) {
-            case GroupTypes::TYPE_CHANNEL:
-            case GroupTypes::TYPE_GROUP:
+            case GroupTypes::CHANNEL:
+            case GroupTypes::GROUP:
                 return str_replace('@', '', $this->name);
-            case GroupTypes::TYPE_MAILING:
+            case GroupTypes::MAILING:
                 return explode('@', $this->name)[0];
-            case GroupTypes::TYPE_GITHUB:
+            case GroupTypes::GITHUB:
             default:
                 return $this->name;
         }

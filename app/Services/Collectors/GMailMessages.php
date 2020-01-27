@@ -129,7 +129,7 @@ class GMailMessages implements CollectorInterface
 
 //        $messageService->add($words);
 
-        $mailing = $this->groupRepository->findWhere([['type', '=', GroupTypes::TYPE_MAILING]]);
+        $mailing = $this->groupRepository->findWhere([['type', '=', GroupTypes::MAILING]]);
         $fromTo = [];
         foreach ($mailing as $group) {
             $fromTo[] = 'list:' . $group->name;

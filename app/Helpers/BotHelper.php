@@ -34,10 +34,10 @@ class BotHelper
      */
     public static function getGroupSign(bool $isWeb = false): string
     {
-        $groups = Group::whereIn('type', [GroupTypes::TYPE_CHANNEL, GroupTypes::TYPE_GROUP])->get();
+        $groups = Group::whereIn('type', [GroupTypes::CHANNEL, GroupTypes::GROUP])->get();
 
-        $channels = $groups->where('type', GroupTypes::TYPE_CHANNEL)->pluck('name')->all();
-        $groups = $groups->where('type', GroupTypes::TYPE_GROUP)->pluck('name')->all();
+        $channels = $groups->where('type', GroupTypes::CHANNEL)->pluck('name')->all();
+        $groups = $groups->where('type', GroupTypes::GROUP)->pluck('name')->all();
 
         $sign =
             Emoji::megaphone() . ' ' . SanitizerHelper::escapeMarkdown(implode(' | ', $channels)) . "\n" .

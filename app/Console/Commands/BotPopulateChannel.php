@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Contracts\CollectorInterface;
 use App\Contracts\Repositories\GroupRepository;
 use App\Contracts\Repositories\OpportunityRepository;
+use App\Enums\Arguments;
 use App\Enums\GroupTypes;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\Helper;
@@ -17,8 +18,8 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Notifications\DatabaseNotification as Notification;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
@@ -30,14 +31,6 @@ use Telegram\Bot\BotsManager;
  */
 class BotPopulateChannel extends Command
 {
-
-    /**
-     * Commands
-     */
-    public const TYPE_APPROVAL = 'approval';
-    public const TYPE_NOTIFY = 'notify';
-    public const TYPE_PROCESS = 'process';
-    public const TYPE_SEND = 'send';
 
     /**
      * The name and signature of the console command.
@@ -86,7 +79,7 @@ class BotPopulateChannel extends Command
         $this->groupRepository = $groupRepository;
 
         $this->channels = $this->groupRepository->findWhere([
-            ['type', '=', GroupTypes::TYPE_CHANNEL]
+            ['type', '=', GroupTypes::CHANNEL]
         ]);
 
         parent::__construct();
@@ -98,16 +91,16 @@ class BotPopulateChannel extends Command
     public function handle(): void
     {
         switch ($this->argument('type')) {
-            case self::TYPE_PROCESS:
+            case Arguments::PROCESS:
                 $this->processOpportunities();
                 break;
-            case self::TYPE_NOTIFY:
+            case Arguments::NOTIFY:
                 $this->notifyGroup();
                 break;
-            case self::TYPE_SEND:
+            case Arguments::SEND:
                 $this->sendOpportunityToChannels($this->argument('opportunity'));
                 break;
-            case self::TYPE_APPROVAL:
+            case Arguments::APPROVAL:
                 $this->sendTelegramOpportunityToApproval($this->argument('opportunity'));
                 break;
             default:
@@ -137,7 +130,7 @@ class BotPopulateChannel extends Command
     {
         $opportunities = new EloquentCollection();
         foreach ($this->collectors as $collector) {
-            $collector = App::make($collector);
+            $collector = resolve($collector);
             if ($collector instanceof CollectorInterface) {
                 $collection = $collector->collectOpportunities();
                 if ($collection->isEmpty()) {
@@ -168,7 +161,7 @@ class BotPopulateChannel extends Command
         $opportunity = $this->repository->find($opportunityId);
 
         $mailing = $this->groupRepository->findWhere([
-            ['type', '=', GroupTypes::TYPE_MAILING],
+            ['type', '=', GroupTypes::MAILING],
             ['main', '=', true],
         ]);
 
@@ -178,14 +171,13 @@ class BotPopulateChannel extends Command
         foreach ($channels as $channel) {
             if (blank($channel->tags) || ExtractorHelper::hasTags($channel->tags, $opportunity->getText())) {
                 $channel->notify(new SendOpportunity($opportunity));
-                if ($channel->main && $opportunity->telegram_id && $opportunity->telegram_user_id) {
-                    $opportunity->notify(new NotifySenderUser);
+                if ($channel->main && $channel->type === GroupTypes::CHANNEL && $opportunity->telegram_user_id) {
+                    $opportunity->notify(new NotifySenderUser($channel));
                 }
             }
         }
 
-        $opportunity->status = Opportunity::STATUS_ACTIVE;
-        $opportunity->save();
+        $opportunity->update(['status' => Opportunity::STATUS_ACTIVE]);
     }
 
     /**
@@ -195,16 +187,39 @@ class BotPopulateChannel extends Command
      */
     protected function notifyGroup(): void
     {
-        $opportunities = $this->repository->findWhere([['telegram_id', '<>', null]]);
+        $opportunities = $this->repository->findWhere([['status', '=', Opportunity::STATUS_ACTIVE]]);
 
         $groups = $this->groupRepository->findWhere([
-            ['type', '=', GroupTypes::TYPE_GROUP],
+            ['type', '=', GroupTypes::GROUP],
             ['main', '=', true],
         ]);
 
         if ($opportunities->isNotEmpty() && $groups->isNotEmpty()) {
+            $opportunitiesIds = $opportunities->pluck('id')->toArray();
             /** @var Group $group */
             foreach ($groups as $group) {
+                /** @var Collection $telegramIds */
+                $telegramIds = $this->channels
+                    ->where('main', true)
+                    ->first()
+                    ->notifications()
+                    ->where('type', SendOpportunity::class)
+                    ->where(static function ($query) use ($opportunitiesIds) {
+                        foreach ($opportunitiesIds as $opportunityId) {
+                            $query->orWhereJsonContains('data->opportunity', $opportunityId);
+                        }
+                    })
+                    ->pluck('data')
+                    ->pluck('telegram_ids', 'opportunity');
+
+                $opportunities = $opportunities->map(static function (Opportunity $opportunity) use ($telegramIds) {
+                    if ($telegramIds->has($opportunity->id)) {
+                        $opportunity->telegram_id = Arr::first($telegramIds->get($opportunity->id));
+                    }
+                    return $opportunity;
+                });
+
+
                 $lastNotifications = $group->unreadNotifications;
 
                 $channels = $this->channels->concat($groups);
@@ -247,7 +262,7 @@ class BotPopulateChannel extends Command
     protected function sendOpportunityToApproval(Opportunity $opportunity): void
     {
         $adminGroup = $this->groupRepository->findWhere([
-            ['type', '=', GroupTypes::TYPE_GROUP],
+            ['type', '=', GroupTypes::GROUP],
             ['admin', '=', true],
         ])->first();
 

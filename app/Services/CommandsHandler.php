@@ -6,6 +6,8 @@ use App\Commands\NewOpportunityCommand;
 use App\Commands\OptionsCommand;
 use App\Console\Commands\BotPopulateChannel;
 use App\Contracts\Repositories\OpportunityRepository;
+use App\Enums\Arguments;
+use App\Enums\Callbacks;
 use App\Exceptions\TelegramOpportunityException;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
@@ -109,25 +111,25 @@ class CommandsHandler
             $opportunity = $this->repository->find($data[1]);
         }
         switch ($data[0]) {
-            case Opportunity::CALLBACK_APPROVE:
+            case Callbacks::APPROVE:
                 if ($opportunity) {
                     Artisan::call(
                         'bot:populate:channel',
                         [
-                            'type' => BotPopulateChannel::TYPE_SEND,
+                            'type' => Arguments::SEND,
                             'opportunity' => $opportunity->id
                         ]
                     );
                     $this->sendMessage(Artisan::output());
                 }
                 break;
-            case Opportunity::CALLBACK_REMOVE:
+            case Callbacks::REMOVE:
                 if ($opportunity) {
                     $opportunity->delete();
                 }
                 break;
-            case OptionsCommand::OPTIONS_COMMAND:
-                if (in_array($data[1], [BotPopulateChannel::TYPE_PROCESS, BotPopulateChannel::TYPE_NOTIFY], true)) {
+            case Callbacks::OPTIONS:
+                if (in_array($data[1], [Arguments::PROCESS, Arguments::NOTIFY], true)) {
                     Artisan::call('bot:populate:channel', ['type' => $data[1]]);
                     $this->sendMessage(Artisan::output());
                 }
@@ -268,7 +270,7 @@ class CommandsHandler
         Artisan::call(
             'bot:populate:channel',
             [
-                'type' => BotPopulateChannel::TYPE_APPROVAL,
+                'type' => Arguments::APPROVAL,
                 'opportunity' => $opportunity->id,
             ]
         );

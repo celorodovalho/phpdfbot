@@ -11,7 +11,6 @@ use App\Services\TelegramMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Notifications\Notification;
-use Illuminate\Session\Store;
 
 /**
  * Class GroupSummaryOpportunities
@@ -86,7 +85,7 @@ class GroupSummaryOpportunities extends Notification
 
             $listOpportunities->prepend($text);
 
-            $listSize = $listOpportunities->map(function ($title) {
+            $listSize = $listOpportunities->map(static function ($title) {
                 return strlen($title);
             });
 
@@ -94,7 +93,7 @@ class GroupSummaryOpportunities extends Notification
                 ? (int)(BotHelper::TELEGRAM_LIMIT / $listSize->max())
                 : $listSize->count();
             $listOpportunities = $listSize->chunk($chunkSize)
-                ->map(function ($item) use ($listOpportunities) {
+                ->map(static function ($item) use ($listOpportunities) {
                     return $listOpportunities->only($item->keys())->implode("\n");
                 });
 
@@ -117,13 +116,14 @@ class GroupSummaryOpportunities extends Notification
      *
      * @return array
      */
-    public function toArray($notifiable)
+    public function toArray($notifiable): array
     {
         $session = session();
         $telegramId = $session->get($this->id);
         return [
+            'group_name' => $notifiable->name,
+            'opportunities' => $this->opportunities->pluck('id')->toArray(),
             'telegram_id' => $telegramId,
-            'opportunities' => $this->opportunities->pluck('id')->toArray()
         ];
     }
 }

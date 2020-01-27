@@ -57,7 +57,7 @@ class GitHubMessages implements CollectorInterface
      */
     public function collectOpportunities(): Collection
     {
-        $githubSources = $this->groupRepository->findWhere([['type', '=', GroupTypes::TYPE_GITHUB]]);
+        $githubSources = $this->groupRepository->findWhere([['type', '=', GroupTypes::GITHUB]]);
         $messages = [];
         foreach ($githubSources as $source) {
             $username = explode('/', $source->name);
