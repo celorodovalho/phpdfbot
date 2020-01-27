@@ -78,10 +78,6 @@ class BotPopulateChannel extends Command
         $this->repository = $repository;
         $this->groupRepository = $groupRepository;
 
-        $this->channels = $this->groupRepository->findWhere([
-            ['type', '=', GroupTypes::CHANNEL]
-        ]);
-
         parent::__construct();
     }
 
@@ -90,6 +86,10 @@ class BotPopulateChannel extends Command
      */
     public function handle(): void
     {
+        $this->channels = $this->groupRepository->findWhere([
+            ['type', '=', GroupTypes::CHANNEL]
+        ]);
+
         switch ($this->argument('type')) {
             case Arguments::PROCESS:
                 $this->processOpportunities();
@@ -189,15 +189,18 @@ class BotPopulateChannel extends Command
     {
         $opportunities = $this->repository->findWhere([['status', '=', Opportunity::STATUS_ACTIVE]]);
 
-        $groups = $this->groupRepository->findWhere([
+        $allGroups = $this->groupRepository->findWhere([
             ['type', '=', GroupTypes::GROUP],
-            ['main', '=', true],
         ]);
+
+        $groups = $allGroups->where('main', true);
 
         if ($opportunities->isNotEmpty() && $groups->isNotEmpty()) {
             $opportunitiesIds = $opportunities->pluck('id')->toArray();
             /** @var Group $group */
             foreach ($groups as $group) {
+                $lastNotifications = $group->unreadNotifications;
+
                 /** @var Collection $telegramIds */
                 $telegramIds = $this->channels
                     ->where('main', true)
@@ -219,11 +222,8 @@ class BotPopulateChannel extends Command
                     return $opportunity;
                 });
 
-
-                $lastNotifications = $group->unreadNotifications;
-
-                $channels = $this->channels->concat($groups);
-                $group->notify(new GroupSummaryOpportunities($opportunities, $channels));
+                $allChannels = $this->channels->concat($allGroups);
+                $group->notify(new GroupSummaryOpportunities($opportunities, $allChannels));
 
                 /** @var Notification $lastNotification */
                 foreach ($lastNotifications as $lastNotification) {

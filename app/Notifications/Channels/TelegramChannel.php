@@ -72,7 +72,7 @@ class TelegramChannel
                 foreach ($body as $text) {
                     $params['text'] = $text;
                     if ($messages->count()) {
-                        $params['reply_to_message_id'] = $messages->first()->messageId;
+                        $params['reply_to_message_id'] = $messages->first()['message_id'];
                     }
                     /** @var Message $telegramMessage */
                     $telegramMessage = $this->telegram->sendMessage($params);

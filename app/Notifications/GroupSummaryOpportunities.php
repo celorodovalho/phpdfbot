@@ -119,11 +119,11 @@ class GroupSummaryOpportunities extends Notification
     public function toArray($notifiable): array
     {
         $session = session();
-        $telegramId = $session->get($this->id);
+        $telegramIds = $session->get($this->id);
         return [
             'group_name' => $notifiable->name,
             'opportunities' => $this->opportunities->pluck('id')->toArray(),
-            'telegram_id' => $telegramId,
+            'telegram_id' => reset($telegramIds),
         ];
     }
 }
