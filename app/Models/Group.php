@@ -13,16 +13,17 @@ use Prettus\Repository\Traits\TransformableTrait;
 
 /**
  * Class Groups.
- * @property string $name
- * @property string $title
- * @property boolean $main
- * @property boolean $admin
- * @property integer $type
+ *
+ * @property string     $name
+ * @property string     $title
+ * @property boolean    $main
+ * @property boolean    $admin
+ * @property integer    $type
  * @property Collection $tags
  */
 class Group extends Model implements Transformable
 {
-    use TransformableTrait, HasDatabaseNotifications, RoutesNotifications, TelegramIdentifiable;
+    use TransformableTrait, HasDatabaseNotifications, RoutesNotifications;
 
     /**
      * The attributes that are mass assignable.
@@ -41,6 +42,9 @@ class Group extends Model implements Transformable
         'tags' => 'collection',
     ];
 
+    /**
+     * @return mixed|string
+     */
     public function getTitleAttribute()
     {
         switch ($this->type) {

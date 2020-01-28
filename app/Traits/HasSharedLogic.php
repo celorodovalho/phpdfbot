@@ -5,7 +5,9 @@ namespace App\Traits;
 use App\Helpers\BotHelper;
 
 /**
- * Trait HasSharedLogic.
+ * Trait HasSharedLogic
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 trait HasSharedLogic
 {
@@ -130,7 +132,7 @@ trait HasSharedLogic
      *
      * @return mixed
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return $this->toArray();
     }

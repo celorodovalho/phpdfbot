@@ -37,19 +37,21 @@ class NotifySenderUser extends Notification
     /**
      * Get the notification's delivery channels.
      *
-     * @param  mixed $notifiable
+     * @param mixed $notifiable
+     *
      * @return array
      */
-    public function via($notifiable)
+    public function via($notifiable): array
     {
         return [TelegramChannel::class, 'database'];
     }
 
     /**
      * @param Opportunity $notifiable
+     *
      * @return TelegramMessage
      */
-    public function toTelegram($notifiable)
+    public function toTelegram($notifiable): TelegramMessage
     {
         $telegramMessage = new TelegramMessage;
         if ($notifiable->telegram_user_id) {
@@ -78,7 +80,7 @@ class NotifySenderUser extends Notification
      *
      * @return array
      */
-    public function toArray($notifiable)
+    public function toArray($notifiable): array
     {
         $session = session();
         $telegramIds = $session->get($this->id);

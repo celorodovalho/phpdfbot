@@ -2,15 +2,22 @@
 
 namespace App\Traits;
 
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Contracts\Notifications\Dispatcher;
 
+/**
+ * Trait RoutesNotifications
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 trait RoutesNotifications
 {
     /**
      * Send the given notification.
      *
-     * @param  mixed  $instance
+     * @param mixed $instance
+     *
      * @return mixed
      */
     public function notify($instance)
@@ -21,11 +28,12 @@ trait RoutesNotifications
     /**
      * Send the given notification immediately.
      *
-     * @param  mixed  $instance
-     * @param  array|null  $channels
+     * @param mixed      $instance
+     * @param array|null $channels
+     *
      * @return void
      */
-    public function notifyNow($instance, array $channels = null)
+    public function notifyNow($instance, array $channels = null): void
     {
         app(Dispatcher::class)->sendNow($this, $instance, $channels);
     }
@@ -33,13 +41,14 @@ trait RoutesNotifications
     /**
      * Get the notification routing information for the given driver.
      *
-     * @param  string  $driver
-     * @param  \Illuminate\Notifications\Notification|null  $notification
+     * @param string            $driver
+     * @param Notification|null $notification
+     *
      * @return mixed
      */
     public function routeNotificationFor($driver, $notification = null)
     {
-        if (method_exists($this, $method = 'routeNotificationFor'.Str::studly($driver))) {
+        if (method_exists($this, $method = 'routeNotificationFor' . Str::studly($driver))) {
             return $this->{$method}($notification);
         }
 

@@ -8,8 +8,12 @@ use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
 use Telegram\Bot\Keyboard\Keyboard;
-use App\Console\Commands\BotPopulateChannel;
 
+/**
+ * Class OptionsCommand
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class OptionsCommand extends Command
 {
 
@@ -26,7 +30,7 @@ class OptionsCommand extends Command
     /**
      * @inheritdoc
      */
-    public function handle()
+    public function handle(): void
     {
         Log::info('OPTIONS_COMMAND', [$this->arguments, $this->getArguments()]);
 

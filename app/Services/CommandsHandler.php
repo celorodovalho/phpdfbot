@@ -3,8 +3,6 @@
 namespace App\Services;
 
 use App\Commands\NewOpportunityCommand;
-use App\Commands\OptionsCommand;
-use App\Console\Commands\BotPopulateChannel;
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Enums\Arguments;
 use App\Enums\Callbacks;
@@ -31,6 +29,8 @@ use Telegram\Bot\Objects\Update;
 
 /**
  * Class CommandsHandler
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class CommandsHandler
 {
@@ -50,8 +50,9 @@ class CommandsHandler
 
     /**
      * CommandsHandler constructor.
-     * @param BotsManager $botsManager
-     * @param string $botName
+     *
+     * @param BotsManager                               $botsManager
+     * @param string                                    $botName
      * @param OpportunityRepository|RepositoryInterface $repository
      */
     public function __construct(
@@ -68,6 +69,7 @@ class CommandsHandler
      * Process the update coming from bot interface
      *
      * @param Update $update
+     *
      * @return mixed
      * @throws TelegramSDKException
      */
@@ -91,8 +93,6 @@ class CommandsHandler
             }
         } catch (TelegramOpportunityException $exception) {
             $this->sendMessage($exception->getMessage());
-        } catch (Exception $exception) {
-            throw $exception;
         }
     }
 
@@ -100,6 +100,7 @@ class CommandsHandler
      * Process the Callback query coming from bot interface
      *
      * @param CallbackQuery $callbackQuery
+     *
      * @throws TelegramSDKException
      */
     private function processCallbackQuery(CallbackQuery $callbackQuery): void
@@ -153,9 +154,10 @@ class CommandsHandler
              * Bots can delete outgoing messages in groups and supergroups.
              * Bots granted can_post_messages permissions can delete outgoing messages in channels.
              * If the bot is an administrator of a group, it can delete any message there.
-             * If the bot has can_delete_messages permission in a supergroup or a channel, it can delete any message there. Returns True on success.
+             * If the bot has can_delete_messages permission in a supergroup or a channel,
+             * it can delete any message there. Returns True on success.
              */
-            if ($exception->getCode() != 400) {
+            if ($exception->getCode() !== 400) {
                 throw $exception;
             }
         }
@@ -165,6 +167,7 @@ class CommandsHandler
      * Process the messages coming from bot interface
      *
      * @param Message $message
+     *
      * @throws Exception|TelegramOpportunityException
      */
     private function processMessage(Message $message): void
@@ -185,12 +188,9 @@ class CommandsHandler
         Log::info('DOCUMENT', [$document]);
         Log::info('CAPTION', [$caption]);
 
-        if (
-            (
-                (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) ||
-                (!$message->from->isBot && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE)
-            ) &&
-            !in_array($message->text, $this->telegram->getCommands(), true)
+        if (((filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT)
+                || (!$message->from->isBot && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE))
+            && !in_array($message->text, $this->telegram->getCommands(), true)
         ) {
             if (blank($message->text) && blank($caption)) {
                 throw new TelegramOpportunityException(
@@ -311,9 +311,10 @@ class CommandsHandler
 
     /**
      * @param $message
+     *
      * @throws TelegramSDKException
      */
-    private function sendMessage($message)
+    private function sendMessage($message): void
     {
         if (filled($message)) {
             $this->telegram->sendMessage([

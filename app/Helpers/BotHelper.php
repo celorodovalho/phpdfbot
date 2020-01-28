@@ -9,7 +9,8 @@ use Spatie\Emoji\Emoji;
 
 /**
  * Class BotHelper
- * @package App\Helpers
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class BotHelper
 {
@@ -22,6 +23,7 @@ class BotHelper
 
     /**
      * Other types: 'private', 'group', 'supergroup' or 'channel'.
+     *
      * @var string
      */
     public const TG_CHAT_TYPE_PRIVATE = 'private';
@@ -30,6 +32,7 @@ class BotHelper
      * Build the footer sign to the messages
      *
      * @param bool $isWeb
+     *
      * @return string
      */
     public static function getGroupSign(bool $isWeb = false): string

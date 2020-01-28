@@ -36,7 +36,7 @@ class TelegramChannel
     /**
      * Send the given notification.
      *
-     * @param mixed $notifiable
+     * @param mixed        $notifiable
      * @param Notification $notification
      *
      * @return Collection

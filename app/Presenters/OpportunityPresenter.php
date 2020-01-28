@@ -3,19 +3,20 @@
 namespace App\Presenters;
 
 use App\Transformers\OpportunityTransformer;
+use League\Fractal\TransformerAbstract;
 use Prettus\Repository\Presenter\FractalPresenter;
 
 /**
- * Class OpportunityPresenter.
+ * Class OpportunityPresenter
  *
- * @package namespace App\Presenters;
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class OpportunityPresenter extends FractalPresenter
 {
     /**
      * Transformer
      *
-     * @return \League\Fractal\TransformerAbstract
+     * @return TransformerAbstract
      */
     public function getTransformer()
     {

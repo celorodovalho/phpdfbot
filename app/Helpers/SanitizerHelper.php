@@ -9,8 +9,9 @@ use League\HTMLToMarkdown\HtmlConverter;
 use Spatie\Emoji\Emoji;
 
 /**
- * Class Sanitizer
- * @package App\Helpers
+ * Class SanitizerHelper
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class SanitizerHelper
 {
@@ -24,6 +25,7 @@ class SanitizerHelper
      * Remove the Telegram Markdown from messages
      *
      * @param string $message
+     *
      * @return string
      */
     public static function removeMarkdown(string $message): string
@@ -36,6 +38,7 @@ class SanitizerHelper
      * Remove BBCode from strings
      *
      * @param string $message
+     *
      * @return string
      */
     public static function removeBBCode(string $message): string
@@ -48,6 +51,7 @@ class SanitizerHelper
      * Remove the Brackets from strings
      *
      * @param string $message
+     *
      * @return string
      */
     public static function removeBrackets(string $message): string
@@ -64,6 +68,7 @@ class SanitizerHelper
      * Escapes the Markdown to avoid bad request in Telegram
      *
      * @param string $message
+     *
      * @return string
      */
     public static function escapeMarkdown(string $message): string
@@ -77,6 +82,7 @@ class SanitizerHelper
      * Replace the Markdown to avoid bad request in Telegram
      *
      * @param string $message
+     *
      * @return string
      */
     public static function replaceMarkdown(string $message): string
@@ -90,6 +96,7 @@ class SanitizerHelper
      * Sanitizes the subject and remove annoying content
      *
      * @param string $message
+     *
      * @return string
      */
     public static function sanitizeSubject(string $message): string
@@ -111,6 +118,7 @@ class SanitizerHelper
      * Sanitizes the message, removing annoying and unnecessary content
      *
      * @param string $message
+     *
      * @return string
      */
     public static function sanitizeBody(string $message): string
@@ -167,14 +175,13 @@ class SanitizerHelper
 
             $message = preg_replace('/([*_`]){2,}/m', '$1', $message);
 
-            $converter = new CommonMarkConverter([
-                'enable_em' => false,
-                'enable_strong' => false,
-            ]);
+            $converter = new CommonMarkConverter();
 
             $message = $converter->convertToHtml($message);
 
-            dump($message);
+            $message = preg_replace('/\*(.+?)\*/m', '<strong>$1</strong>', $message);
+            $message = preg_replace('/`(.+?)`/m', '<pre>$1</pre>', $message);
+            $message = preg_replace('/_(.+?)_/m', '<em>$1</em>', $message);
 
             $converter = new HtmlConverter([
                 'bold_style' => '*',
@@ -187,10 +194,10 @@ class SanitizerHelper
 
             $message = $converter->convert($message);
 
-            $message = preg_replace("/^(\\\)?# (.+)$/m", '`$1`', $message);
+            $message = preg_replace('/([#]){2,}/m', '$1', $message);
+            $message = preg_replace("/^(\\\\?)# (.+)$/m", '`$2`', $message);
 
             $message = str_ireplace(['<3'], Emoji::blueHeart(), $message);
-            $message = preg_replace('/([#_`]){2,}/m', '$1', $message);
 
             $message = preg_replace('/([ \t])+/', ' ', $message);
             $message = preg_replace("/\s{2,}/m", "\n", $message);
@@ -208,8 +215,8 @@ class SanitizerHelper
             $message = strip_tags($message);
 
             $message = preg_replace("/(\n){2,}/im", "\n", $message);
+            $message = preg_replace('/[-]{2,}/m', '', $message);
         }
-        dump($message);
         return trim($message);
     }
 
@@ -217,6 +224,7 @@ class SanitizerHelper
      * Remove attributes from HTML tags
      *
      * @param string $message
+     *
      * @return string
      */
     public static function removeTagsAttributes(string $message): string
@@ -228,6 +236,7 @@ class SanitizerHelper
      * Closes the HTML open tags
      *
      * @param string $message
+     *
      * @return string
      */
     public static function closeOpenTags(string $message): string
@@ -249,6 +258,7 @@ class SanitizerHelper
      *
      * @param string $str
      * @param string $repto
+     *
      * @return string
      */
     public static function removeEmptyTagsRecursive(string $str, string $repto = ''): string

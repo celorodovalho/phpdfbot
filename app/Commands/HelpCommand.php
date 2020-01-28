@@ -5,7 +5,9 @@ namespace App\Commands;
 use Telegram\Bot\Commands\Command;
 
 /**
- * Class HelpCommand.
+ * Class HelpCommand
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class HelpCommand extends Command
 {
@@ -27,13 +29,13 @@ class HelpCommand extends Command
     /**
      * {@inheritdoc}
      */
-    public function handle()
+    public function handle(): void
     {
         $commands = $this->telegram->getCommands();
 
         $text = '';
         foreach ($commands as $name => $handler) {
-            $text .= sprintf('/%s - %s'.PHP_EOL, $name, $handler->getDescription());
+            $text .= sprintf('/%s - %s' . PHP_EOL, $name, $handler->getDescription());
         }
 
         $this->replyWithMessage(compact('text'));
@@ -42,7 +44,5 @@ class HelpCommand extends Command
             'chat_id' => env('TELEGRAM_GROUP_ADM'),
             'text' => json_encode($this->getUpdate())
         ]);
-
-
     }
 }

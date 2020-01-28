@@ -5,8 +5,12 @@ namespace App\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
+/**
+ * Class SendOpportunity
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class SendOpportunity extends Mailable
 {
     use Queueable, SerializesModels;

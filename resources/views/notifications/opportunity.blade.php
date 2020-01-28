@@ -51,3 +51,17 @@ $bold = $isEmail ? '**' : '*';
 @endif
 
 {{\App\Helpers\BotHelper::getGroupSign($isEmail)}}
+@if($hasAuthor)
+@php
+$userNames = explode('|', $opportunity->origin);
+$userName = end($userNames);
+@endphp
+@if(!blank($userName))
+
+@if(\Illuminate\Support\Str::contains($userName, ' '))
+{{"by [$userName](tg://user?id={$this->opportunity->telegram_user_id})"}}
+@else
+{{'by @' . $userName}}
+@endif
+@endif
+@endif

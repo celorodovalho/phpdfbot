@@ -13,8 +13,12 @@ use Carbon\Carbon;
 use Exception;
 use GrahamCampbell\GitHub\GitHubManager;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Config;
 
+/**
+ * Class GitHubMessages
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class GitHubMessages implements CollectorInterface
 {
 
@@ -32,10 +36,11 @@ class GitHubMessages implements CollectorInterface
 
     /**
      * GitHubMessages constructor.
-     * @param Collection $opportunities
-     * @param GitHubManager $gitHubManager
+     *
+     * @param Collection            $opportunities
+     * @param GitHubManager         $gitHubManager
      * @param OpportunityRepository $repository
-     * @param GroupRepository $groupRepository
+     * @param GroupRepository       $groupRepository
      */
     public function __construct(
         Collection $opportunities,
@@ -73,6 +78,7 @@ class GitHubMessages implements CollectorInterface
 
     /**
      * @param array $message
+     *
      * @throws Exception
      */
     public function createOpportunity($message)
@@ -101,6 +107,7 @@ class GitHubMessages implements CollectorInterface
      *
      * @param string $username
      * @param string $repo
+     *
      * @return array
      */
     protected function fetchMessages($username, $repo): array
@@ -115,6 +122,7 @@ class GitHubMessages implements CollectorInterface
      * Get array of URL of attached images
      *
      * @param string $message
+     *
      * @return array
      * @throws Exception
      */
@@ -127,6 +135,7 @@ class GitHubMessages implements CollectorInterface
      * Get message body from github content
      *
      * @param array $message
+     *
      * @return bool|string
      */
     public function extractDescription($message): string
@@ -136,6 +145,7 @@ class GitHubMessages implements CollectorInterface
 
     /**
      * @param string $message
+     *
      * @return string
      */
     public function extractOrigin($message): string
@@ -145,6 +155,7 @@ class GitHubMessages implements CollectorInterface
 
     /**
      * @param array $message
+     *
      * @return string
      */
     public function extractTitle($message): string
@@ -154,6 +165,7 @@ class GitHubMessages implements CollectorInterface
 
     /**
      * @param string $message
+     *
      * @return string
      */
     public function extractLocation($message): string
@@ -163,6 +175,7 @@ class GitHubMessages implements CollectorInterface
 
     /**
      * @param string $message
+     *
      * @return array
      */
     public function extractTags($message): array
@@ -172,6 +185,7 @@ class GitHubMessages implements CollectorInterface
 
     /**
      * @param $message
+     *
      * @return string
      */
     public function extractUrl($message): string
@@ -182,6 +196,7 @@ class GitHubMessages implements CollectorInterface
 
     /**
      * @param $message
+     *
      * @return string
      */
     public function extractEmails($message): string

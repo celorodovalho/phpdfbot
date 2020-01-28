@@ -9,8 +9,9 @@ use App\Models\Group;
 use App\Notifications\Channels\TelegramChannel;
 use App\Services\TelegramMessage;
 use Illuminate\Bus\Queueable;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Collection as DatabaseCollection;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Collection;
 
 /**
  * Class GroupSummaryOpportunities
@@ -30,10 +31,10 @@ class GroupSummaryOpportunities extends Notification
     /**
      * SendOpportunity constructor.
      *
-     * @param Collection $opportunities
-     * @param Collection $channels
+     * @param DatabaseCollection $opportunities
+     * @param Collection         $channels
      */
-    public function __construct(Collection $opportunities, Collection $channels)
+    public function __construct(DatabaseCollection $opportunities, Collection $channels)
     {
         $this->opportunities = $opportunities;
         $this->channels = $channels;
@@ -46,7 +47,7 @@ class GroupSummaryOpportunities extends Notification
      *
      * @return array
      */
-    public function via($notifiable)
+    public function via($notifiable): array
     {
         return [
             TelegramChannel::class,
@@ -59,7 +60,7 @@ class GroupSummaryOpportunities extends Notification
      *
      * @return TelegramMessage
      */
-    public function toTelegram($group)
+    public function toTelegram($group): TelegramMessage
     {
         $telegramMessage = new TelegramMessage;
         if ($this->opportunities->isNotEmpty()) {
@@ -77,7 +78,7 @@ class GroupSummaryOpportunities extends Notification
             });
 
             $text = sprintf(
-                "[%s](%s)\n%s\n\n",
+                "[%s](%s)\n%s\n",
                 '🄿🄷🄿🄳🄵',
                 str_replace('/index.php', '', asset('/img/phpdf.webp')),
                 'Há novas vagas no canal!'

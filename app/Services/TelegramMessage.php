@@ -3,11 +3,13 @@
 namespace App\Services;
 
 use App\Helpers\BotHelper;
-use JsonSerializable;
 use App\Traits\HasSharedLogic;
+use JsonSerializable;
 
 /**
- * Class TelegramMessage.
+ * Class TelegramMessage
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class TelegramMessage implements JsonSerializable
 {

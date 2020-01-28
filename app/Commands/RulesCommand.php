@@ -7,6 +7,11 @@ use App\Models\Config;
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
 
+/**
+ * Class RulesCommand
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class RulesCommand extends Command
 {
     /**
@@ -22,7 +27,7 @@ class RulesCommand extends Command
     /**
      * @inheritdoc
      */
-    public function handle()
+    public function handle(): void
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 

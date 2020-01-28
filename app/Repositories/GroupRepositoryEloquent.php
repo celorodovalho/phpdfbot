@@ -8,9 +8,9 @@ use App\Contracts\Repositories\GroupRepository;
 use App\Models\Group;
 
 /**
- * Class GroupsRepositoryEloquent.
+ * Class GroupRepositoryEloquent
  *
- * @package namespace App\Repositories;
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class GroupRepositoryEloquent extends BaseRepository implements GroupRepository
 {
@@ -19,7 +19,7 @@ class GroupRepositoryEloquent extends BaseRepository implements GroupRepository
      *
      * @return string
      */
-    public function model()
+    public function model(): string
     {
         return Group::class;
     }
@@ -27,9 +27,8 @@ class GroupRepositoryEloquent extends BaseRepository implements GroupRepository
     /**
      * Boot up the repository, pushing criteria
      */
-    public function boot()
+    public function boot(): void
     {
         $this->pushCriteria(app(RequestCriteria::class));
     }
-
 }

@@ -4,6 +4,11 @@ namespace App\Contracts\Validation;
 
 use Illuminate\Contracts\Validation\ValidatesWhenResolved;
 
+/**
+ * Interface CreateUpdateInterface
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 interface CreateUpdateInterface extends ValidatesWhenResolved
 {
     /**

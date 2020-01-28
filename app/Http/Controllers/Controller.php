@@ -12,8 +12,9 @@ use Prettus\Validator\Contracts\ValidatorInterface;
 
 /**
  * Class Controller
+ *
  * @property RepositoryInterface|RepositoryCriteriaInterface $repository
- * @property ValidatorInterface $validator
+ * @property ValidatorInterface                              $validator
  */
 class Controller extends BaseController
 {

@@ -17,6 +17,7 @@ use App\Notifications\SendOpportunity;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Notifications\DatabaseNotification as Notification;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -46,7 +47,7 @@ class BotPopulateChannel extends Command
      */
     protected $description = 'Command to populate the channel with new content';
 
-    /** @var array */
+    /** @var Collection */
     protected $channels;
 
     /** @var array */
@@ -193,6 +194,7 @@ class BotPopulateChannel extends Command
             ['type', '=', GroupTypes::GROUP],
         ]);
 
+        /** @var Collection $groups */
         $groups = $allGroups->where('main', true);
 
         if ($opportunities->isNotEmpty() && $groups->isNotEmpty()) {
@@ -207,7 +209,7 @@ class BotPopulateChannel extends Command
                     ->first()
                     ->notifications()
                     ->where('type', SendOpportunity::class)
-                    ->where(static function ($query) use ($opportunitiesIds) {
+                    ->where(static function (Builder $query) use ($opportunitiesIds) {
                         foreach ($opportunitiesIds as $opportunityId) {
                             $query->orWhereJsonContains('data->opportunity', $opportunityId);
                         }

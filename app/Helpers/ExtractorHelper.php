@@ -6,12 +6,12 @@ use App\Enums\BrazilianStates;
 use App\Enums\Countries;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
 
 /**
- * Class HashTag
- * @package App\Helpers
+ * Class ExtractorHelper
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class ExtractorHelper
 {
@@ -21,6 +21,7 @@ class ExtractorHelper
      * Append the hashtags relatives the to content
      *
      * @param string $text
+     *
      * @return array
      */
     public static function extractTags(string $text): array
@@ -41,7 +42,8 @@ class ExtractorHelper
 
     /**
      * @param string $text
-     * @param array $words
+     * @param array  $words
+     *
      * @return array
      */
     public static function extractWords(string $text, array $words = []): array
@@ -60,6 +62,7 @@ class ExtractorHelper
 
     /**
      * @param string $text
+     *
      * @return array
      */
     public static function extractLocation(string $text): array
@@ -73,6 +76,7 @@ class ExtractorHelper
 
     /**
      * @param string $text
+     *
      * @return array
      */
     public static function extractUrls(string $text): array
@@ -85,6 +89,7 @@ class ExtractorHelper
 
     /**
      * @param string $text
+     *
      * @return array
      */
     public static function extractEmail(string $text): array
@@ -99,7 +104,8 @@ class ExtractorHelper
      * Check if text contains specific tag
      *
      * @param iterable $tags
-     * @param $text
+     * @param          $text
+     *
      * @return bool
      */
     public static function hasTags(iterable $tags, $text)

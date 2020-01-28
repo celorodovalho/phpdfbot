@@ -7,6 +7,11 @@ use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
 use Telegram\Bot\Keyboard\Keyboard;
 
+/**
+ * Class StartCommand
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class StartCommand extends Command
 {
     /**
@@ -22,7 +27,7 @@ class StartCommand extends Command
     /**
      * @inheritdoc
      */
-    public function handle()
+    public function handle(): void
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 

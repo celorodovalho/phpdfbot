@@ -6,7 +6,6 @@ use App\Enums\Callbacks;
 use App\Enums\GroupTypes;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
-use App\Helpers\SanitizerHelper;
 use App\Mail\SendOpportunity as Mailable;
 use App\Models\Group;
 use App\Models\Opportunity;
@@ -22,6 +21,8 @@ use Throwable;
 
 /**
  * Class SendOpportunity
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class SendOpportunity extends Notification
 {
@@ -30,17 +31,8 @@ class SendOpportunity extends Notification
     /** @var array */
     private $options;
 
-    /** @var string */
-    private $admin;
-
-    /** @var string */
-    private $botName;
-
     /** @var Opportunity */
     private $opportunity;
-
-    /** @var Converter */
-    private $markdown;
 
     /**
      * SendOpportunity constructor.
@@ -51,10 +43,7 @@ class SendOpportunity extends Notification
     public function __construct(Opportunity $opportunity, array $options = [])
     {
         $this->options = $options;
-        $this->admin = Config::get('telegram.admin');
-        $this->botName = Config::get('telegram.default');
         $this->opportunity = $opportunity;
-        $this->markdown = resolve(Converter::class);
     }
 
     /**
@@ -89,28 +78,23 @@ class SendOpportunity extends Notification
     {
         $telegramMessage = new TelegramMessage;
 
-        if ($this->admin === $group->name && Str::contains($this->opportunity->origin, [$this->botName])) {
-            $userNames = explode('|', $this->opportunity->origin);
-            $userName = end($userNames);
-            if (!blank($userName)) {
-                if (Str::contains($userName, ' ')) {
-                    $userMention = "[$userName](tg://user?id={$this->opportunity->telegram_user_id})";
-                } else {
-                    $userMention = '@' . $userName;
-                }
-                $this->opportunity->description .= "\n\nby $userMention";
-            }
-        }
+        $admin = Config::get('telegram.admin');
+        $botName = Config::get('telegram.default');
 
         $messageText = view('notifications.opportunity', [
             'opportunity' => $this->opportunity,
-            'isEmail' => false
+            'isEmail' => false,
+            'hasAuthor' => $admin === $group->name && Str::contains($this->opportunity->origin, [$botName])
         ])->render();
 
         if (strlen($messageText) > BotHelper::TELEGRAM_LIMIT) {
-            $messageText = str_split(
-                $messageText,
-                BotHelper::TELEGRAM_LIMIT - strlen("\n00/00\n")
+            $messageText = explode(
+                '%%%%%%%',
+                wordwrap(
+                    $messageText,
+                    (BotHelper::TELEGRAM_LIMIT - strlen("\n00/00\n")),
+                    '%%%%%%%'
+                )
             );
 
             $count = count($messageText);
@@ -123,7 +107,7 @@ class SendOpportunity extends Notification
             }
         }
 
-        if ($group->admin) {
+        if ($admin) {
             $telegramMessage->button(
                 Callbacks::APPROVE()->description,
                 null,
@@ -164,10 +148,13 @@ class SendOpportunity extends Notification
 
         $messageText = view('notifications.opportunity', [
             'opportunity' => $this->opportunity,
-            'isEmail' => true
+            'isEmail' => true,
+            'hasAuthor' => false,
         ])->render();
 
-        $messageText = $this->markdown->convertToHtml($messageText);
+        $markdown = resolve(Converter::class);
+
+        $messageText = $markdown->convertToHtml($messageText);
 
         $mailable->subject($this->opportunity->title)
             ->html($messageText);

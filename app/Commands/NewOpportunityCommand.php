@@ -7,6 +7,11 @@ use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
 use Telegram\Bot\Keyboard\Keyboard;
 
+/**
+ * Class NewOpportunityCommand
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class NewOpportunityCommand extends Command
 {
     public const TEXT = 'Envie o texto da vaga em resposta a essa mensagem!';
@@ -24,7 +29,7 @@ class NewOpportunityCommand extends Command
     /**
      * @inheritdoc
      */
-    public function handle()
+    public function handle(): void
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 

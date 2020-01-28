@@ -2,7 +2,6 @@
 
 namespace App\Exceptions;
 
-use App\Services\GmailService;
 use Exception;
 use GrahamCampbell\GitHub\GitHubManager;
 use Illuminate\Contracts\Container\Container;
@@ -17,6 +16,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
+/**
+ * Class Handler
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class Handler extends ExceptionHandler
 {
     /**
@@ -44,14 +48,14 @@ class Handler extends ExceptionHandler
     private $gitHubManager;
 
     /**
-     * @var GmailService
+     * Handler constructor.
+     *
+     * @param Container     $container
+     * @param GitHubManager $gitHubManager
      */
-    private $gmailService;
-
-    public function __construct(Container $container, GitHubManager $gitHubManager, GmailService $gmailService)
+    public function __construct(Container $container, GitHubManager $gitHubManager)
     {
         $this->gitHubManager = $gitHubManager;
-        $this->gmailService = $gmailService;
         parent::__construct($container);
     }
 
@@ -59,6 +63,7 @@ class Handler extends ExceptionHandler
      * Report or log an exception.
      *
      * @param Exception $exception
+     *
      * @return mixed|void
      * @throws Exception
      */
@@ -74,8 +79,9 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param Request $request
+     * @param Request    $request
      * @param \Exception $exception
+     *
      * @return Response
      */
     public function render($request, Exception $exception)
@@ -85,9 +91,9 @@ class Handler extends ExceptionHandler
 
     /**
      * @param OutputInterface $output
-     * @param Exception $exception
+     * @param Exception       $exception
      */
-    public function renderForConsole($output, Exception $exception)
+    public function renderForConsole($output, Exception $exception): void
     {
         $output->writeln('<error>Something wrong!</error>', 32);
         $output->writeln("<error>{$exception->getMessage()}</error>", 32);
@@ -102,8 +108,8 @@ class Handler extends ExceptionHandler
      * Generate a log on server, and send a notification to admin
      *
      * @param Exception $exception
-     * @param string $message
-     * @param null $context
+     * @param string    $message
+     * @param null      $context
      */
     public function log(Exception $exception, $message = '', $context = null): void
     {
@@ -131,7 +137,7 @@ class Handler extends ExceptionHandler
             $repo = env('GITHUB_REPO');
 
             $issues = $this->gitHubManager->search()->issues(
-                '"'.$exception->getMessage().'"+repo:'.$username.'/'.$repo
+                '"' . $exception->getMessage() . '"+repo:' . $username . '/' . $repo
             );
 
             $issueBody = sprintf(

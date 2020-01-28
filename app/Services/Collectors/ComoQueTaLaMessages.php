@@ -11,11 +11,15 @@ use DateTime;
 use DateTimeZone;
 use Exception;
 use Goutte\Client;
-use GrahamCampbell\GitHub\GitHubManager;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Config;
 use Symfony\Component\DomCrawler\Crawler;
 
+/**
+ * Class ComoQueTaLaMessages
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class ComoQueTaLaMessages implements CollectorInterface
 {
     /** @var Collection */
@@ -26,7 +30,8 @@ class ComoQueTaLaMessages implements CollectorInterface
 
     /**
      * ComoQueTaLaMessages constructor.
-     * @param Collection $opportunities
+     *
+     * @param Collection            $opportunities
      * @param OpportunityRepository $repository
      */
     public function __construct(
@@ -54,6 +59,7 @@ class ComoQueTaLaMessages implements CollectorInterface
 
     /**
      * @param array $message
+     *
      * @throws Exception
      */
     public function createOpportunity($message)
@@ -105,7 +111,8 @@ class ComoQueTaLaMessages implements CollectorInterface
                             ? $subCrawler->filter('.uk-container > .uk-grid-divider > .uk-width-1-1:last-child')->html()
                             : ''
                     ];
-                    $company = $node->filter('[itemprop="name"]')->count() ? $node->filter('[itemprop="name"]')->text() : '';
+                    $company = $node->filter('[itemprop="name"]')->count()
+                        ? $node->filter('[itemprop="name"]')->text() : '';
                     $location = trim($node->filter('[itemprop="addressLocality"]')->text()) . '/'
                         . trim($node->filter('[itemprop="addressRegion"]')->text());
 
@@ -126,6 +133,7 @@ class ComoQueTaLaMessages implements CollectorInterface
      * Get array of URL of attached images
      *
      * @param string $message
+     *
      * @return array
      * @throws Exception
      */
@@ -138,6 +146,7 @@ class ComoQueTaLaMessages implements CollectorInterface
      * Get message body from github content
      *
      * @param array $message
+     *
      * @return bool|string
      */
     public function extractDescription($message): string
@@ -147,6 +156,7 @@ class ComoQueTaLaMessages implements CollectorInterface
 
     /**
      * @param string $message
+     *
      * @return string
      */
     public function extractOrigin($message): string
@@ -156,6 +166,7 @@ class ComoQueTaLaMessages implements CollectorInterface
 
     /**
      * @param array $message
+     *
      * @return string
      */
     public function extractTitle($message): string
@@ -165,6 +176,7 @@ class ComoQueTaLaMessages implements CollectorInterface
 
     /**
      * @param string $message
+     *
      * @return string
      */
     public function extractLocation($message): string
@@ -174,6 +186,7 @@ class ComoQueTaLaMessages implements CollectorInterface
 
     /**
      * @param string $message
+     *
      * @return array
      */
     public function extractTags($message): array
@@ -183,6 +196,7 @@ class ComoQueTaLaMessages implements CollectorInterface
 
     /**
      * @param $message
+     *
      * @return string
      */
     public function extractUrl($message): string
@@ -193,6 +207,7 @@ class ComoQueTaLaMessages implements CollectorInterface
 
     /**
      * @param $message
+     *
      * @return string
      */
     public function extractEmails($message): string

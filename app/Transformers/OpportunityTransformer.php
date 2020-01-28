@@ -6,9 +6,9 @@ use League\Fractal\TransformerAbstract;
 use App\Models\Opportunity;
 
 /**
- * Class OpportunityTransformer.
+ * Class OpportunityTransformer
  *
- * @package namespace App\Transformers;
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class OpportunityTransformer extends TransformerAbstract
 {
@@ -22,7 +22,7 @@ class OpportunityTransformer extends TransformerAbstract
     public function transform(Opportunity $model)
     {
         return [
-            'id'         => (int) $model->id,
+            'id' => (int)$model->id,
 
             /* place your other model properties here */
 
