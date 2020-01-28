@@ -192,7 +192,7 @@ class BotPopulateChannel extends Command
 
         $allGroups = $this->groupRepository->findWhere([
             ['type', '=', GroupTypes::GROUP],
-            ['admin', '!=', false],
+            ['admin', '=', false],
         ]);
 
         /** @var Collection $groups */
