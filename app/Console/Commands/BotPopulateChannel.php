@@ -195,7 +195,9 @@ class BotPopulateChannel extends Command
         ]);
 
         /** @var Collection $groups */
-        $groups = $allGroups->where('main', true)->orWhere('admin', true);
+        $groups = $allGroups->filter(static function ($item) {
+            return $item->main || $item->admin;
+        });
 
         if ($opportunities->isNotEmpty() && $groups->isNotEmpty()) {
             $opportunitiesIds = $opportunities->pluck('id')->toArray();
