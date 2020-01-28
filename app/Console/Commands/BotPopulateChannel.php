@@ -241,7 +241,11 @@ class BotPopulateChannel extends Command
                             $lastNotification->markAsRead();
                         }
                     } catch (Exception $exception) {
-                        $this->error(implode(': ', ['Could not delete notification', $exception->getMessage()]));
+                        $this->error(implode(': ', [
+                            'Could not delete notification',
+                            $exception->getMessage(),
+                            $lastNotification
+                        ]));
                     }
                 }
             }
