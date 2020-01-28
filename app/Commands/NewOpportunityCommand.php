@@ -31,7 +31,7 @@ class NewOpportunityCommand extends Command
         $replyMarkup = Keyboard::forceReply();
 
         $this->replyWithMessage([
-            'parse_mode' => BotHelper::PARSE_MARKDOWN2,
+            'parse_mode' => BotHelper::PARSE_MARKDOWN,
             'text' => self::TEXT,
             'reply_markup' => $replyMarkup
         ]);

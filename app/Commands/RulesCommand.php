@@ -29,7 +29,7 @@ class RulesCommand extends Command
         $rules = Config::where('key', 'rules')->first();
 
         $this->replyWithMessage([
-            'parse_mode' => BotHelper::PARSE_MARKDOWN2,
+            'parse_mode' => BotHelper::PARSE_MARKDOWN,
             'text' => $rules
         ]);
     }

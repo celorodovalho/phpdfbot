@@ -31,7 +31,7 @@ class TelegramMessage implements JsonSerializable
     public function __construct(string $content = '')
     {
         $this->content($content);
-        $this->payload['parse_mode'] = BotHelper::PARSE_MARKDOWN2;
+        $this->payload['parse_mode'] = BotHelper::PARSE_MARKDOWN;
     }
 
     /**

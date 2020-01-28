@@ -6,6 +6,7 @@ use App\Enums\Callbacks;
 use App\Enums\GroupTypes;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
+use App\Helpers\SanitizerHelper;
 use App\Mail\SendOpportunity as Mailable;
 use App\Models\Group;
 use App\Models\Opportunity;
@@ -129,7 +130,7 @@ class SendOpportunity extends Notification
                 implode(' ', [Callbacks::APPROVE, $this->opportunity->id])
             );
             $telegramMessage->button(
-                Callbacks::APPROVE,
+                Callbacks::REMOVE()->description,
                 null,
                 implode(' ', [Callbacks::REMOVE, $this->opportunity->id])
             );

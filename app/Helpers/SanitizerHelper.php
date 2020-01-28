@@ -138,8 +138,8 @@ class SanitizerHelper
                 'linkedin.com/company/clube-de-vagas/',
                 'Cordialmente',
                 'Tiago Romualdo Souza',
-                '--',
                 'Com lisura,',
+                '[Profissão Futuro]',
             ];
 
             $message = html_entity_decode($message);
@@ -165,9 +165,16 @@ class SanitizerHelper
                 '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
             ], '`', $message);
 
-            $converter = new CommonMarkConverter();
+            $message = preg_replace('/([*_`]){2,}/m', '$1', $message);
+
+            $converter = new CommonMarkConverter([
+                'enable_em' => false,
+                'enable_strong' => false,
+            ]);
 
             $message = $converter->convertToHtml($message);
+
+            dump($message);
 
             $converter = new HtmlConverter([
                 'bold_style' => '*',
@@ -180,17 +187,16 @@ class SanitizerHelper
 
             $message = $converter->convert($message);
 
-            $message = preg_replace("/^# (.+)$/m", '`$1`', $message);
+            $message = preg_replace("/^(\\\)?# (.+)$/m", '`$1`', $message);
 
             $message = str_ireplace(['<3'], Emoji::blueHeart(), $message);
-            $message = preg_replace("/([#_`]){2,}/m", '$1', $message);
+            $message = preg_replace('/([#_`]){2,}/m', '$1', $message);
 
             $message = preg_replace('/([ \t])+/', ' ', $message);
             $message = preg_replace("/\s{2,}/m", "\n", $message);
 
 //            $message = preg_replace('/\s*$^\s*/m', "\n", $message);
 //            $message = preg_replace("/([\r\n])+/m", "\n", $message);
-//            $message = preg_replace("/\n{2,}/m", "\n", $message);
 
             $message = trim($message, " \t\n\r\0\x0B--");
 
@@ -200,7 +206,10 @@ class SanitizerHelper
             $message = preg_replace('/(.+)(chat\.whatsapp\.com\/)(.+)/m', 'http://bit.ly/phpdf-official', $message);
 
             $message = strip_tags($message);
+
+            $message = preg_replace("/(\n){2,}/im", "\n", $message);
         }
+        dump($message);
         return trim($message);
     }
 
@@ -245,5 +254,20 @@ class SanitizerHelper
     public static function removeEmptyTagsRecursive(string $str, string $repto = ''): string
     {
         return trim($str) === '' ? $str : preg_replace('/<([^<\/>]*)>([\s]*?|(?R))<\/\1>/imsU', $repto, $str);
+    }
+
+    /**
+     * Escape Telegram Markdown version 2
+     *
+     * @param string $text
+     *
+     * @return string
+     */
+    public static function escapeV2Characters(string $text): string
+    {
+        $escapedStrings = array_map(static function ($string) {
+            return '\\' . $string;
+        }, self::TELEGRAM_CHARACTERS);
+        return str_ireplace(self::TELEGRAM_CHARACTERS, $escapedStrings, $text);
     }
 }
