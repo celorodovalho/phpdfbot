@@ -148,7 +148,7 @@ class GMailMessages implements CollectorInterface
         $messageService->unread();
 
         $messages = $messageService->preload()->all();
-        return $messages->reject(static function (Mail $message) {
+        return $messages->reject(function (Mail $message) {
             return in_array($this->gMailService->user(), $message->getFrom(), true);
         });
     }
