@@ -192,11 +192,10 @@ class BotPopulateChannel extends Command
 
         $allGroups = $this->groupRepository->findWhere([
             ['type', '=', GroupTypes::GROUP],
-            ['admin', '=', false],
         ]);
 
         /** @var Collection $groups */
-        $groups = $allGroups->where('main', true);
+        $groups = $allGroups->where('main', true)->orWhere('admin', true);
 
         if ($opportunities->isNotEmpty() && $groups->isNotEmpty()) {
             $opportunitiesIds = $opportunities->pluck('id')->toArray();
@@ -226,7 +225,7 @@ class BotPopulateChannel extends Command
                     return $opportunity;
                 });
 
-                $allChannels = $this->channels->concat($allGroups);
+                $allChannels = $this->channels->concat($allGroups->where('admin', '=', false));
                 $group->notify(new GroupSummaryOpportunities($opportunities, $allChannels));
 
                 /** @var Notification $lastNotification */
