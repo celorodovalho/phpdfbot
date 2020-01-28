@@ -30,7 +30,7 @@ class OptionsCommand extends Command
     /**
      * @inheritdoc
      */
-    public function handle(): void
+    public function handle()
     {
         Log::info('OPTIONS_COMMAND', [$this->arguments, $this->getArguments()]);
 
