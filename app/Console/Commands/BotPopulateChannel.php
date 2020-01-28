@@ -211,7 +211,8 @@ class BotPopulateChannel extends Command
                     ->where('type', SendOpportunity::class)
                     ->where(static function (Builder $query) use ($opportunitiesIds) {
                         foreach ($opportunitiesIds as $opportunityId) {
-                            $query->orWhereJsonContains('data->opportunity', $opportunityId);
+                            //$query->orWhereJsonContains('data->opportunity', $opportunityId);
+                            $query->where('data', 'like', '%"opportunity":' . $opportunityId . '%');
                         }
                     })
                     ->pluck('data')
