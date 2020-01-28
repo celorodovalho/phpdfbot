@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Models\Group;
 use Exception;
 use GrahamCampbell\GitHub\GitHubManager;
 use Illuminate\Contracts\Container\Container;
@@ -185,9 +186,11 @@ class Handler extends ExceptionHandler
         } catch (Exception $exception2) {
             Log::error('EXC2', [$exception2]);
             try {
+                /** @todo remover isso */
+                $group = Group::where('admin', true)->first();
                 /** @todo Usar DI ao inves de static */
                 Telegram::sendDocument([
-                    'chat_id' => Config::get('telegram.admin'),
+                    'chat_id' => $group->name,
                     'document' => InputFile::create($referenceLog),
                     'caption' => $logMessage
                 ]);

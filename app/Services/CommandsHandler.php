@@ -10,6 +10,7 @@ use App\Exceptions\TelegramOpportunityException;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\SanitizerHelper;
+use App\Models\Group;
 use App\Models\Opportunity;
 use Exception;
 use Illuminate\Support\Facades\Artisan;
@@ -141,8 +142,10 @@ class CommandsHandler
                 break;
         }
         try {
+            /** @todo remover isso */
+            $group = Group::where('admin', true)->first();
             $this->telegram->deleteMessage([
-                'chat_id' => Config::get('telegram.admin'),
+                'chat_id' => $group->name,
                 'message_id' => $callbackQuery->message->messageId
             ]);
         } catch (TelegramResponseException $exception) {

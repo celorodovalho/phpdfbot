@@ -78,13 +78,12 @@ class SendOpportunity extends Notification
     {
         $telegramMessage = new TelegramMessage;
 
-        $admin = Config::get('telegram.admin');
         $botName = Config::get('telegram.default');
 
         $messageText = view('notifications.opportunity', [
             'opportunity' => $this->opportunity,
             'isEmail' => false,
-            'hasAuthor' => $admin === $group->name && Str::contains($this->opportunity->origin, [$botName])
+            'hasAuthor' => $group->admin && Str::contains($this->opportunity->origin, [$botName])
         ])->render();
 
         if (strlen($messageText) > BotHelper::TELEGRAM_LIMIT) {
@@ -107,7 +106,7 @@ class SendOpportunity extends Notification
             }
         }
 
-        if ($admin) {
+        if ($group->admin) {
             $telegramMessage->button(
                 Callbacks::APPROVE()->description,
                 null,
