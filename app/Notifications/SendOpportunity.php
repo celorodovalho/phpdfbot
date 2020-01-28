@@ -142,8 +142,7 @@ class SendOpportunity extends Notification
         if (!Str::contains($this->opportunity->origin, $group->name) &&
             (blank($group->tags) || ExtractorHelper::hasTags($group->tags, $this->opportunity->getText()))
         ) {
-            dump($group->name);
-            $mailable->to('phpdfbot+teste@gmail.com');
+            $mailable->to($group->name);
         }
 
         $messageText = view('notifications.opportunity', [
