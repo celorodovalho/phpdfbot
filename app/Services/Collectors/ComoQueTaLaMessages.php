@@ -76,7 +76,7 @@ class ComoQueTaLaMessages implements CollectorInterface
                 Opportunity::LOCATION => $this->extractLocation($description . $message[Opportunity::LOCATION]),
                 Opportunity::TAGS => $this->extractTags($title . $description . $message[Opportunity::LOCATION]),
                 Opportunity::SALARY => $this->extractSalary($title . $description),
-                Opportunity::URL => $this->extractUrl($description . $message[Opportunity::URL]),
+                Opportunity::URL => $this->extractUrl($description . ' ' . $message[Opportunity::URL]),
                 Opportunity::ORIGIN => $this->extractOrigin($description),
                 Opportunity::EMAILS => $this->extractEmails($description),
             ]
