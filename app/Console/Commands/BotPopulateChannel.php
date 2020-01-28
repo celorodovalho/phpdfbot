@@ -238,7 +238,6 @@ class BotPopulateChannel extends Command
                                 'chat_id' => $group->name,
                                 'message_id' => $lastNotification->data['telegram_id']
                             ]);
-                            $lastNotification->markAsRead();
                         }
                     } catch (Exception $exception) {
                         $this->error(implode(': ', [
@@ -247,6 +246,7 @@ class BotPopulateChannel extends Command
                             $lastNotification
                         ]));
                     }
+                    $lastNotification->markAsRead();
                 }
             }
 
