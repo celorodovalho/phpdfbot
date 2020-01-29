@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use App\Contracts\Repositories\UserRepository;
 use App\Helpers\BotHelper;
+use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
 use Telegram\Bot\Keyboard\Keyboard;
@@ -50,9 +51,6 @@ class StartCommand extends Command
 //                . ' ' . $this->update->getMessage()->from->lastName;
         }
 
-        /** @var TelegramUser $newMembers */
-        $newMembers = $message->newChatMembers;
-
 //        $keyboard = Keyboard::make()
 //            ->inline()
 //            ->row(
@@ -74,17 +72,17 @@ class StartCommand extends Command
 
         $this->triggerCommand('help');
 
-        if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE && filled($newMembers) && $newMembers->isNotEmpty()) {
-            $newMembers->each(function (TelegramUser $newMember) {
-                $this->userRepository->updateOrCreate([
-                    'id' => $newMember->id,
-                    'username' => $newMember->username,
-                    'is_bot' => $newMember->isBot,
-                    'first_name' => $newMember->firstName,
-                    'last_name' => $newMember->lastName,
-                    'language_code' => $newMember->languageCode,
-                ]);
-            });
+        if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE) {
+            $telegramUser = $message->from;
+            $user = $this->userRepository->firstOrCreate([
+                'id' => $telegramUser->id,
+                'username' => $telegramUser->username,
+                'is_bot' => $telegramUser->isBot,
+                'first_name' => $telegramUser->firstName,
+                'last_name' => $telegramUser->lastName,
+                'language_code' => $telegramUser->languageCode,
+            ]);
+            Log::info('USER_CREATED', [$user]);
         }
     }
 }
