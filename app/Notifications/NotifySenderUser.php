@@ -56,7 +56,9 @@ class NotifySenderUser extends Notification
         $telegramMessage = new TelegramMessage;
         if ($notifiable->telegram_user_id) {
             /** @var DatabaseNotification $notification */
-            $notification = $this->group->notifications()->where('data->opportunity', $notifiable->id)->first();
+//            $notification = $this->group->notifications()->where('data->opportunity', $notifiable->id)->first();
+            $notification = $this->group->notifications()
+                ->where('data', 'like', '%"opportunity":' . $notifiable->id . '%')->first();
             $telegramIds = $notification->data['telegram_ids'];
             $link = sprintf('https://t.me/%s/%s', $this->group->title, reset($telegramIds));
             $telegramMessage
