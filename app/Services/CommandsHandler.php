@@ -263,7 +263,7 @@ class CommandsHandler
         }
 
         // TODO: Think more about this
-        if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE && $newMembers->isNotEmpty()) {
+        if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE && filled($newMembers) && $newMembers->isNotEmpty()) {
             $newMembers->each(function (TelegramUser $newMember) {
                 $this->userRepository->updateOrCreate([
                     'id' => $newMember->id,
