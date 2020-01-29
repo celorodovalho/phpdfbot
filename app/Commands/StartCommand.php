@@ -82,7 +82,7 @@ class StartCommand extends Command
                 'last_name' => $telegramUser->lastName,
                 'language_code' => $telegramUser->languageCode,
             ]);
-            Log::info('USER_CREATED', [$user]);
+            Log::info('USER_CREATED_StartCommand', [$user]);
         }
     }
 }

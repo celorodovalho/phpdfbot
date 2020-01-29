@@ -199,7 +199,21 @@ class CommandsHandler
             'PHOTOS' => $photos,
             'DOCUMENT' => $document,
             'CAPTION' => $caption,
+            'NEW_MEMBERS' => $newMembers,
         ]);
+
+        if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE) {
+            $telegramUser = $message->from;
+            $user = $this->userRepository->firstOrCreate([
+                'id' => $telegramUser->id,
+                'username' => $telegramUser->username,
+                'is_bot' => $telegramUser->isBot,
+                'first_name' => $telegramUser->firstName,
+                'last_name' => $telegramUser->lastName,
+                'language_code' => $telegramUser->languageCode,
+            ]);
+            Log::info('USER_CREATED_processMessage', [$user]);
+        }
 
         if (((filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT)
                 || (!$message->from->isBot && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE))
@@ -255,11 +269,6 @@ class CommandsHandler
             $opportunity->save();
 
             $this->sendOpportunityToApproval($opportunity);
-        }
-
-
-        if (filled($newMembers)) {
-            Log::info('NEW_MEMBER', [$newMembers]);
         }
 
         // TODO: Think more about this
