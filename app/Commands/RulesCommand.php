@@ -2,10 +2,16 @@
 
 namespace App\Commands;
 
+use App\Helpers\BotHelper;
 use App\Models\Config;
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
 
+/**
+ * Class RulesCommand
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class RulesCommand extends Command
 {
     /**
@@ -21,14 +27,14 @@ class RulesCommand extends Command
     /**
      * @inheritdoc
      */
-    public function handle()
+    public function handle(): void
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
         $rules = Config::where('key', 'rules')->first();
 
         $this->replyWithMessage([
-            'parse_mode' => 'Markdown',
+            'parse_mode' => BotHelper::PARSE_MARKDOWN,
             'text' => $rules
         ]);
     }

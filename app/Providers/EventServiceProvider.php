@@ -2,11 +2,17 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Event;
+use App\Events\Listeners\RegisterNotificationIdentification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Illuminate\Notifications\Events\NotificationSent;
 
+/**
+ * Class EventServiceProvider
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class EventServiceProvider extends ServiceProvider
 {
     /**
@@ -15,11 +21,11 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
-        'App\Events\Event' => [
-            'App\Listeners\EventListener',
-        ],
         Registered::class => [
             SendEmailVerificationNotification::class,
+        ],
+        NotificationSent::class => [
+            RegisterNotificationIdentification::class,
         ],
     ];
 
@@ -31,7 +37,5 @@ class EventServiceProvider extends ServiceProvider
     public function boot()
     {
         parent::boot();
-
-        //
     }
 }

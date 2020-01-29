@@ -3,13 +3,14 @@
 namespace App\Services;
 
 use App\Commands\NewOpportunityCommand;
-use App\Commands\OptionsCommand;
-use App\Console\Commands\BotPopulateChannel;
 use App\Contracts\Repositories\OpportunityRepository;
+use App\Enums\Arguments;
+use App\Enums\Callbacks;
 use App\Exceptions\TelegramOpportunityException;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\SanitizerHelper;
+use App\Models\Group;
 use App\Models\Opportunity;
 use Exception;
 use Illuminate\Support\Facades\Artisan;
@@ -29,6 +30,8 @@ use Telegram\Bot\Objects\Update;
 
 /**
  * Class CommandsHandler
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class CommandsHandler
 {
@@ -48,8 +51,9 @@ class CommandsHandler
 
     /**
      * CommandsHandler constructor.
-     * @param BotsManager $botsManager
-     * @param string $botName
+     *
+     * @param BotsManager                               $botsManager
+     * @param string                                    $botName
      * @param OpportunityRepository|RepositoryInterface $repository
      */
     public function __construct(
@@ -66,6 +70,7 @@ class CommandsHandler
      * Process the update coming from bot interface
      *
      * @param Update $update
+     *
      * @return mixed
      * @throws TelegramSDKException
      */
@@ -89,8 +94,6 @@ class CommandsHandler
             }
         } catch (TelegramOpportunityException $exception) {
             $this->sendMessage($exception->getMessage());
-        } catch (Exception $exception) {
-            throw $exception;
         }
     }
 
@@ -98,6 +101,7 @@ class CommandsHandler
      * Process the Callback query coming from bot interface
      *
      * @param CallbackQuery $callbackQuery
+     *
      * @throws TelegramSDKException
      */
     private function processCallbackQuery(CallbackQuery $callbackQuery): void
@@ -109,27 +113,25 @@ class CommandsHandler
             $opportunity = $this->repository->find($data[1]);
         }
         switch ($data[0]) {
-            case Opportunity::CALLBACK_APPROVE:
+            case Callbacks::APPROVE:
                 if ($opportunity) {
-                    $opportunity->status = Opportunity::STATUS_ACTIVE;
-                    $opportunity->save();
                     Artisan::call(
                         'bot:populate:channel',
                         [
-                            'type' => BotPopulateChannel::TYPE_SEND,
+                            'type' => Arguments::SEND,
                             'opportunity' => $opportunity->id
                         ]
                     );
                     $this->sendMessage(Artisan::output());
                 }
                 break;
-            case Opportunity::CALLBACK_REMOVE:
+            case Callbacks::REMOVE:
                 if ($opportunity) {
                     $opportunity->delete();
                 }
                 break;
-            case OptionsCommand::OPTIONS_COMMAND:
-                if (in_array($data[1], [BotPopulateChannel::TYPE_PROCESS, BotPopulateChannel::TYPE_NOTIFY], true)) {
+            case Callbacks::OPTIONS:
+                if (in_array($data[1], [Arguments::PROCESS, Arguments::NOTIFY], true)) {
                     Artisan::call('bot:populate:channel', ['type' => $data[1]]);
                     $this->sendMessage(Artisan::output());
                 }
@@ -140,8 +142,10 @@ class CommandsHandler
                 break;
         }
         try {
+            /** @todo remover isso */
+            $group = Group::where('admin', true)->first();
             $this->telegram->deleteMessage([
-                'chat_id' => Config::get('telegram.admin'),
+                'chat_id' => $group->name,
                 'message_id' => $callbackQuery->message->messageId
             ]);
         } catch (TelegramResponseException $exception) {
@@ -153,9 +157,10 @@ class CommandsHandler
              * Bots can delete outgoing messages in groups and supergroups.
              * Bots granted can_post_messages permissions can delete outgoing messages in channels.
              * If the bot is an administrator of a group, it can delete any message there.
-             * If the bot has can_delete_messages permission in a supergroup or a channel, it can delete any message there. Returns True on success.
+             * If the bot has can_delete_messages permission in a supergroup or a channel,
+             * it can delete any message there. Returns True on success.
              */
-            if ($exception->getCode() != 400) {
+            if ($exception->getCode() !== 400) {
                 throw $exception;
             }
         }
@@ -165,6 +170,7 @@ class CommandsHandler
      * Process the messages coming from bot interface
      *
      * @param Message $message
+     *
      * @throws Exception|TelegramOpportunityException
      */
     private function processMessage(Message $message): void
@@ -185,12 +191,9 @@ class CommandsHandler
         Log::info('DOCUMENT', [$document]);
         Log::info('CAPTION', [$caption]);
 
-        if (
-            (
-                (filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT) ||
-                (!$message->from->isBot && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE)
-            ) &&
-            !in_array($message->text, $this->telegram->getCommands(), true)
+        if (((filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT)
+                || (!$message->from->isBot && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE))
+            && !in_array($message->text, $this->telegram->getCommands(), true)
         ) {
             if (blank($message->text) && blank($caption)) {
                 throw new TelegramOpportunityException(
@@ -262,16 +265,19 @@ class CommandsHandler
      * Send opportunity to approval
      *
      * @param Opportunity $opportunity
+     *
+     * @throws TelegramSDKException
      */
     private function sendOpportunityToApproval(Opportunity $opportunity): void
     {
         Artisan::call(
             'bot:populate:channel',
             [
-                'type' => BotPopulateChannel::TYPE_APPROVAL,
+                'type' => Arguments::APPROVAL,
                 'opportunity' => $opportunity->id,
             ]
         );
+        $this->sendMessage('A vaga foi enviada para aprovação. Você receberá uma confirmação assim que for aprovada!');
     }
 
     /**
@@ -308,9 +314,10 @@ class CommandsHandler
 
     /**
      * @param $message
+     *
      * @throws TelegramSDKException
      */
-    private function sendMessage($message)
+    private function sendMessage($message): void
     {
         if (filled($message)) {
             $this->telegram->sendMessage([

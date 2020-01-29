@@ -4,6 +4,11 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Class OpportunityUpdateRequest
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class OpportunityUpdateRequest extends FormRequest
 {
     /**

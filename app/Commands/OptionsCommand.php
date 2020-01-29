@@ -2,20 +2,25 @@
 
 namespace App\Commands;
 
+use App\Enums\Arguments;
+use App\Enums\Callbacks;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
 use Telegram\Bot\Keyboard\Keyboard;
-use App\Console\Commands\BotPopulateChannel;
 
+/**
+ * Class OptionsCommand
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class OptionsCommand extends Command
 {
-    public const OPTIONS_COMMAND = 'options';
 
     /**
      * @var string Command Name
      */
-    protected $name = self::OPTIONS_COMMAND;
+    protected $name = Callbacks::OPTIONS;
 
     /**
      * @var string Command Description
@@ -42,11 +47,11 @@ class OptionsCommand extends Command
             ->row(
                 Keyboard::inlineButton([
                     'text' => 'Notificar Grupo',
-                    'callback_data' => $this->name . ' ' . BotPopulateChannel::TYPE_NOTIFY
+                    'callback_data' => $this->name . ' ' . Arguments::NOTIFY
                 ]),
                 Keyboard::inlineButton([
                     'text' => 'Realizar Coleta',
-                    'callback_data' => $this->name . ' ' . BotPopulateChannel::TYPE_PROCESS
+                    'callback_data' => $this->name . ' ' . Arguments::PROCESS
                 ])
             );
 

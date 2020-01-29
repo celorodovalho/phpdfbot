@@ -13,9 +13,9 @@ use Prettus\Validator\Contracts\ValidatorInterface;
 use Prettus\Validator\Exceptions\ValidatorException;
 
 /**
- * Class OpportunitiesController.
+ * Class OpportunityController
  *
- * @package namespace App\Http\Controllers\Api;
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class OpportunityController extends ApiController
 {
@@ -24,7 +24,7 @@ class OpportunityController extends ApiController
      * OpportunityController constructor.
      *
      * @param OpportunityRepository $repository
-     * @param OpportunityValidator $validator
+     * @param OpportunityValidator  $validator
      */
     public function __construct(OpportunityRepository $repository, OpportunityValidator $validator)
     {
@@ -42,7 +42,6 @@ class OpportunityController extends ApiController
         $opportunities = $this->repository->all();
 
         if (request()->wantsJson()) {
-
             return response()->json([
                 'data' => $opportunities,
             ]);
@@ -61,7 +60,6 @@ class OpportunityController extends ApiController
     public function store(OpportunityCreateRequest $request)
     {
         try {
-
             $this->validator->with($request->all())->passesOrFail(ValidatorInterface::RULE_CREATE);
 
             $opportunity = $this->repository->create($request->all());
@@ -72,7 +70,6 @@ class OpportunityController extends ApiController
             ];
 
             if ($request->wantsJson()) {
-
                 return response()->json($response);
             }
 
@@ -101,7 +98,6 @@ class OpportunityController extends ApiController
         $opportunity = $this->repository->find($id);
 
         if (request()->wantsJson()) {
-
             return response()->json([
                 'data' => $opportunity,
             ]);
@@ -128,14 +124,13 @@ class OpportunityController extends ApiController
      * Update the specified resource in storage.
      *
      * @param OpportunityUpdateRequest $request
-     * @param string $id
+     * @param string                   $id
      *
      * @return Response
      */
     public function update(OpportunityUpdateRequest $request, $id)
     {
         try {
-
             $this->validator->with($request->all())->passesOrFail(ValidatorInterface::RULE_UPDATE);
 
             $opportunity = $this->repository->update($request->all(), $id);
@@ -152,9 +147,7 @@ class OpportunityController extends ApiController
 
             return redirect()->back()->with('message', $response['message']);
         } catch (ValidatorException $e) {
-
             if ($request->wantsJson()) {
-
                 return response()->json([
                     'error' => true,
                     'message' => $e->getMessageBag()
@@ -178,7 +171,6 @@ class OpportunityController extends ApiController
         $deleted = $this->repository->delete($id);
 
         if (request()->wantsJson()) {
-
             return response()->json([
                 'message' => 'Opportunity deleted.',
                 'deleted' => $deleted,

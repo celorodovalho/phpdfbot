@@ -6,9 +6,9 @@ use \Prettus\Validator\Contracts\ValidatorInterface;
 use \Prettus\Validator\LaravelValidator;
 
 /**
- * Class OpportunityValidator.
+ * Class OpportunityValidator
  *
- * @package namespace App\Validators;
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class OpportunityValidator extends LaravelValidator
 {

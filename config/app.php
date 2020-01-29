@@ -182,6 +182,7 @@ return [
         Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class,
         JD\Cloudder\CloudderServiceProvider::class,
         GrahamCampbell\GitHub\GitHubServiceProvider::class,
+        Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::class,
     ],
 
     /*

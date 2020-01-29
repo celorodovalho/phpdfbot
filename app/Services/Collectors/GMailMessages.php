@@ -3,7 +3,9 @@
 namespace App\Services\Collectors;
 
 use App\Contracts\CollectorInterface;
+use App\Contracts\Repositories\GroupRepository;
 use App\Contracts\Repositories\OpportunityRepository;
+use App\Enums\GroupTypes;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\Helper;
 use App\Helpers\SanitizerHelper;
@@ -17,6 +19,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use JD\Cloudder\CloudinaryWrapper;
@@ -24,6 +27,8 @@ use JD\Cloudder\Facades\Cloudder;
 
 /**
  * Class GMailMessages
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class GMailMessages implements CollectorInterface
 {
@@ -42,21 +47,29 @@ class GMailMessages implements CollectorInterface
 
     /** @var OpportunityRepository */
     private $repository;
+    /**
+     * @var GroupRepository
+     */
+    private $groupRepository;
 
     /**
      * GMailMessages constructor.
-     * @param Collection $opportunities
-     * @param GmailService $gMailService
+     *
+     * @param Collection            $opportunities
+     * @param GmailService          $gMailService
      * @param OpportunityRepository $repository
+     * @param GroupRepository       $groupRepository
      */
     public function __construct(
         Collection $opportunities,
         GmailService $gMailService,
-        OpportunityRepository $repository
+        OpportunityRepository $repository,
+        GroupRepository $groupRepository
     ) {
         $this->gMailService = $gMailService;
         $this->opportunities = $opportunities;
         $this->repository = $repository;
+        $this->groupRepository = $groupRepository;
     }
 
     /**
@@ -81,6 +94,7 @@ class GMailMessages implements CollectorInterface
 
     /**
      * @param Mail $message
+     *
      * @throws Exception
      */
     public function createOpportunity($message)
@@ -114,18 +128,18 @@ class GMailMessages implements CollectorInterface
     {
         $messageService = $this->gMailService->message();
 
-        $words = '{' . implode(' ', array_map(function ($word) {
-                return Str::contains($word, ' ') ? '"' . $word . '"' : $word;
-            }, Config::get('constants.requiredWords'))) . '}';
+        $words = '{' . implode(' ', array_map(static function ($word) {
+            return Str::contains($word, ' ') ? '"' . $word . '"' : $word;
+        }, Config::get('constants.requiredWords'))) . '}';
 
         $messageService->add($words);
 
-        $groups = array_keys(Config::get('constants.mailing'));
+        $mailing = $this->groupRepository->findWhere([['type', '=', GroupTypes::MAILING]]);
         $fromTo = [];
-        foreach ($groups as $group) {
-            $fromTo[] = 'list:' . $group;
-            $fromTo[] = 'to:' . $group;
-            $fromTo[] = 'bcc:' . $group;
+        foreach ($mailing as $group) {
+            $fromTo[] = 'list:' . $group->name;
+            $fromTo[] = 'to:' . $group->name;
+            $fromTo[] = 'bcc:' . $group->name;
         }
 
         $fromTo = '{' . implode(' ', $fromTo) . '}';
@@ -143,6 +157,7 @@ class GMailMessages implements CollectorInterface
      * Get array of URL for attachments files
      *
      * @param Mail $message
+     *
      * @return array
      * @throws Exception
      */
@@ -173,7 +188,7 @@ class GMailMessages implements CollectorInterface
                         );
                         $files[] = $fileUrl;
                     } catch (Exception $exception) {
-                        $this->error($exception->getMessage());
+                        Log::error(__CLASS__, [$exception]);
                     }
                 }
             }
@@ -185,6 +200,7 @@ class GMailMessages implements CollectorInterface
      * Get message body from GMail content
      *
      * @param Mail $message
+     *
      * @return bool|string
      */
     public function extractDescription($message): string
@@ -205,12 +221,13 @@ class GMailMessages implements CollectorInterface
 
     /**
      * @param Mail $message
+     *
      * @return string
      */
     public function extractOrigin($message): string
     {
         $to = $message->getTo();
-        $to = array_map(function ($item) {
+        $to = array_map(static function ($item) {
             return $item['email'];
         }, $to);
         return strtolower(json_encode($to));
@@ -218,6 +235,7 @@ class GMailMessages implements CollectorInterface
 
     /**
      * @param Mail $message
+     *
      * @return string
      */
     public function extractTitle($message): string
@@ -227,6 +245,7 @@ class GMailMessages implements CollectorInterface
 
     /**
      * @param $message
+     *
      * @return string
      */
     public function extractLocation($message): string
@@ -236,6 +255,7 @@ class GMailMessages implements CollectorInterface
 
     /**
      * @param $message
+     *
      * @return array
      */
     public function extractTags($message): array
@@ -245,6 +265,7 @@ class GMailMessages implements CollectorInterface
 
     /**
      * @param $message
+     *
      * @return string
      */
     public function extractUrl($message): string
@@ -255,6 +276,7 @@ class GMailMessages implements CollectorInterface
 
     /**
      * @param $message
+     *
      * @return string
      */
     public function extractEmails($message): string

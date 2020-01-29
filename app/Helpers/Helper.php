@@ -7,7 +7,8 @@ use Illuminate\Support\Traits\Macroable;
 
 /**
  * Class Helper
- * @package App\Helpers
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class Helper
 {
@@ -17,6 +18,7 @@ class Helper
      * Base64 encode URL safe
      *
      * @param string $data
+     *
      * @return string
      */
     public static function base64UrlEncode(string $data): string
@@ -28,6 +30,7 @@ class Helper
      * Base64 URL safe decode
      *
      * @param string $data
+     *
      * @return string
      */
     public static function base64UrlDecode(string $data): string
@@ -39,13 +42,14 @@ class Helper
      * Returns the classes that implement specific interface
      *
      * @param string $interface
+     *
      * @return array
      */
     public static function getImplementations(string $interface): array
     {
         $classes = [];
         foreach (get_declared_classes() as $className) {
-            if(Str::contains($className, 'Message')) {
+            if (Str::contains($className, 'Message')) {
                 dump([$interface, $className]);
             }
             if (in_array($interface, class_implements($className), true)) {
@@ -57,6 +61,7 @@ class Helper
 
     /**
      * @param string $namespace
+     *
      * @return array
      */
     public static function getNamespaceClasses(string $namespace): array
@@ -64,8 +69,25 @@ class Helper
         $composer = require base_path('/vendor/autoload.php');
 
         $namespaces = array_keys($composer->getClassMap());
-        return array_filter($namespaces, function($item) use ($namespace) {
+        return array_filter($namespaces, function ($item) use ($namespace) {
             return Str::startsWith($item, $namespace);
         });
+    }
+
+    /**
+     * Reduces a string without breaking the words
+     *
+     * @param string $string
+     * @param int    $limit
+     * @param string $end
+     *
+     * @return mixed
+     */
+    public static function excerpt(string $string, int $limit = 100, string $end = '...'): string
+    {
+        $limit -= strlen($end);
+        $array = explode("\n", wordwrap($string, $limit));
+        $string = reset($array);
+        return $string . (strlen($string) < $limit ? '' : $end);
     }
 }

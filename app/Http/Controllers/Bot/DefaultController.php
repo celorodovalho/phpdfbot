@@ -14,6 +14,8 @@ use Telegram\Bot\Exceptions\TelegramSDKException;
 
 /**
  * Class DefaultController
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class DefaultController extends Controller
 {
@@ -35,11 +37,12 @@ class DefaultController extends Controller
 
     /**
      * DefaultController constructor.
-     * @param BotsManager $botsManager
-     * @param Telegram $telegram
-     * @param Handler $handler
+     *
+     * @param BotsManager           $botsManager
+     * @param Telegram              $telegram
+     * @param Handler               $handler
      * @param OpportunityRepository $repository
-     * @param OpportunityValidator $validator
+     * @param OpportunityValidator  $validator
      */
     public function __construct(
         BotsManager $botsManager,
@@ -58,6 +61,7 @@ class DefaultController extends Controller
      * Set the webhook to the bots
      *
      * @param $botName
+     *
      * @return string
      * @throws TelegramSDKException
      */
@@ -86,6 +90,7 @@ class DefaultController extends Controller
      *
      * @param $token
      * @param $botName
+     *
      * @return string
      */
     public function webhook($token, $botName): string

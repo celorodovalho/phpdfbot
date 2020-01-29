@@ -3,44 +3,35 @@
 namespace App\Console\Commands;
 
 use App\Contracts\CollectorInterface;
+use App\Contracts\Repositories\GroupRepository;
 use App\Contracts\Repositories\OpportunityRepository;
-use App\Helpers\BotHelper;
+use App\Enums\Arguments;
+use App\Enums\GroupTypes;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\Helper;
-use App\Helpers\SanitizerHelper;
-use App\Models\Notification;
+use App\Models\Group;
 use App\Models\Opportunity;
-use App\Notifications\PublishedOpportunity;
-use App\Transformers\FormattedOpportunityTransformer;
-use Dacastro4\LaravelGmail\Services\Message\Mail;
+use App\Notifications\GroupSummaryOpportunities;
+use App\Notifications\NotifySenderUser;
+use App\Notifications\SendOpportunity;
 use Exception;
-use GrahamCampbell\Markdown\Facades\Markdown;
+use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Notifications\ChannelManager;
+use Illuminate\Notifications\DatabaseNotification as Notification;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use Spatie\Emoji\Emoji;
+use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
-use Telegram\Bot\Exceptions\TelegramResponseException;
-use Telegram\Bot\Exceptions\TelegramSDKException;
-use Telegram\Bot\Keyboard\Keyboard;
 
 /**
  * Class BotPopulateChannel
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
-class BotPopulateChannel extends AbstractCommand
+class BotPopulateChannel extends Command
 {
-
-    /**
-     * Commands
-     */
-    public const TYPE_NOTIFY = 'notify';
-    public const TYPE_PROCESS = 'process';
-    public const TYPE_SEND = 'send';
-    public const TYPE_APPROVAL = 'approval';
 
     /**
      * The name and signature of the console command.
@@ -56,27 +47,8 @@ class BotPopulateChannel extends AbstractCommand
      */
     protected $description = 'Command to populate the channel with new content';
 
-    /**
-     * The name of bot of this command
-     *
-     * @var string
-     */
-    protected $botName = 'phpdfbot';
-
-    /** @var array */
+    /** @var Collection */
     protected $channels;
-
-    /** @var string */
-    protected $appUrl;
-
-    /** @var array */
-    protected $groups;
-
-    /** @var array */
-    protected $mailing;
-
-    /** @var string */
-    protected $admin;
 
     /** @var array */
     private $collectors;
@@ -84,44 +56,52 @@ class BotPopulateChannel extends AbstractCommand
     /** @var OpportunityRepository */
     private $repository;
 
+    /** @var GroupRepository */
+    private $groupRepository;
+
+    /** @var Api */
+    private $telegram;
+
     /**
      * BotPopulateChannel constructor.
-     * @param BotsManager $botsManager
+     *
+     * @param BotsManager           $botsManager
      * @param OpportunityRepository $repository
+     * @param GroupRepository       $groupRepository
      */
     public function __construct(
         BotsManager $botsManager,
-        OpportunityRepository $repository
+        OpportunityRepository $repository,
+        GroupRepository $groupRepository
     ) {
-        parent::__construct($botsManager);
+        $this->telegram = $botsManager->bot(Config::get('telegram.default'));
         $this->collectors = Helper::getNamespaceClasses('App\\Services\\Collectors');
         $this->repository = $repository;
+        $this->groupRepository = $groupRepository;
+
+        parent::__construct();
     }
 
     /**
      * Execute the console command.
-     *
-     * @throws TelegramSDKException
      */
     public function handle(): void
     {
-        $this->channels = Config::get('telegram.channels');
-        $this->appUrl = env('APP_URL');
-        $this->groups = Config::get('telegram.groups');
-        $this->mailing = Config::get('constants.mailing');
-        $this->admin = Config::get('telegram.admin');
+        $this->channels = $this->groupRepository->findWhere([
+            ['type', '=', GroupTypes::CHANNEL]
+        ]);
 
         switch ($this->argument('type')) {
-            case self::TYPE_PROCESS:
+            case Arguments::PROCESS:
                 $this->processOpportunities();
                 break;
-            case self::TYPE_NOTIFY:
+            case Arguments::NOTIFY:
                 $this->notifyGroup();
                 break;
-            case self::TYPE_SEND:
+            case Arguments::SEND:
                 $this->sendOpportunityToChannels($this->argument('opportunity'));
                 break;
-            case self::TYPE_APPROVAL:
+            case Arguments::APPROVAL:
                 $this->sendTelegramOpportunityToApproval($this->argument('opportunity'));
                 break;
             default:
@@ -132,8 +112,6 @@ class BotPopulateChannel extends AbstractCommand
 
     /**
      * Retrieve the Opportunities objects and send them to approval
-     *
-     * @throws TelegramSDKException
      */
     protected function processOpportunities(): void
     {
@@ -141,6 +119,7 @@ class BotPopulateChannel extends AbstractCommand
         foreach ($opportunities as $opportunity) {
             $this->sendOpportunityToApproval($opportunity);
         }
+        $this->info('Opportunities sent to approval');
     }
 
     /**
@@ -152,20 +131,20 @@ class BotPopulateChannel extends AbstractCommand
     {
         $opportunities = new EloquentCollection();
         foreach ($this->collectors as $collector) {
-            $collector = App::make($collector);
+            $collector = resolve($collector);
             if ($collector instanceof CollectorInterface) {
-                $collectorOpportunities = $collector->collectOpportunities();
-                if ($collectorOpportunities->isEmpty()) {
+                $collection = $collector->collectOpportunities();
+                if ($collection->isEmpty()) {
                     $this->info(sprintf(
-                        '%s não contém novas oportunidades',
+                        "%s hasn't new opportunities",
                         class_basename(get_class($collector))
                     ));
                 }
-                $opportunities = $opportunities->concat($collectorOpportunities);
+                $opportunities = $opportunities->concat($collection);
             }
         }
 
-        $opportunities->map(function (Opportunity $opportunity) {
+        $opportunities->map(static function (Opportunity $opportunity) {
             $opportunity->save();
         });
 
@@ -176,261 +155,132 @@ class BotPopulateChannel extends AbstractCommand
      * Prepare and send the opportunity to the channel, then update the TelegramId in database
      *
      * @param int $opportunityId
-     * @throws TelegramSDKException
-     * @todo Move to communicate-telegram class
      */
     protected function sendOpportunityToChannels(int $opportunityId): void
     {
         /** @var Opportunity $opportunity */
         $opportunity = $this->repository->find($opportunityId);
 
-        foreach ($this->channels as $channel => $config) {
-            if (blank($config['tags']) || ExtractorHelper::hasTags($config['tags'], $opportunity->getText())) {
-                $messageSentIds = $this->sendOpportunity($opportunity, $channel);
-            }
-            $messageSentId = reset($messageSentIds);
-            if ($messageSentId && $config['main']) {
-                $opportunity->telegram_id = $messageSentId;
-                $opportunity->status = Opportunity::STATUS_ACTIVE;
-                $opportunity->save();
-                if ($opportunity->telegram_user_id) {
-                    $opportunity->notify(new PublishedOpportunity);
+        $mailing = $this->groupRepository->findWhere([
+            ['type', '=', GroupTypes::MAILING],
+            ['main', '=', true],
+        ]);
+
+        $channels = $this->channels->concat($mailing);
+
+        /** @var Group $channel */
+        foreach ($channels as $channel) {
+            if (blank($channel->tags) || ExtractorHelper::hasTags($channel->tags, $opportunity->getText())) {
+                $channel->notify(new SendOpportunity($opportunity));
+                if ($channel->main && $channel->type === GroupTypes::CHANNEL && $opportunity->telegram_user_id) {
+                    $opportunity->notify(new NotifySenderUser($channel));
                 }
             }
         }
 
-        foreach ($this->mailing as $mail => $config) {
-            if (
-                $config &&
-                !Str::contains($opportunity->origin, $mail) &&
-                (blank($config['tags']) || ExtractorHelper::hasTags($config['tags'], $opportunity->getText()))
-            ) {
-                $this->mailOpportunity($opportunity, $mail);
-            }
-        }
-    }
-
-    /**
-     * @param Opportunity $opportunity
-     * @param int $chatId
-     * @param array $options
-     * @return array
-     * @throws TelegramSDKException
-     * @todo Move to communicate-telegram class
-     */
-    protected function sendOpportunity(Opportunity $opportunity, $chatId, array $options = []): array
-    {
-        $messageTexts = fractal()->item($opportunity)->transformWith(new FormattedOpportunityTransformer())->toArray();
-        $messageSentIds = [];
-        $lastSentID = null;
-        $messageSent = null;
-
-        if ($this->admin === $chatId && Str::contains($opportunity->origin, [$this->botName])) {
-            $userNames = explode('|', $opportunity->origin);
-            $userName = end($userNames);
-            if (!blank($userName)) {
-                if (Str::contains($userName, ' ')) {
-                    $text = "[$userName](tg://user?id={$opportunity->telegram_user_id}) enviou:";
-                } else {
-                    $text = '@' . $userName . ' enviou:';
-                }
-                $this->telegram->sendMessage([
-                    'chat_id' => $chatId,
-                    'parse_mode' => 'Markdown',
-                    'text' => $text
-                ]);
-            }
-        }
-
-        foreach ($messageTexts['data']['body'] as $messageText) {
-            $sendMsg = array_merge([
-                'chat_id' => $chatId,
-                'parse_mode' => 'Markdown',
-                'text' => $messageText,
-            ], $options);
-
-            if ($lastSentID) {
-                $sendMsg['reply_to_message_id'] = $lastSentID;
-            }
-
-            try {
-                $messageSent = $this->telegram->sendMessage($sendMsg);
-                $messageSentIds[] = $messageSent->messageId;
-            } catch (Exception $exception) {
-                if ($exception->getCode() === 400) {
-                    $sendMsg['text'] = SanitizerHelper::removeMarkdown($messageText);
-                    unset($sendMsg['Markdown']);
-                    try {
-                        $messageSent = $this->telegram->sendMessage($sendMsg);
-                    } catch (TelegramResponseException $exception2) {
-                        if ($exception2->getCode() === 400) {
-                            Log::error('THROW_MESSAGE2', [$sendMsg]);
-                        }
-                        throw $exception;
-                    }
-                    Log::error('THROW_MESSAGE1', [$sendMsg]);
-                    $messageSentIds[] = $messageSent->messageId;
-                } else {
-                    throw $exception;
-                }
-            }
-
-            if ($messageSent) {
-                $lastSentID = $messageSent->messageId;
-            }
-        }
-        return $messageSentIds;
-    }
-
-    /**
-     * @param Opportunity $opportunity
-     * @param string $email
-     * @param array $options
-     * @throws Exception
-     * @todo Move to communicate-email class
-     */
-    protected function mailOpportunity(Opportunity $opportunity, string $email, array $options = [])
-    {
-        $messageTexts = fractal()->item($opportunity)->transformWith(new FormattedOpportunityTransformer(true))->toArray();
-        $messageTexts = Markdown::convertToHtml($messageTexts['data']['body']);
-        $messageTexts = nl2br($messageTexts);
-
-        $mail = new Mail();
-        $mail->to($email)
-            ->message($messageTexts)
-            ->subject($opportunity->title)
-            ->send();
+        $opportunity->update(['status' => Opportunity::STATUS_ACTIVE]);
     }
 
     /**
      * Notifies the group with the latest opportunities in channel
      * Get all the unnoticed opportunities, build a keyboard with the links, sends to the group, update the opportunity
      * and remove the previous notifications from group
-     * @todo Move to communicate-telegram class
      */
-    protected function notifyGroup()
+    protected function notifyGroup(): void
     {
-        $opportunities = $this->repository->findWhere([['telegram_id', '<>', null]]);
-        if ($opportunities->isNotEmpty()) {
-            /** @todo Usar repository no lugar da model */
-            $lastNotifications = Notification::all();
+        $opportunities = $this->repository->findWhere([['status', '=', Opportunity::STATUS_ACTIVE]]);
 
-            $firstOpportunityId = null;
+        $allGroups = $this->groupRepository->findWhere([
+            ['type', '=', GroupTypes::GROUP],
+        ]);
 
-            /** @var Collection $listOpportunities */
-            $listOpportunities = $opportunities->map(function ($opportunity) use (&$firstOpportunityId) {
-                $firstOpportunityId = $firstOpportunityId ?? $opportunity->telegram_id;
-                return sprintf(
-                    '➩ [%s](%s)',
-                    SanitizerHelper::sanitizeSubject(SanitizerHelper::removeBrackets($opportunity->title)),
-                    'https://t.me/VagasBrasil_TI/' . $opportunity->telegram_id
-                );
-            });
+        /** @var Collection $groups */
+        $groups = $allGroups->filter(static function ($item) {
+            return $item->main || $item->admin;
+        });
 
-            $keyboard = Keyboard::make()->inline();
-            $keyboard->row(Keyboard::inlineButton([
-                'text' => 'Ver vagas',
-                'url' => 'https://t.me/VagasBrasil_TI/' . $firstOpportunityId
-            ]));
+        if ($opportunities->isNotEmpty() && $groups->isNotEmpty()) {
+            $opportunitiesIds = $opportunities->pluck('id')->toArray();
+            /** @var Group $group */
+            foreach ($groups as $group) {
+                $lastNotifications = $group->unreadNotifications;
 
-            $mainGroup = $this->admin;
-            foreach ($this->groups as $group => $config) {
-                if ($config['main']) {
-                    $mainGroup = $group;
+                /** @var Collection $telegramIds */
+                $telegramIds = $this->channels
+                    ->where('main', true)
+                    ->first()
+                    ->notifications()
+                    ->where('type', SendOpportunity::class)
+                    ->where(static function (Builder $query) use ($opportunitiesIds) {
+                        foreach ($opportunitiesIds as $opportunityId) {
+                            //$query->orWhereJsonContains('data->opportunity', $opportunityId);
+                            $query->where('data', 'like', '%"opportunity":' . $opportunityId . '%');
+                        }
+                    })
+                    ->pluck('data')
+                    ->pluck('telegram_ids', 'opportunity');
+
+                $opportunities = $opportunities->map(static function (Opportunity $opportunity) use ($telegramIds) {
+                    if ($telegramIds->has($opportunity->id)) {
+                        $opportunity->telegram_id = Arr::first($telegramIds->get($opportunity->id));
+                    }
+                    return $opportunity;
+                });
+
+                $allChannels = $this->channels->concat($allGroups->where('admin', '=', false));
+                $group->notify(new GroupSummaryOpportunities($opportunities, $allChannels));
+
+                /** @var Notification $lastNotification */
+                foreach ($lastNotifications as $lastNotification) {
+                    try {
+                        if ($lastNotification->data && $lastNotification->data['telegram_id']) {
+                            $this->telegram->deleteMessage([
+                                'chat_id' => $group->name,
+                                'message_id' => $lastNotification->data['telegram_id']
+                            ]);
+                        }
+                    } catch (Exception $exception) {
+                        $this->error(implode(': ', [
+                            'Could not delete notification',
+                            $exception->getMessage(),
+                            $lastNotification
+                        ]));
+                    }
+                    $lastNotification->markAsRead();
                 }
             }
 
-            $text = sprintf(
-                "%s\n\n[%s](%s)",
-                "Há novas vagas no canal!\nConfira: " .
-                SanitizerHelper::escapeMarkdown(implode(
-                        ' | ',
-                        array_merge(array_keys($this->channels), array_keys($this->groups)))
-                ),
-                '🄿🄷🄿🄳🄵',
-                str_replace('/index.php', '', $this->appUrl) . '/img/phpdf.webp'
-            );
-
-            $listOpportunities->prepend($text);
-            $total = $listOpportunities->count();
-            $length = 0;
-            $opportunitiesText = collect();
-            $listOpportunities->map(function ($opportunity, $key) use ($mainGroup, $keyboard, &$length, &$opportunitiesText, &$total) {
-                $length += strlen($opportunity);
-                if ($length >= BotHelper::TELEGRAM_LIMIT || ($key + 1) >= $total) {
-                    $notificationMessage = [
-                        'chat_id' => $mainGroup,
-                        'parse_mode' => 'Markdown',
-                        'reply_markup' => $keyboard,
-                        'text' => $opportunitiesText->implode("\n")
-                    ];
-
-                    $message = $this->telegram->sendMessage($notificationMessage);
-
-                    $notification = new Notification();
-                    $notification->telegram_id = $message->messageId;
-                    $notification->body = json_encode($notificationMessage);
-                    $notification->save();
-
-                    $opportunitiesText = collect();
-                    $length = 0;
-                }
-                $opportunitiesText->add($opportunity);
-            });
-
-            foreach ($lastNotifications as $lastNotification) {
-                try {
-                    $this->telegram->deleteMessage([
-                        'chat_id' => $mainGroup,
-                        'message_id' => $lastNotification->telegram_id
-                    ]);
-                } catch (Exception $exception) {
-                    $this->error(implode(': ', ['ERRO_AO_DELETAR_NOTIFICACAO', $exception->getMessage()]));
-                    Log::info('ERRO_AO_DELETAR_NOTIFICACAO', [$exception->getMessage()]);
-                }
-                $lastNotification->delete();
-            }
-            $opportunities->each(function ($opportunity) {
+            $opportunities->each(static function (Opportunity $opportunity) {
                 $opportunity->delete();
             });
+            $this->info('The group was notified!');
+        } else {
+            $this->info(sprintf(
+                'There is no notification to send - Groups: %s - Opportunities: %s',
+                $groups->count(),
+                $opportunities->count()
+            ));
         }
-        $this->info('The group was notified!');
     }
 
     /**
      * Send opportunity to approval
      *
      * @param Opportunity $opportunity
-     * @throws TelegramSDKException
-     * @todo Move to communicate-telegram class
      */
     protected function sendOpportunityToApproval(Opportunity $opportunity): void
     {
-        $keyboard = Keyboard::make()
-            ->inline()
-            ->row(
-                Keyboard::inlineButton([
-                    'text' => 'Aprovar',
-                    'callback_data' => implode(' ', [Opportunity::CALLBACK_APPROVE, $opportunity->id])
-                ]),
-                Keyboard::inlineButton([
-                    'text' => 'Remover',
-                    'callback_data' => implode(' ', [Opportunity::CALLBACK_REMOVE, $opportunity->id])
-                ])
-            );
+        $adminGroup = $this->groupRepository->findWhere([
+            ['type', '=', GroupTypes::GROUP],
+            ['admin', '=', true],
+        ])->first();
 
-        $messageToSend = [
-            'reply_markup' => $keyboard,
-        ];
-
-        /** @var Opportunity $opportunity */
-        $this->sendOpportunity($opportunity, $this->admin, $messageToSend);
+        /** @var Group $adminGroup */
+        $adminGroup->notify(new SendOpportunity($opportunity));
     }
 
     /**
      * @param $opportunityId
-     * @throws TelegramSDKException
-     * @todo Move to communicate-telegram class
      */
     protected function sendTelegramOpportunityToApproval($opportunityId): void
     {

@@ -10,7 +10,9 @@ use App\Models\Opportunity;
 use App\Validators\OpportunityValidator;
 
 /**
- * Class OpportunityRepositoryEloquent.
+ * Class OpportunityRepositoryEloquent
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class OpportunityRepositoryEloquent extends BaseRepository implements OpportunityRepository
 {
@@ -19,7 +21,7 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
      *
      * @return string
      */
-    public function model()
+    public function model(): string
     {
         return Opportunity::class;
     }
@@ -29,7 +31,7 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
      *
      * @return mixed
      */
-    public function validator()
+    public function validator(): string
     {
         return OpportunityValidator::class;
     }
@@ -42,7 +44,12 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
         $this->pushCriteria(app(RequestCriteria::class));
     }
 
-    public function make(array $data)
+    /**
+     * @param array $data
+     *
+     * @return mixed
+     */
+    public function make(array $data): Opportunity
     {
         $opportunity = $this->firstOrNew([
             Opportunity::TITLE => $data[Opportunity::TITLE],
@@ -53,7 +60,7 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
         $opportunity->{Opportunity::POSITION} = $data[Opportunity::POSITION];
         $opportunity->{Opportunity::COMPANY} = $data[Opportunity::COMPANY];
         $opportunity->{Opportunity::LOCATION} = mb_strtoupper($data[Opportunity::LOCATION]);
-        $opportunity->{Opportunity::TAGS} = implode(' ', $data[Opportunity::TAGS]);
+        $opportunity->{Opportunity::TAGS} = new Collection($data[Opportunity::TAGS]);
         $opportunity->{Opportunity::SALARY} = $data[Opportunity::SALARY];
         $opportunity->{Opportunity::URL} = $data[Opportunity::URL];
         $opportunity->{Opportunity::ORIGIN} = $data[Opportunity::ORIGIN];

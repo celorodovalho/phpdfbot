@@ -5,9 +5,9 @@ namespace App\Contracts\Repositories;
 use Prettus\Repository\Contracts\RepositoryInterface;
 
 /**
- * Interface OpportunityRepository.
+ * Interface OpportunityRepository
  *
- * @package namespace App\Contracts\Repositories;
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 interface OpportunityRepository extends RepositoryInterface
 {

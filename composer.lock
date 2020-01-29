@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9780bda6ed68daba073ff6f1aa7dcaf4",
+    "content-hash": "cc43d4d9485378ffefa91464e66c88dc",
     "packages": [
         {
             "name": "bensampo/laravel-enum",
@@ -2213,66 +2213,6 @@
                 "zf"
             ],
             "time": "2020-01-07T22:58:31+00:00"
-        },
-        {
-            "name": "laravel-notification-channels/telegram",
-            "version": "0.1.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/laravel-notification-channels/telegram.git",
-                "reference": "cd55dd09e5669aee44e050f432d38f0f506170c7"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/laravel-notification-channels/telegram/zipball/cd55dd09e5669aee44e050f432d38f0f506170c7",
-                "reference": "cd55dd09e5669aee44e050f432d38f0f506170c7",
-                "shasum": ""
-            },
-            "require": {
-                "guzzlehttp/guzzle": "^6.2",
-                "illuminate/notifications": "^5.5 || ^6.0",
-                "illuminate/support": "^5.5 || ^6.0",
-                "php": "^7.1"
-            },
-            "require-dev": {
-                "mockery/mockery": "^1.0",
-                "phpunit/phpunit": "^7.0 || ^8.0"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "NotificationChannels\\Telegram\\TelegramServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "NotificationChannels\\Telegram\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Irfaq Syed",
-                    "email": "syed@lukonet.com",
-                    "homepage": "https://lukonet.com",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Telegram Notifications Channel for Laravel",
-            "homepage": "https://github.com/laravel-notification-channels/telegram",
-            "keywords": [
-                "laravel",
-                "notification",
-                "telegram",
-                "telegram notification",
-                "telegram notifications channel"
-            ],
-            "time": "2019-11-07T05:37:13+00:00"
         },
         {
             "name": "laravel/framework",
@@ -4565,6 +4505,65 @@
                 "uuid"
             ],
             "time": "2019-12-17T08:18:51+00:00"
+        },
+        {
+            "name": "rap2hpoutre/laravel-log-viewer",
+            "version": "v1.3.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/rap2hpoutre/laravel-log-viewer.git",
+                "reference": "031ed45cd09814f5ab3c03a235b4511994911683"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/rap2hpoutre/laravel-log-viewer/zipball/031ed45cd09814f5ab3c03a235b4511994911683",
+                "reference": "031ed45cd09814f5ab3c03a235b4511994911683",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/support": "4.2.*|5.*|^6.0",
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "orchestra/testbench": "3.7.*",
+                "phpunit/phpunit": "^7"
+            },
+            "type": "laravel-package",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Rap2hpoutre\\LaravelLogViewer\\LaravelLogViewerServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "classmap": [
+                    "src/controllers"
+                ],
+                "psr-0": {
+                    "Rap2hpoutre\\LaravelLogViewer\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "rap2hpoutre",
+                    "email": "raphaelht@gmail.com"
+                }
+            ],
+            "description": "A Laravel log reader",
+            "keywords": [
+                "laravel",
+                "log",
+                "log-reader",
+                "log-viewer",
+                "logging",
+                "lumen"
+            ],
+            "time": "2019-12-03T22:00:29+00:00"
         },
         {
             "name": "spatie/emoji",

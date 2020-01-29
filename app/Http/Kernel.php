@@ -4,6 +4,11 @@ namespace App\Http;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
+/**
+ * Class Kernel
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class Kernel extends HttpKernel
 {
     /**

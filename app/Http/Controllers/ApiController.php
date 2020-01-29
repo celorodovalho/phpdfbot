@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Validation\CreateUpdateInterface;
+use Illuminate\Http\Response;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Validator\Contracts\ValidatorInterface;
+use Prettus\Validator\Exceptions\ValidatorException;
 
 /**
  * Class ApiController
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class ApiController extends Controller
 {
@@ -15,7 +19,7 @@ class ApiController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index()
     {
@@ -26,11 +30,11 @@ class ApiController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  CreateUpdateInterface $request
+     * @param CreateUpdateInterface $request
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      *
-     * @throws \Prettus\Validator\Exceptions\ValidatorException
+     * @throws ValidatorException
      */
     protected function storeDefault(CreateUpdateInterface $request)
     {
@@ -47,12 +51,12 @@ class ApiController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  CreateUpdateInterface $request
-     * @param  string              $id
+     * @param CreateUpdateInterface $request
+     * @param string                $id
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      *
-     * @throws \Prettus\Validator\Exceptions\ValidatorException
+     * @throws ValidatorException
      */
     protected function updateDefault(CreateUpdateInterface $request, $id)
     {
@@ -66,9 +70,9 @@ class ApiController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  int $id
+     * @param int $id
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show($id)
     {
@@ -78,9 +82,9 @@ class ApiController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int $id
+     * @param int $id
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy($id)
     {

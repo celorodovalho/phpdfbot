@@ -2,10 +2,16 @@
 
 namespace App\Commands;
 
+use App\Helpers\BotHelper;
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
 use Telegram\Bot\Keyboard\Keyboard;
 
+/**
+ * Class StartCommand
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class StartCommand extends Command
 {
     /**
@@ -21,7 +27,7 @@ class StartCommand extends Command
     /**
      * @inheritdoc
      */
-    public function handle()
+    public function handle(): void
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
@@ -41,7 +47,7 @@ class StartCommand extends Command
             );
 
         $this->replyWithMessage([
-            'parse_mode' => 'Markdown',
+            'parse_mode' => BotHelper::PARSE_MARKDOWN,
             'text' => "Olá @$username! Seja bem-vindo(a)! Ao entrar, apresente-se e leia nossas regras:",
             'reply_markup' => $keyboard
         ]);
