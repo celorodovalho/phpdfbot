@@ -2,10 +2,12 @@
 
 namespace App\Commands;
 
+use App\Contracts\Repositories\UserRepository;
 use App\Helpers\BotHelper;
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
 use Telegram\Bot\Keyboard\Keyboard;
+use Telegram\Bot\Objects\User as TelegramUser;
 
 /**
  * Class StartCommand
@@ -14,15 +16,24 @@ use Telegram\Bot\Keyboard\Keyboard;
  */
 class StartCommand extends Command
 {
-    /**
-     * @var string Command Name
-     */
+    /** @var string Command Name */
     protected $name = 'start';
 
-    /**
-     * @var string Command Description
-     */
+    /** @var string Command Description */
     protected $description = 'Start Command to get you started';
+
+    /** @var UserRepository */
+    private $userRepository;
+
+    /**
+     * StartCommand constructor.
+     *
+     * @param UserRepository $userRepository
+     */
+    public function __construct(UserRepository $userRepository)
+    {
+        $this->userRepository = $userRepository;
+    }
 
     /**
      * @inheritdoc
@@ -31,11 +42,16 @@ class StartCommand extends Command
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
-        $username = $this->update->getMessage()->from->username;
+        $message = $this->update->getMessage();
+
+        $username = $message->from->username;
         if (!$username) {
-            $username = $this->update->getMessage()->from->firstName;
+            $username = $message->from->firstName;
 //                . ' ' . $this->update->getMessage()->from->lastName;
         }
+
+        /** @var TelegramUser $newMembers */
+        $newMembers = $message->newChatMembers;
 
 //        $keyboard = Keyboard::make()
 //            ->inline()
@@ -57,5 +73,18 @@ class StartCommand extends Command
         ]);
 
         $this->triggerCommand('help');
+
+        if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE && $newMembers->isNotEmpty()) {
+            $newMembers->each(function (TelegramUser $newMember) {
+                $this->userRepository->updateOrCreate([
+                    'id' => $newMember->id,
+                    'username' => $newMember->username,
+                    'is_bot' => $newMember->isBot,
+                    'first_name' => $newMember->firstName,
+                    'last_name' => $newMember->lastName,
+                    'language_code' => $newMember->languageCode,
+                ]);
+            });
+        }
     }
 }
