@@ -36,6 +36,7 @@ class OptionsCommand extends Command
 
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
+        // TODO: chage way of get owner id
         if ($this->getUpdate()->getMessage()->from->id !== (int)env('TELEGRAM_OWNER_ID')) {
             return $this->replyWithMessage([
                 'text' => 'Lamento, mas esse comando é restrito. Para maiores informações entre em contato: @se45ky',

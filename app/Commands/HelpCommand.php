@@ -40,6 +40,7 @@ class HelpCommand extends Command
 
         $this->replyWithMessage(compact('text'));
 
+        // TODO: change way of get admin group
         $this->telegram->sendMessage([
             'chat_id' => env('TELEGRAM_GROUP_ADM'),
             'text' => json_encode($this->getUpdate())
