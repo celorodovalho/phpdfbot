@@ -59,7 +59,7 @@ $userName = end($userNames);
 @if(!blank($userName))
 
 @if(\Illuminate\Support\Str::contains($userName, ' '))
-{{"by [$userName](tg://user?id={$this->opportunity->telegram_user_id})"}}
+{{"by [$userName](tg://user?id={$opportunity->telegram_user_id})"}}
 @else
 {{'by @' . $userName}}
 @endif
