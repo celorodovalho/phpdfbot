@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\GroupTypes;
 use App\Traits\RoutesNotifications;
 use App\Traits\TelegramIdentifiable;
+use BenSampo\Enum\Traits\CastsEnums;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\HasDatabaseNotifications;
 use Illuminate\Support\Collection;
@@ -23,7 +24,7 @@ use Prettus\Repository\Traits\TransformableTrait;
  */
 class Group extends Model implements Transformable
 {
-    use TransformableTrait, HasDatabaseNotifications, RoutesNotifications;
+    use TransformableTrait, HasDatabaseNotifications, RoutesNotifications, CastsEnums;
 
     /**
      * The attributes that are mass assignable.
@@ -38,8 +39,15 @@ class Group extends Model implements Transformable
         'tags',
     ];
 
+    /** @var array */
     protected $casts = [
         'tags' => 'collection',
+        'type' => 'int',
+    ];
+
+    /** @var array */
+    protected $enumCasts = [
+        'type' => GroupTypes::class,
     ];
 
     /**
