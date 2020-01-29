@@ -152,6 +152,8 @@ class SendOpportunity extends Notification
 
         $markdown = resolve(Converter::class);
 
+        $messageText = nl2br($messageText);
+
         $messageText = $markdown->convertToHtml($messageText);
 
         $mailable->subject($this->opportunity->title)

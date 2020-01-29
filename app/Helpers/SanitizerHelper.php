@@ -7,6 +7,7 @@ use Illuminate\Support\Traits\Macroable;
 use League\CommonMark\CommonMarkConverter;
 use League\HTMLToMarkdown\HtmlConverter;
 use Spatie\Emoji\Emoji;
+use Transliterator;
 
 /**
  * Class SanitizerHelper
@@ -279,5 +280,23 @@ class SanitizerHelper
             return '\\' . $string;
         }, self::TELEGRAM_CHARACTERS);
         return str_ireplace(self::TELEGRAM_CHARACTERS, $escapedStrings, $text);
+    }
+
+    /**
+     * Normalize latin characters to avoid question marks and encoding errors
+     *
+     * @param $string
+     *
+     * @return string
+     */
+    public static function normalizeLatinChars($string): string
+    {
+//        setlocale(LC_ALL, 'en_US.utf8');
+//        return iconv('UTF-8', 'ASCII//TRANSLIT', $string);
+        $transliterator = Transliterator::createFromRules(
+            ':: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;',
+            Transliterator::FORWARD
+        );
+        return $transliterator->transliterate($string);
     }
 }

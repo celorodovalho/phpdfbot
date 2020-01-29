@@ -12,6 +12,7 @@
         "ext-curl": "*",
         "ext-dom": "*",
         "ext-json": "*",
+        "ext-intl": "*",
         "bensampo/laravel-enum": "^1.29",
         "dacastro4/laravel-gmail": "^3.0",
         "dingo/api": "^2.4",

@@ -32,24 +32,28 @@ class StartCommand extends Command
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
         $username = $this->update->getMessage()->from->username;
+        if (!$username) {
+            $username = $this->update->getMessage()->from->firstName;
+//                . ' ' . $this->update->getMessage()->from->lastName;
+        }
 
-        $keyboard = Keyboard::make()
-            ->inline()
-            ->row(
-                Keyboard::inlineButton([
-                    'text' => 'Leia as Regras',
-                    'url' => 'https://t.me/phpdf/8726'
-                ]),
-                Keyboard::inlineButton([
-                    'text' => 'Vagas de TI',
-                    'url' => 'https://t.me/VagasBrasil_TI'
-                ])
-            );
+//        $keyboard = Keyboard::make()
+//            ->inline()
+//            ->row(
+//                Keyboard::inlineButton([
+//                    'text' => 'Leia as Regras',
+//                    'url' => 'https://t.me/phpdf/8726'
+//                ]),
+//                Keyboard::inlineButton([
+//                    'text' => 'Vagas de TI',
+//                    'url' => 'https://t.me/VagasBrasil_TI'
+//                ])
+//            );
 
         $this->replyWithMessage([
-            'parse_mode' => BotHelper::PARSE_MARKDOWN,
-            'text' => "Olá @$username! Seja bem-vindo(a)! Ao entrar, apresente-se e leia nossas regras:",
-            'reply_markup' => $keyboard
+//            'parse_mode' => BotHelper::PARSE_MARKDOWN,
+            'text' => "Olá $username! Eu sou o Bot de vagas. Voce pode começar me enviando o texto da vaga que quer publicar:",
+//            'reply_markup' => $keyboard
         ]);
 
         $this->triggerCommand('help');

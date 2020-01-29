@@ -35,7 +35,7 @@ class ExtractorHelper
         ));
         array_walk($tags, function ($item, $key) use (&$tags) {
             $tag = '#' . mb_strtolower(str_replace([' ', '-'], '', $item));
-            $tags[$key] = iconv('UTF-8', 'ASCII//TRANSLIT', $tag);
+            $tags[$key] = SanitizerHelper::normalizeLatinChars($tag);
         });
         return array_values($tags);
     }
