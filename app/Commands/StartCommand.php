@@ -74,14 +74,16 @@ class StartCommand extends Command
 
         if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE) {
             $telegramUser = $message->from;
-            $user = $this->userRepository->updateOrCreate([
-                'id' => $telegramUser->id,
-                'username' => $telegramUser->username,
-                'is_bot' => $telegramUser->isBot,
-                'first_name' => $telegramUser->firstName,
-                'last_name' => $telegramUser->lastName,
-                'language_code' => $telegramUser->languageCode,
-            ]);
+            $user = $this->userRepository->updateOrCreate(
+                ['id' => $telegramUser->id,],
+                [
+                    'username' => $telegramUser->username,
+                    'is_bot' => $telegramUser->isBot,
+                    'first_name' => $telegramUser->firstName,
+                    'last_name' => $telegramUser->lastName,
+                    'language_code' => $telegramUser->languageCode,
+                ]
+            );
             Log::info('USER_CREATED_StartCommand', [$user]);
         }
     }

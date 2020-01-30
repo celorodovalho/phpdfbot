@@ -204,14 +204,16 @@ class CommandsHandler
 
         if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE) {
             $telegramUser = $message->from;
-            $user = $this->userRepository->updateOrCreate([
-                'id' => $telegramUser->id,
-                'username' => $telegramUser->username,
-                'is_bot' => $telegramUser->isBot,
-                'first_name' => $telegramUser->firstName,
-                'last_name' => $telegramUser->lastName,
-                'language_code' => $telegramUser->languageCode,
-            ]);
+            $user = $this->userRepository->updateOrCreate(
+                ['id' => $telegramUser->id,],
+                [
+                    'username' => $telegramUser->username,
+                    'is_bot' => $telegramUser->isBot,
+                    'first_name' => $telegramUser->firstName,
+                    'last_name' => $telegramUser->lastName,
+                    'language_code' => $telegramUser->languageCode,
+                ]
+            );
             Log::info('USER_CREATED_processMessage', [$user]);
         }
 
@@ -273,15 +275,17 @@ class CommandsHandler
 
         // TODO: Think more about this
         if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE && filled($newMembers) && $newMembers->isNotEmpty()) {
-            $newMembers->each(function (TelegramUser $newMember) {
-                $this->userRepository->updateOrCreate([
-                    'id' => $newMember->id,
-                    'username' => $newMember->username,
-                    'is_bot' => $newMember->isBot,
-                    'first_name' => $newMember->firstName,
-                    'last_name' => $newMember->lastName,
-                    'language_code' => $newMember->languageCode,
-                ]);
+            $newMembers->each(function (TelegramUser $telegramUser) {
+                $this->userRepository->updateOrCreate(
+                    ['id' => $telegramUser->id,],
+                    [
+                        'username' => $telegramUser->username,
+                        'is_bot' => $telegramUser->isBot,
+                        'first_name' => $telegramUser->firstName,
+                        'last_name' => $telegramUser->lastName,
+                        'language_code' => $telegramUser->languageCode,
+                    ]
+                );
             });
         }
     }
