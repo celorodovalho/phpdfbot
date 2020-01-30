@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Web\OpportunityController;
+use League\CommonMark\Converter;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,6 +47,28 @@ Route::group(['namespace' => 'Web',], function () {
     Route::resource('opportunities', 'OpportunityController');
 });
 
+Route::get('test2/{opportunity}', function (\App\Models\Opportunity $opportunity){
+    $messageText = view('notifications.opportunity', [
+        'opportunity' => $opportunity,
+        'isEmail' => true,
+        'hasAuthor' => false,
+    ])->render();
+
+    dump($messageText);
+
+//    $markdown = new \League\CommonMark\CommonMarkConverter();
+    $markdown = resolve(Converter::class);
+    $messageText = nl2br($messageText);
+//    $messageText = str_replace("\n", "\n\n", $messageText);
+
+    dump($messageText);
+
+    $messageText = $markdown->convertToHtml($messageText);
+
+    dump($messageText);
+
+    return $messageText;
+});
 Route::get('test', function (\GrahamCampbell\GitHub\GitHubManager $github){
     try {
         $opportunity = \App\Models\Opportunity::find(1);
