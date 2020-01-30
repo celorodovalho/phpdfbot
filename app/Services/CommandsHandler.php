@@ -241,7 +241,7 @@ class CommandsHandler
             $files = [];
             if (filled($photos)) {
                 $files = $photos->filter(static function ($photo) {
-                    return ($photo->width + $photo->height) > 1000;
+                    return ($photo['width'] + $photo['height']) > 1000;
                 })->toArray();
             }
             if (filled($document)) {
