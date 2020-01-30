@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Symfony\Component\Console\Output\OutputInterface;
 use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Laravel\Facades\Telegram;
@@ -137,8 +138,10 @@ class Handler extends ExceptionHandler
             $username = env('GITHUB_USERNAME');
             $repo = env('GITHUB_REPO');
 
+            $msg = Str::limit($exception->getMessage(), 256, '');
+
             $issues = $this->gitHubManager->search()->issues(
-                '"' . $exception->getMessage() . '"+repo:' . $username . '/' . $repo
+                '"' . $msg . '"+repo:' . $username . '/' . $repo
             );
 
             $issueBody = sprintf(
@@ -159,7 +162,7 @@ class Handler extends ExceptionHandler
                     $username,
                     $repo,
                     [
-                        'title' => $exception->getMessage(),
+                        'title' => $msg,
                         'body' => $issueBody,
                         'labels' => ['bug']
                     ]

@@ -204,7 +204,7 @@ class CommandsHandler
 
         if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE) {
             $telegramUser = $message->from;
-            $user = $this->userRepository->firstOrCreate([
+            $user = $this->userRepository->updateOrCreate([
                 'id' => $telegramUser->id,
                 'username' => $telegramUser->username,
                 'is_bot' => $telegramUser->isBot,
