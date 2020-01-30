@@ -152,6 +152,13 @@ class SanitizerHelper
                 '[Profissão Futuro]',
             ];
 
+            $omitting = [
+                'subscribe@googlegroups.com',
+                'GrupoClubedeVagas',
+            ];
+
+            $message = str_ireplace($omitting, '', $message);
+
             $message = html_entity_decode($message);
 
             $message = trim($message, '\\');
@@ -222,7 +229,7 @@ class SanitizerHelper
             $message = preg_replace("/(\n){2,}/im", "\n", $message);
             $message = preg_replace('/[-]{2,}/m', '', $message);
 
-            $message = str_replace(['', ' ', '•', '• ', '&gt;', '&gt; ', '\-' ,'\- '], '- ', $message);
+            $message = preg_replace('/^(\\?[•>-] ?)/mu', '- ', $message);
         }
         return trim($message);
     }
@@ -252,7 +259,7 @@ class SanitizerHelper
         @$dom->loadHTML(mb_convert_encoding($message, 'HTML-ENTITIES', 'UTF-8'));
         $mock = new \DOMDocument;
         $body = $dom->getElementsByTagName('body')->item(0);
-        if (is_object($body)) {
+        if (is_object($body) && filled($body->childNodes)) {
             foreach ($body->childNodes as $child) {
                 $mock->appendChild($mock->importNode($child, true));
             }
