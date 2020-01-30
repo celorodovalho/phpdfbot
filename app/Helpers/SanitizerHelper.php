@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use GrahamCampbell\Markdown\Facades\Markdown;
+use function GuzzleHttp\Psr7\str;
 use Illuminate\Support\Traits\Macroable;
 use League\CommonMark\CommonMarkConverter;
 use League\HTMLToMarkdown\HtmlConverter;
@@ -165,6 +166,9 @@ class SanitizerHelper
                 '',
                 $message
             );
+
+            $message = preg_replace('/^(#)([A-Za-z]+)/im', '$1 $2', $message);
+
             $message = self::removeEmptyTagsRecursive($message);
 
             $message = self::removeTagsAttributes($message);
@@ -172,7 +176,7 @@ class SanitizerHelper
 
             $message = str_ireplace([
                 '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
-            ], '`', $message);
+            ], '*', $message);
 
             $message = preg_replace('/([*_`]){2,}/m', '$1', $message);
 
@@ -217,6 +221,8 @@ class SanitizerHelper
 
             $message = preg_replace("/(\n){2,}/im", "\n", $message);
             $message = preg_replace('/[-]{2,}/m', '', $message);
+
+            $message = str_replace(['', ' ', '•', '• ', '&gt;', '&gt; ', '\-' ,'\- '], '- ', $message);
         }
         return trim($message);
     }
