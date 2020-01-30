@@ -240,13 +240,15 @@ class CommandsHandler
 
             $files = [];
             if (filled($photos)) {
-                foreach ($photos as $photo) {
-                    $files[] = $photo;
-                }
+                $files = $photos->filter(static function ($photo) {
+                    return ($photo->width + $photo->height) > 1000;
+                })->toArray();
             }
             if (filled($document)) {
                 $files[] = $document->first();
             }
+
+            $files = BotHelper::getFiles($files);
 
             $title = str_replace("\n", ' ', $text);
 

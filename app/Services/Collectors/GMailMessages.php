@@ -19,11 +19,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use JD\Cloudder\CloudinaryWrapper;
-use JD\Cloudder\Facades\Cloudder;
 
 /**
  * Class GMailMessages
@@ -129,8 +125,8 @@ class GMailMessages implements CollectorInterface
         $messageService = $this->gMailService->message();
 
         $words = '{' . implode(' ', array_map(static function ($word) {
-            return Str::contains($word, ' ') ? '"' . $word . '"' : $word;
-        }, Config::get('constants.requiredWords'))) . '}';
+                return Str::contains($word, ' ') ? '"' . $word . '"' : $word;
+            }, Config::get('constants.requiredWords'))) . '}';
 
         $messageService->add($words);
 
@@ -174,22 +170,7 @@ class GMailMessages implements CollectorInterface
                     $extension = File::extension($attachment->getFileName());
                     $fileName = Helper::base64UrlEncode($attachment->getFileName()) . '.' . $extension;
                     $filePath = $attachment->saveAttachmentTo($message->getId() . '/', $fileName, 'uploads');
-                    $filePath = Storage::disk('uploads')->path($filePath);
-                    try {
-                        list($width, $height) = getimagesize($filePath);
-                        /** @var CloudinaryWrapper $cloudImage */
-                        $cloudImage = Cloudder::upload($filePath, null);
-                        $fileUrl = $cloudImage->secureShow(
-                            $cloudImage->getPublicId(),
-                            [
-                                'width' => $width,
-                                'height' => $height
-                            ]
-                        );
-                        $files[] = $fileUrl;
-                    } catch (Exception $exception) {
-                        Log::error(__CLASS__, [$exception]);
-                    }
+                    $files[] = Helper::cloudinaryUpload($filePath);
                 }
             }
         }
