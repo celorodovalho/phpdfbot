@@ -51,16 +51,9 @@ class Helper
      */
     public static function getImplementations(string $interface): array
     {
-        $classes = [];
-        foreach (get_declared_classes() as $className) {
-            if (Str::contains($className, 'Message')) {
-                dump([$interface, $className]);
-            }
-            if (in_array($interface, class_implements($className), true)) {
-                $classes[] = $className;
-            }
-        }
-        return $classes;
+        return array_filter(get_declared_classes(), static function ($class) use ($interface) {
+            return in_array($interface, class_implements($class), true);
+        });
     }
 
     /**
