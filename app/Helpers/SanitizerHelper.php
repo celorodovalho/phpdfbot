@@ -231,7 +231,7 @@ class SanitizerHelper
             $message = preg_replace("/(\n){2,}/im", "\n", $message);
             $message = preg_replace('/[-=]{2,}/m', '', $message);
 
-            $message = preg_replace('/^(\d?\\\?[•>-\\\.] ?)/mu', '- ', $message);
+            $message = preg_replace('/^(\d?\\\?[-•>\\\.] ?)/mu', '- ', $message);
 
             $message = preg_replace('/^\\\$/mu', '', $message);
 
