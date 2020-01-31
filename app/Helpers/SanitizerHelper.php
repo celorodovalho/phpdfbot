@@ -150,11 +150,14 @@ class SanitizerHelper
                 'Tiago Romualdo Souza',
                 'Com lisura,',
                 '[Profissão Futuro]',
+                'Se cadastre em nosso portal',
+                'At.te,',
             ];
 
             $omitting = [
                 'subscribe@googlegroups.com',
                 'GrupoClubedeVagas',
+                '!()'
             ];
 
             $message = str_ireplace($omitting, '', $message);
@@ -221,15 +224,18 @@ class SanitizerHelper
 
             $message = preg_replace('/cid:(.+)/m', '', $message);
 
-            $message = str_replace('GrupoClubedeVagas', '', $message);
             $message = preg_replace('/(.+)(chat\.whatsapp\.com\/)(.+)/m', 'http://bit.ly/phpdf-official', $message);
 
             $message = strip_tags($message);
 
             $message = preg_replace("/(\n){2,}/im", "\n", $message);
-            $message = preg_replace('/[-]{2,}/m', '', $message);
+            $message = preg_replace('/[-=]{2,}/m', '', $message);
 
-            $message = preg_replace('/^(\\?[•>-] ?)/mu', '- ', $message);
+            $message = preg_replace('/^(\d?\\\?[•>-\\\.] ?)/mu', '- ', $message);
+
+            $message = preg_replace('/^\\\$/mu', '', $message);
+
+            $message = str_ireplace($omitting, '', $message);
         }
         return trim($message);
     }
