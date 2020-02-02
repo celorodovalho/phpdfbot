@@ -11,9 +11,10 @@
         "php": "^7.2",
         "ext-curl": "*",
         "ext-dom": "*",
-        "ext-json": "*",
         "ext-intl": "*",
+        "ext-json": "*",
         "bensampo/laravel-enum": "^1.30",
+        "cweagans/composer-patches": "^1.6",
         "dacastro4/laravel-gmail": "^3.2",
         "dingo/api": "^2.4",
         "doctrine/dbal": "^2.10",
@@ -52,6 +53,11 @@
     "extra": {
         "laravel": {
             "dont-discover": []
+        },
+        "patches": {
+          "graham-campbell/github": {
+            "Fix the compatibility with Laravel 6+": "patches/graham-campbell-github-102.patch"
+          }
         }
     },
     "autoload": {

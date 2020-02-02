@@ -29,7 +29,7 @@ class NewOpportunityCommand extends Command
     /**
      * @inheritdoc
      */
-    public function handle(): void
+    public function handle($arguments): void
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 

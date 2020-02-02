@@ -18,12 +18,16 @@ class MessageService extends GmailMessage
      * @param mixed  $query
      * @param string $column
      */
-    public function add($query, $column = 'q')
+    public function add($query, $column = 'q', $encode = true)
     {
-        if (isset($this->params[$column])) {
-            $this->params[$column] = "{$this->params[$column]} $query";
+        if ( isset( $this->params[$column] ) ) {
+            if ( $column === 'pageToken' ) {
+                $this->params[$column] = $query;
+            } else {
+                $this->params[$column] = "{$this->params[$column]} $query";
+            }
         } else {
-            $this->params = Arr::add($this->params, $column, $query);
+            $this->params = Arr::add( $this->params, $column, $query );
         }
     }
 }

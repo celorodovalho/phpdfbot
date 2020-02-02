@@ -1,0 +1,35 @@
+diff --git a/src/GitHubFactory.php b/src/GitHubFactory.php
+--- a/src/GitHubFactory.php
++++ b/src/GitHubFactory.php
+@@ -67,7 +67,7 @@
+      *
+      * @return void
+      */
+-    public function __construct(AuthenticatorFactory $auth, ?Factory $cache)
++    public function __construct(AuthenticatorFactory $auth, Factory $cache)
+     {
+         $this->auth = $auth;
+         $this->cache = $cache;
+diff --git a/src/GitHubServiceProvider.php b/src/GitHubServiceProvider.php
+--- a/src/GitHubServiceProvider.php
++++ b/src/GitHubServiceProvider.php
+@@ -91,10 +91,8 @@
+     {
+         $this->app->singleton('github.factory', function (Container $app) {
+             $auth = $app['github.authfactory'];
+-            $cache = null;
+-            if ($app->has('cache')) {
+-                $cache = $app['cache'];
+-            }
++            $cache = $app['cache'];
++
+             return new GitHubFactory($auth, $cache);
+         });
+
+@@ -111,6 +109,7 @@
+         $this->app->singleton('github', function (Container $app) {
+             $config = $app['config'];
+             $factory = $app['github.factory'];
++
+             return new GitHubManager($config, $factory);
+         });
