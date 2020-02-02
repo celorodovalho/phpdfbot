@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Console\Output\OutputInterface;
-use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
 /**
@@ -91,6 +90,7 @@ class Handler extends ExceptionHandler
      * @param Exception $exception
      * @param string $message
      * @param null $context
+     * @throws \Telegram\Bot\Exceptions\TelegramSDKException
      */
     public function log(Exception $exception, $message = '', $context = null): void
     {
@@ -123,7 +123,7 @@ class Handler extends ExceptionHandler
         /** @var \Telegram\Bot\Objects\Message $sentMessage */
         $sentMessage = Telegram::sendDocument([
             'chat_id' => $group->name,
-            'document' => new InputFile($referenceLog),
+            'document' => $referenceLog,
             'caption' => $exception->getMessage()
         ]);
 
