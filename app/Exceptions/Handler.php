@@ -90,7 +90,6 @@ class Handler extends ExceptionHandler
      * @param Exception $exception
      * @param string $message
      * @param null $context
-     * @throws \Telegram\Bot\Exceptions\TelegramSDKException
      */
     public function log(Exception $exception, $message = '', $context = null): void
     {
@@ -120,18 +119,22 @@ class Handler extends ExceptionHandler
         $group = Group::where('admin', true)->first();
         /** @todo Usar DI ao inves de static */
 
-        /** @var \Telegram\Bot\Objects\Message $sentMessage */
-        $sentMessage = Telegram::sendDocument([
-            'chat_id' => $group->name,
-            'document' => $referenceLog,
-            'caption' => $exception->getMessage()
-        ]);
+        try {
+            /** @var \Telegram\Bot\Objects\Message $sentMessage */
+            $sentMessage = Telegram::sendDocument([
+                'chat_id' => $group->name,
+                'document' => $referenceLog,
+                'caption' => $exception->getMessage()
+            ]);
 
-        Telegram::sendMessage([
-            'chat_id' => $group->name,
-            'text' => $issueBody,
-            'parse_mode' => BotHelper::PARSE_MARKDOWN,
-            'reply_to_message_id' => $sentMessage->getMessageId()
-        ]);
+            Telegram::sendMessage([
+                'chat_id' => $group->name,
+                'text' => $issueBody,
+                'parse_mode' => BotHelper::PARSE_MARKDOWN,
+                'reply_to_message_id' => $sentMessage->getMessageId()
+            ]);
+        } catch (Exception $exception) {
+            Log::error('ERRO_LOG_ERRO', [$exception]);
+        }
     }
 }
