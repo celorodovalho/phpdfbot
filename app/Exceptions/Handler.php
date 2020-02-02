@@ -2,18 +2,13 @@
 
 namespace App\Exceptions;
 
+use App\Helpers\BotHelper;
 use App\Models\Group;
 use Exception;
-use GrahamCampbell\GitHub\GitHubManager;
-use Illuminate\Contracts\Container\Container;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Symfony\Component\Console\Output\OutputInterface;
 use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Laravel\Facades\Telegram;
@@ -45,26 +40,9 @@ class Handler extends ExceptionHandler
     ];
 
     /**
-     * @var GitHubManager
-     */
-    private $gitHubManager;
-
-    /**
-     * Handler constructor.
-     *
-     * @param Container     $container
-     * @param GitHubManager $gitHubManager
-     */
-    public function __construct(Container $container, GitHubManager $gitHubManager)
-    {
-        $this->gitHubManager = $gitHubManager;
-        parent::__construct($container);
-    }
-
-    /**
      * Report or log an exception.
      *
-     * @param  \Exception  $exception
+     * @param  \Exception $exception
      * @return void
      *
      * @throws \Exception
@@ -81,8 +59,8 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $exception
+     * @param  \Illuminate\Http\Request $request
+     * @param  \Exception $exception
      * @return \Symfony\Component\HttpFoundation\Response
      *
      * @throws \Exception
@@ -94,7 +72,7 @@ class Handler extends ExceptionHandler
 
     /**
      * @param OutputInterface $output
-     * @param Exception       $exception
+     * @param Exception $exception
      */
     public function renderForConsole($output, Exception $exception): void
     {
@@ -111,96 +89,49 @@ class Handler extends ExceptionHandler
      * Generate a log on server, and send a notification to admin
      *
      * @param Exception $exception
-     * @param string    $message
-     * @param null      $context
+     * @param string $message
+     * @param null $context
      */
     public function log(Exception $exception, $message = '', $context = null): void
     {
-        try {
-            $referenceLog = $message . time() . '.log';
+        $referenceLog = $message . time() . '.log';
 
-            Log::error('ERROR', [$exception->getMessage()]);
-            Log::error('FILE', [$exception->getFile()]);
-            Log::error('LINE', [$exception->getLine()]);
-            Log::error('CODE', [$exception->getCode()]);
-            Log::error('TRACE', [$exception->getTrace()]);
+        Log::error('ERROR', [$exception->getMessage()]);
+        Log::error('FILE', [$exception->getFile()]);
+        Log::error('LINE', [$exception->getLine()]);
+        Log::error('CODE', [$exception->getCode()]);
+        Log::error('TRACE', [$exception->getTrace()]);
 
-            Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
-            $referenceLog = Storage::disk('logs')->url($referenceLog);
+        Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
+        $referenceLog = Storage::disk('logs')->url($referenceLog);
 
-            $logMessage = json_encode([
-                'message' => $message,
-                'exceptionMessage' => $exception->getMessage(),
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-                'referenceLog' => $referenceLog,
-            ]);
+        $issueBody = sprintf(
+            "*Message*:\n```\n%s\n```\n\n" .
+            "*File/Line*:\n```\n%s\n```\n\n" .
+            "*Code*:\n```php\n%s\n```\n\n" .
+            "*Log*:\n```php\n%s\n```\n",
+            $exception->getMessage(),
+            $exception->getFile() . '::' . $exception->getLine(),
+            $exception->getCode(),
+            $referenceLog
+        );
 
-            $username = env('GITHUB_USERNAME');
-            $repo = env('GITHUB_REPO');
+        /** @todo remover isso */
+        $group = Group::where('admin', true)->first();
+        /** @todo Usar DI ao inves de static */
 
-            $msg = Str::limit($exception->getMessage(), 256, '');
+        /** @var \Telegram\Bot\Objects\Message $sentMessage */
+        $sentMessage = Telegram::sendDocument([
+            'chat_id' => $group->name,
+            'document' => InputFile::create($referenceLog),
+            'caption' => $exception->getMessage()
+        ]);
 
-            $issues = $this->gitHubManager->search()->issues(
-                '"' . $msg . '"+repo:' . $username . '/' . $repo
-            );
-
-            $issueBody = sprintf(
-                "### Message:\n```\n%s\n```\n\n" .
-                "### File/Line:\n```\n%s\n```\n\n" .
-                "### Code:\n```php\n%s\n```\n\n" .
-                "### Trace:\n```php\n%s\n```\n\n" .
-                "### Log:\n```php\n%s\n```\n",
-                $exception->getMessage(),
-                $exception->getFile() . '::' . $exception->getLine(),
-                $exception->getCode(),
-                $exception->getTraceAsString(),
-                $referenceLog
-            );
-
-            if (blank($issues['items'])) {
-                $this->gitHubManager->issues()->create(
-                    $username,
-                    $repo,
-                    [
-                        'title' => $msg,
-                        'body' => $issueBody,
-                        'labels' => ['bug']
-                    ]
-                );
-            } else {
-                $issueNumber = $issues['items'][0]['number'];
-                $this->gitHubManager->issues()->comments()->create(
-                    $username,
-                    $repo,
-                    $issueNumber,
-                    [
-                        'body' => $issueBody
-                    ]
-                );
-                $this->gitHubManager->issues()->update(
-                    $username,
-                    $repo,
-                    $issueNumber,
-                    [
-                        'state' => 'open'
-                    ]
-                );
-            }
-        } catch (Exception $exception2) {
-            Log::error('EXC2', [$exception2]);
-            try {
-                /** @todo remover isso */
-                $group = Group::where('admin', true)->first();
-                /** @todo Usar DI ao inves de static */
-                Telegram::sendDocument([
-                    'chat_id' => $group->name,
-                    'document' => InputFile::create($referenceLog),
-                    'caption' => $logMessage
-                ]);
-            } catch (Exception $exception3) {
-                Log::error('EXC3', [$exception3]);
-            }
-        }
+        Telegram::sendMessage([
+            'chat_id' => $group->name,
+            'text' => $issueBody,
+            'parse_mode' => BotHelper::PARSE_MARKDOWN,
+            'reply_to_message_id' => $sentMessage->getMessageId()
+        ]);
     }
 }
