@@ -123,7 +123,7 @@ class Handler extends ExceptionHandler
         /** @var \Telegram\Bot\Objects\Message $sentMessage */
         $sentMessage = Telegram::sendDocument([
             'chat_id' => $group->name,
-            'document' => InputFile::create($referenceLog),
+            'document' => new InputFile($referenceLog),
             'caption' => $exception->getMessage()
         ]);
 
