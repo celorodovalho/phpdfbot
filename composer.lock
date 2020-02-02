@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d039b2c069a0a1d4cbced9431c2bb053",
+    "content-hash": "da89e0fbad515ccebf5aeb5b27e82c58",
     "packages": [
         {
             "name": "bensampo/laravel-enum",
@@ -1370,6 +1370,9 @@
                     "providers": [
                         "GrahamCampbell\\GitHub\\GitHubServiceProvider"
                     ]
+                },
+                "patches_applied": {
+                    "Fix the compatibility with Laravel 6+": "patches/graham-campbell-github-102.patch"
                 }
             },
             "autoload": {
