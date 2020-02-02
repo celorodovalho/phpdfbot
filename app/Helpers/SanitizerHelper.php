@@ -3,10 +3,12 @@
 namespace App\Helpers;
 
 use GrahamCampbell\Markdown\Facades\Markdown;
+use function GuzzleHttp\Psr7\str;
 use Illuminate\Support\Traits\Macroable;
 use League\CommonMark\CommonMarkConverter;
 use League\HTMLToMarkdown\HtmlConverter;
 use Spatie\Emoji\Emoji;
+use Transliterator;
 
 /**
  * Class SanitizerHelper
@@ -148,7 +150,17 @@ class SanitizerHelper
                 'Tiago Romualdo Souza',
                 'Com lisura,',
                 '[Profissão Futuro]',
+                'Se cadastre em nosso portal',
+                'At.te,',
             ];
+
+            $omitting = [
+                'subscribe@googlegroups.com',
+                'GrupoClubedeVagas',
+                '!()'
+            ];
+
+            $message = str_ireplace($omitting, '', $message);
 
             $message = html_entity_decode($message);
 
@@ -164,6 +176,9 @@ class SanitizerHelper
                 '',
                 $message
             );
+
+            $message = preg_replace('/^(#)([A-Za-z]+)/im', '$1 $2', $message);
+
             $message = self::removeEmptyTagsRecursive($message);
 
             $message = self::removeTagsAttributes($message);
@@ -171,7 +186,7 @@ class SanitizerHelper
 
             $message = str_ireplace([
                 '<h1>', '</h1>', '<h2>', '</h2>', '<h3>', '</h3>', '<h4>', '</h4>', '<h5>', '</h5>', '<h6>', '</h6>'
-            ], '`', $message);
+            ], '*', $message);
 
             $message = preg_replace('/([*_`]){2,}/m', '$1', $message);
 
@@ -209,13 +224,18 @@ class SanitizerHelper
 
             $message = preg_replace('/cid:(.+)/m', '', $message);
 
-            $message = str_replace('GrupoClubedeVagas', '', $message);
             $message = preg_replace('/(.+)(chat\.whatsapp\.com\/)(.+)/m', 'http://bit.ly/phpdf-official', $message);
 
             $message = strip_tags($message);
 
             $message = preg_replace("/(\n){2,}/im", "\n", $message);
-            $message = preg_replace('/[-]{2,}/m', '', $message);
+            $message = preg_replace('/[-=]{2,}/m', '', $message);
+
+            $message = preg_replace('/^(\d?\\\?[-•>\\\.] ?)/mu', '- ', $message);
+
+            $message = preg_replace('/^\\\$/mu', '', $message);
+
+            $message = str_ireplace($omitting, '', $message);
         }
         return trim($message);
     }
@@ -245,7 +265,7 @@ class SanitizerHelper
         @$dom->loadHTML(mb_convert_encoding($message, 'HTML-ENTITIES', 'UTF-8'));
         $mock = new \DOMDocument;
         $body = $dom->getElementsByTagName('body')->item(0);
-        if (is_object($body)) {
+        if (is_object($body) && filled($body->childNodes)) {
             foreach ($body->childNodes as $child) {
                 $mock->appendChild($mock->importNode($child, true));
             }
@@ -279,5 +299,23 @@ class SanitizerHelper
             return '\\' . $string;
         }, self::TELEGRAM_CHARACTERS);
         return str_ireplace(self::TELEGRAM_CHARACTERS, $escapedStrings, $text);
+    }
+
+    /**
+     * Normalize latin characters to avoid question marks and encoding errors
+     *
+     * @param $string
+     *
+     * @return string
+     */
+    public static function normalizeLatinChars($string): string
+    {
+//        setlocale(LC_ALL, 'en_US.utf8');
+//        return iconv('UTF-8', 'ASCII//TRANSLIT', $string);
+        $transliterator = Transliterator::createFromRules(
+            ':: NFD; :: [:Nonspacing Mark:] Remove; :: Lower(); :: NFC;',
+            Transliterator::FORWARD
+        );
+        return $transliterator->transliterate($string);
     }
 }

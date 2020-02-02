@@ -179,7 +179,6 @@ return [
          * Project Providers
          */
         Telegram\Bot\Laravel\TelegramServiceProvider::class,
-        Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class,
         JD\Cloudder\CloudderServiceProvider::class,
         GrahamCampbell\GitHub\GitHubServiceProvider::class,
         Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::class,

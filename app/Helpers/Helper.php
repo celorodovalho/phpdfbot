@@ -2,8 +2,12 @@
 
 namespace App\Helpers;
 
+use Exception;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
+use JD\Cloudder\CloudinaryWrapper;
 
 /**
  * Class Helper
@@ -47,16 +51,9 @@ class Helper
      */
     public static function getImplementations(string $interface): array
     {
-        $classes = [];
-        foreach (get_declared_classes() as $className) {
-            if (Str::contains($className, 'Message')) {
-                dump([$interface, $className]);
-            }
-            if (in_array($interface, class_implements($className), true)) {
-                $classes[] = $className;
-            }
-        }
-        return $classes;
+        return array_filter(get_declared_classes(), static function ($class) use ($interface) {
+            return in_array($interface, class_implements($class), true);
+        });
     }
 
     /**
@@ -89,5 +86,31 @@ class Helper
         $array = explode("\n", wordwrap($string, $limit));
         $string = reset($array);
         return $string . (strlen($string) < $limit ? '' : $end);
+    }
+
+    /**
+     * @param string $filePath
+     *
+     * @return string
+     */
+    public static function cloudinaryUpload(string $filePath): string
+    {
+        $filePath = Storage::disk('uploads')->path($filePath);
+        try {
+            [$width, $height] = getimagesize($filePath);
+            /** @var CloudinaryWrapper $cloudImage */
+            $cloudinary = resolve(CloudinaryWrapper::class);
+            $cloudImage = $cloudinary->upload($filePath, null);
+            return $cloudImage->secureShow(
+                $cloudImage->getPublicId(),
+                [
+                    'width' => $width,
+                    'height' => $height
+                ]
+            );
+        } catch (Exception $exception) {
+            Log::error(__CLASS__, [$exception]);
+        }
+        return '';
     }
 }

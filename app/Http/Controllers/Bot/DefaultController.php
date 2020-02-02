@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Bot;
 
 use App\Contracts\Repositories\OpportunityRepository;
+use App\Contracts\Repositories\UserRepository;
 use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
 use App\Services\CommandsHandler;
 use App\Validators\OpportunityValidator;
+use Exception;
 use Illuminate\Support\Arr;
 use Telegram\Bot\Api as Telegram;
 use Telegram\Bot\BotsManager;
@@ -20,20 +22,17 @@ use Telegram\Bot\Exceptions\TelegramSDKException;
 class DefaultController extends Controller
 {
 
-    /**
-     * @var BotsManager
-     */
+    /** @var BotsManager */
     private $botsManager;
 
-    /**
-     * @var Handler
-     */
+    /** @var Handler */
     private $handler;
 
-    /**
-     * @var Telegram
-     */
+    /** @var Telegram */
     private $telegram;
+
+    /** @var UserRepository */
+    private $userRepository;
 
     /**
      * DefaultController constructor.
@@ -43,17 +42,20 @@ class DefaultController extends Controller
      * @param Handler               $handler
      * @param OpportunityRepository $repository
      * @param OpportunityValidator  $validator
+     * @param UserRepository        $userRepository
      */
     public function __construct(
         BotsManager $botsManager,
         Telegram $telegram,
         Handler $handler,
         OpportunityRepository $repository,
-        OpportunityValidator $validator
+        OpportunityValidator $validator,
+        UserRepository $userRepository
     ) {
         $this->botsManager = $botsManager;
         $this->telegram = $telegram;
         $this->handler = $handler;
+        $this->userRepository = $userRepository;
         parent::__construct($repository, $validator);
     }
 
@@ -97,8 +99,13 @@ class DefaultController extends Controller
     {
         try {
             $update = $this->telegram->getWebhookUpdate();
-            (new CommandsHandler($this->botsManager, $botName, $this->repository))->processUpdate($update);
-        } catch (\Exception $exception) {
+            (new CommandsHandler(
+                $this->botsManager,
+                $botName,
+                $this->repository,
+                $this->userRepository
+            ))->processUpdate($update);
+        } catch (Exception $exception) {
             $this->handler->log($exception);
         }
         return 'ok';

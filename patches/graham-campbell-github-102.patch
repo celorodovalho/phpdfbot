@@ -1,0 +1,26 @@
+--- src/GitHubFactory.php
++++ src/GitHubFactory.php
+@@ -67,7 +67,7 @@
+      *
+      * @return void
+      */
+-    public function __construct(AuthenticatorFactory $auth, Factory $cache)
++    public function __construct(AuthenticatorFactory $auth, ?Factory $cache)
+     {
+         $this->auth = $auth;
+         $this->cache = $cache;
+--- src/GitHubServiceProvider.php
++++ src/GitHubServiceProvider.php
+@@ -91,7 +91,10 @@
+     {
+         $this->app->singleton('github.factory', function (Container $app) {
+             $auth = $app['github.authfactory'];
+-            $cache = $app['cache'];
++            $cache = null;
++            if ($app->has('cache')) {
++                $cache = $app['cache'];
++            }
+
+
+             return new GitHubFactory($auth, $cache);
+         });

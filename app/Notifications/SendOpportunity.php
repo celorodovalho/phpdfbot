@@ -16,7 +16,7 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
-use League\CommonMark\Converter;
+use League\CommonMark\CommonMarkConverter;
 use Throwable;
 
 /**
@@ -150,7 +150,9 @@ class SendOpportunity extends Notification
             'hasAuthor' => false,
         ])->render();
 
-        $markdown = resolve(Converter::class);
+        $markdown = new CommonMarkConverter();
+
+        $messageText = nl2br($messageText);
 
         $messageText = $markdown->convertToHtml($messageText);
 

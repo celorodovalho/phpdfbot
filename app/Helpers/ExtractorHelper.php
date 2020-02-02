@@ -35,7 +35,7 @@ class ExtractorHelper
         ));
         array_walk($tags, function ($item, $key) use (&$tags) {
             $tag = '#' . mb_strtolower(str_replace([' ', '-'], '', $item));
-            $tags[$key] = iconv('UTF-8', 'ASCII//TRANSLIT', $tag);
+            $tags[$key] = SanitizerHelper::normalizeLatinChars($tag);
         });
         return array_values($tags);
     }
@@ -82,7 +82,7 @@ class ExtractorHelper
     public static function extractUrls(string $text): array
     {
         if (preg_match_all('#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#', $text, $match)) {
-            return $match[0];
+            return array_unique($match[0]);
         }
         return [];
     }

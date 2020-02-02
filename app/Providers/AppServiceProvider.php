@@ -26,6 +26,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        array_map(static function ($filename) {
+            include_once($filename);
+        }, glob(app_path() . '/{,*/,*/*/,*/*/*/}*.php', GLOB_BRACE));
+
         Schema::defaultStringLength(191);
         Validator::extend('alpha_spaces', function ($attribute, $value) {
             // This will only accept alpha and spaces.

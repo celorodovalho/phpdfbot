@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Commands\NewOpportunityCommand;
 use App\Contracts\Repositories\OpportunityRepository;
+use App\Contracts\Repositories\UserRepository;
 use App\Enums\Arguments;
 use App\Enums\Callbacks;
 use App\Exceptions\TelegramOpportunityException;
@@ -14,7 +15,6 @@ use App\Models\Group;
 use App\Models\Opportunity;
 use Exception;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Prettus\Repository\Contracts\RepositoryInterface;
@@ -27,6 +27,7 @@ use Telegram\Bot\Objects\Document;
 use Telegram\Bot\Objects\Message;
 use Telegram\Bot\Objects\PhotoSize;
 use Telegram\Bot\Objects\Update;
+use Telegram\Bot\Objects\User as TelegramUser;
 
 /**
  * Class CommandsHandler
@@ -44,10 +45,12 @@ class CommandsHandler
 
     /** @var Update */
     private $update;
-    /**
-     * @var OpportunityRepository
-     */
+
+    /** @var OpportunityRepository */
     private $repository;
+
+    /** @var UserRepository */
+    private $userRepository;
 
     /**
      * CommandsHandler constructor.
@@ -55,15 +58,18 @@ class CommandsHandler
      * @param BotsManager                               $botsManager
      * @param string                                    $botName
      * @param OpportunityRepository|RepositoryInterface $repository
+     * @param UserRepository                            $userRepository
      */
     public function __construct(
         BotsManager $botsManager,
         string $botName,
-        OpportunityRepository $repository
+        OpportunityRepository $repository,
+        UserRepository $userRepository
     ) {
         $this->botName = $botName;
         $this->telegram = $botsManager->bot($botName);
         $this->repository = $repository;
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -184,12 +190,32 @@ class CommandsHandler
         $document = $message->document;
         /** @var string $caption */
         $caption = $message->caption;
+        /** @var TelegramUser $newMembers */
+        $newMembers = $message->newChatMembers;
 
-        Log::info('MESSAGE_TEXT', [$message->text,]);
-        Log::info('REPLY', [$reply]);
-        Log::info('PHOTOS', [$photos]);
-        Log::info('DOCUMENT', [$document]);
-        Log::info('CAPTION', [$caption]);
+        Log::info('PROCESS_MESSAGE', [
+            'TEXT' => $message->text,
+            'REPLY' => $reply,
+            'PHOTOS' => $photos,
+            'DOCUMENT' => $document,
+            'CAPTION' => $caption,
+            'NEW_MEMBERS' => $newMembers,
+        ]);
+
+        if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE) {
+            $telegramUser = $message->from;
+            $user = $this->userRepository->updateOrCreate(
+                ['id' => $telegramUser->id,],
+                [
+                    'username' => $telegramUser->username,
+                    'is_bot' => $telegramUser->isBot,
+                    'first_name' => $telegramUser->firstName,
+                    'last_name' => $telegramUser->lastName,
+                    'language_code' => $telegramUser->languageCode,
+                ]
+            );
+            Log::info('USER_CREATED_processMessage', [$user]);
+        }
 
         if (((filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT)
                 || (!$message->from->isBot && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE))
@@ -206,7 +232,7 @@ class CommandsHandler
             $urls = ExtractorHelper::extractUrls($text);
             $emails = ExtractorHelper::extractEmail($text);
 
-            if (blank($urls) && blank($emails)) {
+            if (blank($photos) && blank($urls) && blank($emails)) {
                 throw new TelegramOpportunityException(
                     'Envie o texto da vaga, contendo uma URL ou E-mail para se candidatar.'
                 );
@@ -214,13 +240,15 @@ class CommandsHandler
 
             $files = [];
             if (filled($photos)) {
-                foreach ($photos as $photo) {
-                    $files[] = $photo;
-                }
+                $files = $photos->filter(static function ($photo) {
+                    return ($photo['width'] + $photo['height']) > 1000;
+                })->toArray();
             }
             if (filled($document)) {
                 $files[] = $document->first();
             }
+
+            $files = BotHelper::getFiles($files);
 
             $title = str_replace("\n", ' ', $text);
 
@@ -247,18 +275,21 @@ class CommandsHandler
             $this->sendOpportunityToApproval($opportunity);
         }
 
-        $newMembers = $message->newChatMembers;
-        if (filled($newMembers)) {
-            Log::info('NEW_MEMBER', [$newMembers]);
-        }
-
         // TODO: Think more about this
-        /*if (filled($newMembers)) {
-            foreach ($newMembers as $newMember) {
-                $name = $newMember->getFirstName();
-                return $this->telegram->getCommandBus()->execute('start', $this->update, $name);
-            }
-        }*/
+        if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE && filled($newMembers) && $newMembers->isNotEmpty()) {
+            $newMembers->each(function (TelegramUser $telegramUser) {
+                $this->userRepository->updateOrCreate(
+                    ['id' => $telegramUser->id,],
+                    [
+                        'username' => $telegramUser->username,
+                        'is_bot' => $telegramUser->isBot,
+                        'first_name' => $telegramUser->firstName,
+                        'last_name' => $telegramUser->lastName,
+                        'language_code' => $telegramUser->languageCode,
+                    ]
+                );
+            });
+        }
     }
 
     /**

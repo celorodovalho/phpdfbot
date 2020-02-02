@@ -75,7 +75,7 @@ class BotPopulateChannel extends Command
         GroupRepository $groupRepository
     ) {
         $this->telegram = $botsManager->bot(Config::get('telegram.default'));
-        $this->collectors = Helper::getNamespaceClasses('App\\Services\\Collectors');
+        $this->collectors = Helper::getImplementations(CollectorInterface::class);
         $this->repository = $repository;
         $this->groupRepository = $groupRepository;
 

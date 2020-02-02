@@ -1,5 +1,5 @@
 @php
-$bold = $isEmail ? '**' : '*';
+$bold = $isEmail ? '**' : '`';
 @endphp
 @if(filled($opportunity->title))
 {{$bold}}{{ $opportunity->title }}{{$bold}}
@@ -7,7 +7,7 @@ $bold = $isEmail ? '**' : '*';
 @if(filled($opportunity->files) && $opportunity->files->isNotEmpty())
 
 @foreach($opportunity->files as $file)
-{{sprintf(($isEmail ? '!' : '') . '[Image](%s)', $file)}}
+{{sprintf(($isEmail ? '!' : '') . '[🖼](%s)', $file)}}
 @endforeach
 @endif
 @if(filled($opportunity->description))
