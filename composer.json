@@ -54,6 +54,7 @@
         "laravel": {
             "dont-discover": []
         },
+        "composer-exit-on-patch-failure": true,
         "patches": {
           "graham-campbell/github": {
             "Fix the compatibility with Laravel 6+": "patches/graham-campbell-github-102.patch"
