@@ -121,17 +121,17 @@ class Handler extends ExceptionHandler
 
         try {
             /** @var \Telegram\Bot\Objects\Message $sentMessage */
-            $sentMessage = Telegram::sendDocument([
-                'chat_id' => $group->name,
-                'document' => $referenceLog,
-                'caption' => $exception->getMessage()
-            ]);
+//            $sentMessage = Telegram::sendDocument([
+//                'chat_id' => $group->name,
+//                'document' => $referenceLog,
+//                'caption' => $exception->getMessage()
+//            ]);
 
             Telegram::sendMessage([
                 'chat_id' => $group->name,
                 'text' => $issueBody,
                 'parse_mode' => BotHelper::PARSE_MARKDOWN,
-                'reply_to_message_id' => $sentMessage->getMessageId()
+//                'reply_to_message_id' => $sentMessage->getMessageId()
             ]);
         } catch (Exception $exception) {
             Log::error('ERRO_LOG_ERRO', [$exception]);
