@@ -39,7 +39,7 @@ class StartCommand extends Command
     /**
      * @inheritdoc
      */
-    public function handle($arguments): void
+    public function handle(): void
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 

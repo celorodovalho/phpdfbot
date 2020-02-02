@@ -29,7 +29,7 @@ class HelpCommand extends Command
     /**
      * {@inheritdoc}
      */
-    public function handle($arguments): void
+    public function handle(): void
     {
         $commands = $this->telegram->getCommands();
 
@@ -43,7 +43,7 @@ class HelpCommand extends Command
         // TODO: change way of get admin group
         $this->telegram->sendMessage([
             'chat_id' => env('TELEGRAM_GROUP_ADM'),
-            'text' => json_encode([$this->getUpdate(), $arguments])
+            'text' => json_encode([$this->getUpdate()])
         ]);
     }
 }
