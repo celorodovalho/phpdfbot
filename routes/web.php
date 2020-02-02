@@ -1,7 +1,9 @@
 <?php
 
-use App\Http\Controllers\Web\OpportunityController;
-use League\CommonMark\Converter;
+use Dacastro4\LaravelGmail\Facade\LaravelGmail;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
+use Telegram\Bot\Laravel\Facades\Telegram;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,11 +34,19 @@ Route::get('/oauth/gmail/logout', function (){
 });
 
 Route::get('me', function (){
-    dump(\Telegram\Bot\Laravel\Facades\Telegram::getMe());
-    dump(\Telegram\Bot\Laravel\Facades\Telegram::sendMessage([
+    dump(Telegram::getMe());
+    dump(Telegram::sendMessage([
         'chat_id' => 50,
         'text' => 'sdfadfas'
     ]));
+});
+
+Route::get('bot/{type}', function (string $type) {
+    Artisan::call(
+        'bot:populate:channel',
+        ['type' => $type]
+    );
+    return Artisan::output();
 });
 
 Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
@@ -45,47 +55,4 @@ Route::get('/', 'Web\OpportunityController@index');
 
 Route::group(['namespace' => 'Web',], function () {
     Route::resource('opportunities', 'OpportunityController');
-});
-
-Route::get('test2/{opportunity}', function (\App\Models\Opportunity $opportunity){
-    $messageText = view('notifications.opportunity', [
-        'opportunity' => $opportunity,
-        'isEmail' => true,
-        'hasAuthor' => false,
-    ])->render();
-
-    dump($messageText);
-
-//    $markdown = new \League\CommonMark\CommonMarkConverter();
-    $markdown = resolve(Converter::class);
-    $messageText = nl2br($messageText);
-//    $messageText = str_replace("\n", "\n\n", $messageText);
-
-    dump($messageText);
-
-    $messageText = $markdown->convertToHtml($messageText);
-
-    dump($messageText);
-
-    return $messageText;
-});
-Route::get('test', function (\GrahamCampbell\GitHub\GitHubManager $github){
-    try {
-        $opportunity = \App\Models\Opportunity::find(1);
-        $opportunity->notify(new \App\Notifications\SendOpportunity('@botphpdf'));
-//        dump($github->me());https://github.com/phpdevbr/vagas/issues
-//        $github->issues()->create('php-df', 'phpdfbot', array('title' => 'The issue title', 'body' => 'The issue body'));
-//        $issues = $github->issues()->all('phpdevbr', 'vagas', [
-//            'state' => 'open',
-//            'since' => '2019-12-19'
-//        ]);
-//        repo:USERNAME/REPOSITORY
-        $issues = $github->search()->issues('"Undefined property: App\Console\Commands\BotPopulateChannel::$rejectMessages"+repo:php-df/phpdfbot');
-        dump($issues);
-//        $github->issues()->comments()->create('php-df', 'phpdfbot', $issues['issues'][0]['number'], [
-//            'body' => '```'.$issues['issues'][0]['body'].'```'
-//        ]);
-    } catch (\Exception $exception) {
-        dump($exception);die;
-    }
 });
