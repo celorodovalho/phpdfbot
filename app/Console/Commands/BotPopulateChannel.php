@@ -203,7 +203,9 @@ class BotPopulateChannel extends Command
             $opportunitiesIds = $opportunities->pluck('id')->toArray();
             /** @var Group $group */
             foreach ($groups as $group) {
-                $lastNotifications = $group->unreadNotifications;
+                $lastNotifications = $group
+                    ->unreadNotifications()
+                    ->where('type', GroupSummaryOpportunities::class);
 
                 /** @var Collection $telegramIds */
                 $telegramIds = $this->channels
@@ -233,7 +235,9 @@ class BotPopulateChannel extends Command
                 /** @var Notification $lastNotification */
                 foreach ($lastNotifications as $lastNotification) {
                     try {
-                        if ($lastNotification->data && $lastNotification->data['telegram_id']) {
+                        if (filled($lastNotification->data)
+                            && array_key_exists('telegram_id', $lastNotification->data)
+                        ) {
                             $this->telegram->deleteMessage([
                                 'chat_id' => $group->name,
                                 'message_id' => $lastNotification->data['telegram_id']
