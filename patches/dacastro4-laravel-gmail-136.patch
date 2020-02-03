@@ -15,3 +15,10 @@
 -			! $i ? $this->add( "{from:$emails[$i]" ) : $i == $emailsCount - 1 ? $this->add( "from:$emails[$i]}" ) : $this->from( $emails[ $i ] );
 +			! $i ? $this->add( "{from:$emails[$i]" ) : ($i == $emailsCount - 1 ? $this->add( "from:$emails[$i]}" ) : $this->from( $emails[ $i ] ));
 		}
+--- src/Services/Message/Attachment.php
++++ src/Services/Message/Attachment.php
+@@ -136,3 +136,3 @@
+		} else {
+-			if (!ends_with('/', $path)) {
++			if (!\Str::endsWith('/', $path)) {
+				$path = "{$path}/";
