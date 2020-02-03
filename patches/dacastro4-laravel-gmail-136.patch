@@ -4,7 +4,7 @@
 			$name = preg_replace('/ <(.*)>/', '', $email);
 
 -			if (starts_with($name, ' ')) {
-+			if (Str::startsWith($name, ' ')) {
++			if (\Str::startsWith($name, ' ')) {
 				$name = substr($name, 1);
 			}
 --- src/Traits/Filterable.php
