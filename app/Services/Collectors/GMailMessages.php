@@ -148,7 +148,7 @@ class GMailMessages implements CollectorInterface
         $fromTo = '{' . implode(' ', $fromTo) . '}';
 
         $messageService->add($fromTo, 'q', false);
-        $messageService->unread();
+        $messageService->add('is:unread', 'q', false);
 
         $messages = $messageService->preload()->all();
         return $messages->reject(function (Mail $message) {
