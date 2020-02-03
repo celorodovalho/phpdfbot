@@ -24,6 +24,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
+use Telegram\Bot\Exceptions\TelegramSDKException;
 
 /**
  * Class BotPopulateChannel
@@ -68,6 +69,8 @@ class BotPopulateChannel extends Command
      * @param BotsManager           $botsManager
      * @param OpportunityRepository $repository
      * @param GroupRepository       $groupRepository
+     *
+     * @throws TelegramSDKException
      */
     public function __construct(
         BotsManager $botsManager,
@@ -236,7 +239,7 @@ class BotPopulateChannel extends Command
                 /** @var Notification $lastNotification */
                 foreach ($lastNotifications as $lastNotification) {
                     try {
-                        if (filled($lastNotification->data)
+                        if (is_array($lastNotification->data)
                             && array_key_exists('telegram_id', $lastNotification->data)
                         ) {
                             $this->telegram->deleteMessage([

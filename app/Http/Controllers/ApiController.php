@@ -21,7 +21,7 @@ class ApiController extends Controller
      *
      * @return Response
      */
-    public function index()
+    public function index(): Response
     {
         $this->repository->pushCriteria(app(RequestCriteria::class));
         return $this->repository->all();
@@ -36,7 +36,7 @@ class ApiController extends Controller
      *
      * @throws ValidatorException
      */
-    protected function storeDefault(CreateUpdateInterface $request)
+    protected function storeDefault(CreateUpdateInterface $request): Response
     {
         $this->validator->with($request->all())->passesOrFail(ValidatorInterface::RULE_CREATE);
 
@@ -58,7 +58,7 @@ class ApiController extends Controller
      *
      * @throws ValidatorException
      */
-    protected function updateDefault(CreateUpdateInterface $request, $id)
+    protected function updateDefault(CreateUpdateInterface $request, $id): Response
     {
         $this->validator->with($request->all())->passesOrFail(ValidatorInterface::RULE_UPDATE);
 
@@ -74,7 +74,7 @@ class ApiController extends Controller
      *
      * @return Response
      */
-    public function show($id)
+    public function show($id): Response
     {
         return $this->repository->find($id);
     }
@@ -86,7 +86,7 @@ class ApiController extends Controller
      *
      * @return Response
      */
-    public function destroy($id)
+    public function destroy($id): Response
     {
         $deleted = $this->repository->delete($id);
         return response()->success('Successfully deleted!', $deleted);

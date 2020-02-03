@@ -68,8 +68,9 @@ class GitHubMessages implements CollectorInterface
             $username = explode('/', $source->name);
             $repo = end($username);
             $username = reset($username);
-            $messages = array_merge($messages, $this->fetchMessages($username, $repo));
+            $messages[] = $this->fetchMessages($username, $repo);
         }
+        $messages = array_merge(...$messages);
         foreach ($messages as $message) {
             $this->createOpportunity($message);
         }
@@ -90,11 +91,11 @@ class GitHubMessages implements CollectorInterface
                 Opportunity::TITLE => $title,
                 Opportunity::DESCRIPTION => $description,
                 Opportunity::FILES => $this->extractFiles($title . $description),
-                Opportunity::POSITION => $this->extractPosition($title),
-                Opportunity::COMPANY => $this->extractCompany($title . $description),
+                Opportunity::POSITION => '',
+                Opportunity::COMPANY => '',
                 Opportunity::LOCATION => $this->extractLocation($title . $description),
                 Opportunity::TAGS => $this->extractTags($title . $description),
-                Opportunity::SALARY => $this->extractSalary($title . $description),
+                Opportunity::SALARY => '',
                 Opportunity::URL => $this->extractUrl($description . $message['html_url']),
                 Opportunity::ORIGIN => $this->extractOrigin($message['html_url']),
                 Opportunity::EMAILS => $this->extractEmails($description),
@@ -150,7 +151,7 @@ class GitHubMessages implements CollectorInterface
      */
     public function extractOrigin($message): string
     {
-        return preg_replace('#(https://github.com/)(.+?)(/issues/[0-9]+)#i', '$2', $message);
+        return preg_replace('#(https://github.com/)(.+?)(/issues/\d+)#i', '$2', $message);
     }
 
     /**
@@ -203,23 +204,5 @@ class GitHubMessages implements CollectorInterface
     {
         $mails = ExtractorHelper::extractEmail($message);
         return implode(', ', $mails);
-    }
-
-    /** @todo Match position */
-    public function extractPosition($message): string
-    {
-        return '';
-    }
-
-    /** @todo Match salary */
-    public function extractSalary($message): string
-    {
-        return '';
-    }
-
-    /** @todo Match company */
-    public function extractCompany($message): string
-    {
-        return '';
     }
 }

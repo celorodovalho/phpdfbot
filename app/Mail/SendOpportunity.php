@@ -30,7 +30,7 @@ class SendOpportunity extends Mailable
      *
      * @return $this
      */
-    public function build()
+    public function build(): self
     {
         return $this;
     }

@@ -2,8 +2,9 @@
 
 namespace App\Helpers;
 
+use DOMDocument;
+use DOMNode;
 use GrahamCampbell\Markdown\Facades\Markdown;
-use function GuzzleHttp\Psr7\str;
 use Illuminate\Support\Traits\Macroable;
 use League\CommonMark\CommonMarkConverter;
 use League\HTMLToMarkdown\HtmlConverter;
@@ -261,11 +262,11 @@ class SanitizerHelper
      */
     public static function closeOpenTags(string $message): string
     {
-        $dom = new \DOMDocument;
+        $dom = new DOMDocument;
         @$dom->loadHTML(mb_convert_encoding($message, 'HTML-ENTITIES', 'UTF-8'));
-        $mock = new \DOMDocument;
+        $mock = new DOMDocument;
         $body = $dom->getElementsByTagName('body')->item(0);
-        if (is_object($body) && filled($body->childNodes)) {
+        if ($body instanceof DOMNode && filled($body->childNodes)) {
             foreach ($body->childNodes as $child) {
                 $mock->appendChild($mock->importNode($child, true));
             }
@@ -283,7 +284,7 @@ class SanitizerHelper
      */
     public static function removeEmptyTagsRecursive(string $str, string $repto = ''): string
     {
-        return trim($str) === '' ? $str : preg_replace('/<([^<\/>]*)>([\s]*?|(?R))<\/\1>/imsU', $repto, $str);
+        return trim($str) === '' ? $str : preg_replace('/<([^<\/>]*)>([\s]*?|(?R))<\/\1>/imU', $repto, $str);
     }
 
     /**

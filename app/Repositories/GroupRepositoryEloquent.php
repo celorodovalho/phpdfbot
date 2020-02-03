@@ -2,10 +2,11 @@
 
 namespace App\Repositories;
 
-use Prettus\Repository\Eloquent\BaseRepository;
-use Prettus\Repository\Criteria\RequestCriteria;
 use App\Contracts\Repositories\GroupRepository;
 use App\Models\Group;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Prettus\Repository\Eloquent\BaseRepository;
+use Prettus\Repository\Exceptions\RepositoryException;
 
 /**
  * Class GroupRepositoryEloquent
@@ -26,6 +27,8 @@ class GroupRepositoryEloquent extends BaseRepository implements GroupRepository
 
     /**
      * Boot up the repository, pushing criteria
+     *
+     * @throws RepositoryException
      */
     public function boot(): void
     {

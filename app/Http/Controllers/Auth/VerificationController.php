@@ -6,6 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\VerifiesEmails;
 
+/**
+ * Class VerificationController
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class VerificationController extends Controller
 {
     /*

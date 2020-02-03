@@ -71,11 +71,11 @@ class ComoQueTaLaMessages implements CollectorInterface
                 Opportunity::TITLE => $title,
                 Opportunity::DESCRIPTION => $description,
                 Opportunity::FILES => $this->extractFiles($title . $description),
-                Opportunity::POSITION => $this->extractPosition($title),
-                Opportunity::COMPANY => $this->extractCompany($message),
+                Opportunity::POSITION => '',
+                Opportunity::COMPANY => $message[Opportunity::COMPANY],
                 Opportunity::LOCATION => $this->extractLocation($description . $message[Opportunity::LOCATION]),
                 Opportunity::TAGS => $this->extractTags($title . $description . $message[Opportunity::LOCATION]),
-                Opportunity::SALARY => $this->extractSalary($title . $description),
+                Opportunity::SALARY => '',
                 Opportunity::URL => $this->extractUrl($description . ' ' . $message[Opportunity::URL]),
                 Opportunity::ORIGIN => $this->extractOrigin($description),
                 Opportunity::EMAILS => $this->extractEmails($description),
@@ -93,7 +93,7 @@ class ComoQueTaLaMessages implements CollectorInterface
         $messages = [];
         $client = new Client();
         $crawler = $client->request('GET', 'https://comoequetala.com.br/vagas-e-jobs');
-        $crawler->filter('.uk-list.uk-list-space > li')->each(function (Crawler $node) use (&$messages) {
+        $crawler->filter('.uk-list.uk-list-space > li')->each(static function (Crawler $node) use (&$messages) {
             $client = new Client();
             $pattern = '#(' . implode('|', Config::get('constants.requiredWords')) . ')#i';
             if (preg_match_all($pattern, $node->text())) {
@@ -214,23 +214,5 @@ class ComoQueTaLaMessages implements CollectorInterface
     {
         $mails = ExtractorHelper::extractEmail($message);
         return implode(', ', $mails);
-    }
-
-    /** @todo Match position */
-    public function extractPosition($message): string
-    {
-        return '';
-    }
-
-    /** @todo Match salary */
-    public function extractSalary($message): string
-    {
-        return '';
-    }
-
-    /** @todo Match company */
-    public function extractCompany($message): string
-    {
-        return $message[Opportunity::COMPANY];
     }
 }

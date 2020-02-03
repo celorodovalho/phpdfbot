@@ -33,7 +33,7 @@ class ExtractorHelper
             BrazilianStates::toArray(),
             Countries::toArray()
         ));
-        array_walk($tags, function ($item, $key) use (&$tags) {
+        array_walk($tags, static function ($item, $key) use (&$tags) {
             $tag = '#' . mb_strtolower(str_replace([' ', '-'], '', $item));
             $tags[$key] = SanitizerHelper::normalizeLatinChars($tag);
         });
@@ -81,7 +81,7 @@ class ExtractorHelper
      */
     public static function extractUrls(string $text): array
     {
-        if (preg_match_all('#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#', $text, $match)) {
+        if (preg_match_all('#\bhttps?://[^,\s()<>]+(?:\([\w]+\)|([^,[:punct:]\s]|/))#', $text, $match)) {
             return array_unique($match[0]);
         }
         return [];
@@ -94,7 +94,11 @@ class ExtractorHelper
      */
     public static function extractEmail(string $text): array
     {
-        if (preg_match_all("/[a-z0-9]+[_a-z0-9\.-]*[a-z0-9]+@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})/i", $text, $match)) {
+        if (preg_match_all(
+            "/[a-z0-9]+[_a-z0-9\.-]*[a-z0-9]+@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})/i",
+            $text,
+            $match
+        )) {
             return array_unique($match[0]);
         }
         return [];
@@ -108,7 +112,7 @@ class ExtractorHelper
      *
      * @return bool
      */
-    public static function hasTags(iterable $tags, $text)
+    public static function hasTags(iterable $tags, $text): bool
     {
         $text = mb_strtolower($text);
         foreach ($tags as $tag) {

@@ -10,6 +10,9 @@ use Illuminate\Contracts\Notifications\Dispatcher;
  * Trait RoutesNotifications
  *
  * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ *
+ * @property string email
+ * @property string phone_number
  */
 trait RoutesNotifications
 {
@@ -60,5 +63,7 @@ trait RoutesNotifications
             case 'nexmo':
                 return $this->phone_number;
         }
+
+        return null;
     }
 }

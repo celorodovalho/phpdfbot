@@ -59,6 +59,8 @@ class CommandsHandler
      * @param string                                    $botName
      * @param OpportunityRepository|RepositoryInterface $repository
      * @param UserRepository                            $userRepository
+     *
+     * @throws TelegramSDKException
      */
     public function __construct(
         BotsManager $botsManager,
@@ -79,6 +81,7 @@ class CommandsHandler
      *
      * @return mixed
      * @throws TelegramSDKException
+     * @throws Exception
      */
     public function processUpdate(Update $update): void
     {
@@ -276,7 +279,8 @@ class CommandsHandler
         }
 
         // TODO: Think more about this
-        if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE && filled($newMembers) && $newMembers->isNotEmpty()) {
+        if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE
+            && filled($newMembers) && $newMembers->isNotEmpty()) {
             $newMembers->each(function (TelegramUser $telegramUser) {
                 $this->userRepository->updateOrCreate(
                     ['id' => $telegramUser->id,],
@@ -315,31 +319,18 @@ class CommandsHandler
      * Process the command
      *
      * @param string $command
+     * @param bool   $triggerProcess
      */
-    private function processCommand(string $command): void
+    private function processCommand(string $command, bool $triggerProcess = true): void
     {
+        $triggerProcess = $triggerProcess ? 'processCommand' : 'triggerCommand';
+
         $command = str_replace('/', '', $command);
 
         $commands = $this->telegram->getCommands();
 
         if (array_key_exists($command, $commands)) {
-            $this->telegram->processCommand($this->update);
-        }
-    }
-
-    /**
-     * Process the command
-     *
-     * @param string $command
-     */
-    private function triggerCommand(string $command): void
-    {
-        $command = str_replace('/', '', $command);
-
-        $commands = $this->telegram->getCommands();
-
-        if (array_key_exists($command, $commands)) {
-            $this->telegram->triggerCommand($command, $this->update);
+            $this->telegram->{$triggerProcess}($this->update);
         }
     }
 

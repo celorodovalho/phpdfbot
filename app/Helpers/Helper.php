@@ -66,7 +66,7 @@ class Helper
         $composer = require base_path('/vendor/autoload.php');
 
         $namespaces = array_keys($composer->getClassMap());
-        return array_filter($namespaces, function ($item) use ($namespace) {
+        return array_filter($namespaces, static function ($item) use ($namespace) {
             return Str::startsWith($item, $namespace);
         });
     }

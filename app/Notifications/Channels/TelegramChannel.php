@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
+use RuntimeException;
 use Telegram\Bot\Api as Telegram;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramSDKException;
@@ -27,6 +28,8 @@ class TelegramChannel
      * Channel constructor.
      *
      * @param BotsManager $botsManager
+     *
+     * @throws TelegramSDKException
      */
     public function __construct(BotsManager $botsManager)
     {
@@ -41,6 +44,8 @@ class TelegramChannel
      *
      * @return Collection
      * @throws TelegramSDKException
+     * @throws Exception
+     * @throws Exception
      */
     public function send($notifiable, Notification $notification): Collection
     {
@@ -52,14 +57,14 @@ class TelegramChannel
 
         if ($message->chatIdNotGiven()) {
             if (!$chatId = $notifiable->routeNotificationFor('telegram')) {
-                throw new Exception('Telegram notification chat ID was not provided. Please refer usage docs.');
+                throw new RuntimeException('Telegram notification chat ID was not provided. Please refer usage docs.');
             }
 
             $message->to($chatId);
         }
 
         if ($message->sizeLimitExceed()) {
-            throw new Exception('Telegram text limit size was exceeded. Please refer usage docs.');
+            throw new RuntimeException('Telegram text limit size was exceeded. Please refer usage docs.');
         }
 
         $params = $message->toArray();

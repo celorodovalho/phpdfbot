@@ -64,15 +64,6 @@ interface CollectorInterface
     public function extractOrigin($message): string;
 
     /**
-     * Parse the company
-     *
-     * @param $message
-     *
-     * @return string
-     */
-    public function extractCompany($message): string;
-
-    /**
      * Parse the location
      *
      * @param $message
@@ -89,24 +80,6 @@ interface CollectorInterface
      * @return array
      */
     public function extractTags($message): array;
-
-    /**
-     * Parse the position
-     *
-     * @param $message
-     *
-     * @return string
-     */
-    public function extractPosition($message): string;
-
-    /**
-     * Parse the salary
-     *
-     * @param $message
-     *
-     * @return string
-     */
-    public function extractSalary($message): string;
 
     /**
      * Parse the URL

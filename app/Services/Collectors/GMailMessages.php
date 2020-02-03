@@ -15,6 +15,7 @@ use Dacastro4\LaravelGmail\Exceptions\AuthException;
 use Dacastro4\LaravelGmail\Services\Message\Attachment;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
 use Exception;
+use Google_Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\Config;
@@ -52,7 +53,7 @@ class GMailMessages implements CollectorInterface
      * GMailMessages constructor.
      *
      * @param Collection            $opportunities
-     * @param GmailService          $gMailService
+     * @param GmailService     $gMailService
      * @param OpportunityRepository $repository
      * @param GroupRepository       $groupRepository
      */
@@ -73,6 +74,9 @@ class GMailMessages implements CollectorInterface
      *
      * @return Collection
      * @throws AuthException
+     * @throws Exception
+     * @throws Exception
+     * @throws Exception
      */
     public function collectOpportunities(): Collection
     {
@@ -102,11 +106,11 @@ class GMailMessages implements CollectorInterface
                 Opportunity::TITLE => $title,
                 Opportunity::DESCRIPTION => $description,
                 Opportunity::FILES => $this->extractFiles($message),
-                Opportunity::POSITION => $this->extractPosition($title),
-                Opportunity::COMPANY => $this->extractCompany($title . $description),
+                Opportunity::POSITION => '',
+                Opportunity::COMPANY => '',
                 Opportunity::LOCATION => $this->extractLocation($title . $description),
                 Opportunity::TAGS => $this->extractTags($title . $description),
-                Opportunity::SALARY => $this->extractSalary($title . $description),
+                Opportunity::SALARY => '',
                 Opportunity::URL => $this->extractUrl($description),
                 Opportunity::ORIGIN => $this->extractOrigin($message),
                 Opportunity::EMAILS => $this->extractEmails($description),
@@ -119,16 +123,19 @@ class GMailMessages implements CollectorInterface
      *
      * @return BaseCollection
      * @throws AuthException
+     * @throws Google_Exception
      */
     protected function fetchMessages(): BaseCollection
     {
         $messageService = $this->gMailService->message();
 
-        $words = '{' . implode(' ', array_map(static function ($word) {
+        $words = '{' .
+            implode(' ', array_map(static function ($word) {
                 return Str::contains($word, ' ') ? '"' . $word . '"' : $word;
-            }, Config::get('constants.requiredWords'))) . '}';
+            }, Config::get('constants.requiredWords')))
+            . '}';
 
-        $messageService->add($words);
+        $messageService->add($words, 'q', false);
 
         $mailing = $this->groupRepository->findWhere([['type', '=', GroupTypes::MAILING]]);
         $fromTo = [];
@@ -140,7 +147,7 @@ class GMailMessages implements CollectorInterface
 
         $fromTo = '{' . implode(' ', $fromTo) . '}';
 
-        $messageService->add($fromTo);
+        $messageService->add($fromTo, 'q', false);
         $messageService->unread();
 
         $messages = $messageService->preload()->all();
@@ -207,11 +214,11 @@ class GMailMessages implements CollectorInterface
      */
     public function extractOrigin($message): string
     {
-        $to = $message->getTo();
-        $to = array_map(static function ($item) {
+        $recipient = $message->getTo();
+        $recipient = array_map(static function ($item) {
             return $item['email'];
-        }, $to);
-        return strtolower(json_encode($to));
+        }, $recipient);
+        return strtolower(json_encode($recipient));
     }
 
     /**
@@ -264,23 +271,5 @@ class GMailMessages implements CollectorInterface
     {
         $mails = ExtractorHelper::extractEmail($message);
         return implode(', ', $mails);
-    }
-
-    /** @todo Match position */
-    public function extractPosition($message): string
-    {
-        return '';
-    }
-
-    /** @todo Match salary */
-    public function extractSalary($message): string
-    {
-        return '';
-    }
-
-    /** @todo Match company */
-    public function extractCompany($message): string
-    {
-        return '';
     }
 }

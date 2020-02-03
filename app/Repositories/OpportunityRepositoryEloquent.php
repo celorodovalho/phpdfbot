@@ -2,12 +2,13 @@
 
 namespace App\Repositories;
 
-use Illuminate\Support\Collection;
-use Prettus\Repository\Eloquent\BaseRepository;
-use Prettus\Repository\Criteria\RequestCriteria;
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Models\Opportunity;
 use App\Validators\OpportunityValidator;
+use Illuminate\Support\Collection;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Prettus\Repository\Eloquent\BaseRepository;
+use Prettus\Repository\Exceptions\RepositoryException;
 
 /**
  * Class OpportunityRepositoryEloquent
@@ -38,6 +39,8 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
 
     /**
      * Boot up the repository, pushing criteria
+     *
+     * @throws RepositoryException
      */
     public function boot()
     {
