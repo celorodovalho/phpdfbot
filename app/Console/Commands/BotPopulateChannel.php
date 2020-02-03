@@ -205,7 +205,8 @@ class BotPopulateChannel extends Command
             foreach ($groups as $group) {
                 $lastNotifications = $group
                     ->unreadNotifications()
-                    ->where('type', GroupSummaryOpportunities::class);
+                    ->where('type', GroupSummaryOpportunities::class)
+                    ->get();
 
                 /** @var Collection $telegramIds */
                 $telegramIds = $this->channels
