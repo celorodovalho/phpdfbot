@@ -48,8 +48,6 @@ Bot para Telegram destinado a disponibilização de vagas para área de Tecnolog
         * send: Envia a vaga aprovada para o canal.
         * notify: Envia uma notificao para o grupo de que ha novas vagas publicadas.
     * opportunity {opcional}: O ID da vaga cadastrada
-    * message {opcional}: O ID no telegram da messagem enviada
-    * chat {opcional}: O ID no telegram da conversa de quem enviou a vaga
 
 ## Como acessar?
 

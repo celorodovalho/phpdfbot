@@ -41,55 +41,7 @@ return [
                 //Acme\Project\Commands\MyTelegramBot\BotCommand::class
             ],
         ],
-        'ConcurseirosBot' => [
-            'username'            => 'ConcurseirosBot',
-            'token'               => env('TELEGRAM_BOT_TOKEN2', ''),
-            'webhook_url' => env('TELEGRAM_WEBHOOK_URL', env('APP_URL') . '/webhook/' . env('TELEGRAM_BOT_TOKEN2') . '/ConcurseirosBot'),
-            'commands'            => [
-//                App\Commands\HelpCommand::class,
-            ],
-        ],
-
-//        'mySecondBot' => [
-//            'username'  => 'AnotherTelegram_Bot',
-//            'token' => '123456:abc',
-//        ],
     ],
-    'admin' => '@botphpdf',
-    'groups' => [
-        '@phpdf' => ['main' => true],
-        '@phpbrasil' => ['main' => false],
-    ],
-    'channels' => [
-        '@VagasBrasil_TI' => [
-            'main' => true,
-            'tags' => [],
-        ],
-        '@phpbrasilvagas' => [
-            'main' => false,
-            'tags' => ['php'],
-        ],
-        '@GrupoClubedeVagas' => [
-            'main' => false,
-            'tags' => [],
-        ],
-    ],
-    'mailing' => [
-        'clubinfobsb@googlegroups.com' => [
-            'tags' => [
-                'DF',
-                'BSB',
-                'Distrito Federal',
-                'Brasília',
-                'Águas Claras',
-                'Asa Sul',
-                'Asa Norte',
-                'Taguatinga',
-                'Goiânia',
-            ]
-        ]
-    ],
-
     /*
     |--------------------------------------------------------------------------
     | Default Bot Name

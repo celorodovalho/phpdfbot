@@ -2,39 +2,68 @@
 
 namespace App\Http\Controllers\Bot;
 
+use App\Contracts\Repositories\OpportunityRepository;
+use App\Contracts\Repositories\UserRepository;
+use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
 use App\Services\CommandsHandler;
-
+use App\Validators\OpportunityValidator;
 use Exception;
-
+use Illuminate\Support\Arr;
+use Telegram\Bot\Api as Telegram;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramSDKException;
-use Telegram\Bot\Laravel\Facades\Telegram;
 
 /**
  * Class DefaultController
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class DefaultController extends Controller
 {
 
-    /**
-     * @var BotsManager
-     */
+    /** @var BotsManager */
     private $botsManager;
+
+    /** @var Handler */
+    private $handler;
+
+    /** @var Telegram */
+    private $telegram;
+
+    /** @var UserRepository */
+    private $userRepository;
 
     /**
      * DefaultController constructor.
-     * @param BotsManager $botsManager
+     *
+     * @param BotsManager           $botsManager
+     * @param Telegram              $telegram
+     * @param Handler               $handler
+     * @param OpportunityRepository $repository
+     * @param OpportunityValidator  $validator
+     * @param UserRepository        $userRepository
      */
-    public function __construct(BotsManager $botsManager)
-    {
+    public function __construct(
+        BotsManager $botsManager,
+        Telegram $telegram,
+        Handler $handler,
+        OpportunityRepository $repository,
+        OpportunityValidator $validator,
+        UserRepository $userRepository
+    ) {
         $this->botsManager = $botsManager;
+        $this->telegram = $telegram;
+        $this->handler = $handler;
+        $this->userRepository = $userRepository;
+        parent::__construct($repository, $validator);
     }
 
     /**
      * Set the webhook to the bots
      *
      * @param $botName
+     *
      * @return string
      * @throws TelegramSDKException
      */
@@ -43,8 +72,8 @@ class DefaultController extends Controller
         $telegram = $this->botsManager->bot($botName);
         $config = $this->botsManager->getBotConfig($botName);
 
-        $params = ['url' => array_get($config, 'webhook_url')];
-        $certificatePath = array_get($config, 'certificate_path', false);
+        $params = ['url' => Arr::get($config, 'webhook_url')];
+        $certificatePath = Arr::get($config, 'certificate_path', false);
 
         if ($certificatePath) {
             $params['certificate'] = $certificatePath;
@@ -63,15 +92,21 @@ class DefaultController extends Controller
      *
      * @param $token
      * @param $botName
+     *
      * @return string
      */
     public function webhook($token, $botName): string
     {
         try {
-            $update = Telegram::getWebhookUpdate();
-            CommandsHandler::make($this->botsManager, $botName, $update);
+            $update = $this->telegram->getWebhookUpdate();
+            (new CommandsHandler(
+                $this->botsManager,
+                $botName,
+                $this->repository,
+                $this->userRepository
+            ))->processUpdate($update);
         } catch (Exception $exception) {
-            return $exception->getMessage();
+            $this->handler->log($exception);
         }
         return 'ok';
     }

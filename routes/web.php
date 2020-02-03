@@ -1,5 +1,10 @@
 <?php
 
+use Dacastro4\LaravelGmail\Facade\LaravelGmail;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
+use Telegram\Bot\Laravel\Facades\Telegram;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -29,9 +34,25 @@ Route::get('/oauth/gmail/logout', function (){
 });
 
 Route::get('me', function (){
-    dump(\Telegram\Bot\Laravel\Facades\Telegram::getMe());
-    dump(\Telegram\Bot\Laravel\Facades\Telegram::sendMessage([
+    dump(Telegram::getMe());
+    dump(Telegram::sendMessage([
         'chat_id' => 50,
         'text' => 'sdfadfas'
     ]));
+});
+
+Route::get('bot/{type}', function (string $type) {
+    Artisan::call(
+        'bot:populate:channel',
+        ['type' => $type]
+    );
+    return Artisan::output();
+});
+
+Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
+
+Route::get('/', 'Web\OpportunityController@index');
+
+Route::group(['namespace' => 'Web',], function () {
+    Route::resource('opportunities', 'OpportunityController');
 });
