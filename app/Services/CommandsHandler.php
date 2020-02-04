@@ -220,7 +220,10 @@ class CommandsHandler
             Log::info('USER_CREATED_processMessage', [$user]);
         }
 
-        if (((filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT)
+        if (((filled($reply)
+                    && filled($reply->from)
+                    && $reply->from->isBot
+                    && $reply->text === NewOpportunityCommand::TEXT)
                 || (!$message->from->isBot && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE))
             && !in_array($message->text, $this->telegram->getCommands(), true)
         ) {
