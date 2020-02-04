@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c5eeb42093b8ddcc2202ae176e3a5b9e",
+    "content-hash": "c81dd0123b8bde615fdf24387dc5ceb3",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -3144,6 +3144,60 @@
                 "markdown"
             ],
             "time": "2019-12-28T01:32:28+00:00"
+        },
+        {
+            "name": "maxbanton/cwh",
+            "version": "v2.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/maxbanton/cwh.git",
+                "reference": "cb1db98e1f3aa571437852270c6256a68706cd73"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/maxbanton/cwh/zipball/cb1db98e1f3aa571437852270c6256a68706cd73",
+                "reference": "cb1db98e1f3aa571437852270c6256a68706cd73",
+                "shasum": ""
+            },
+            "require": {
+                "aws/aws-sdk-php": "^3.18",
+                "monolog/monolog": "^2.0",
+                "php": "^7.2"
+            },
+            "require-dev": {
+                "maxbanton/dd": "^2.0",
+                "php-coveralls/php-coveralls": "^2.2",
+                "phpunit/phpunit": "^8.5",
+                "squizlabs/php_codesniffer": "^3.5"
+            },
+            "suggest": {
+                "maxbanton/dd": "Minimalistic dump-and-die function for easy debugging"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Maxbanton\\Cwh\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Max Leonov",
+                    "email": "hi@maxleonov.pw",
+                    "homepage": "https://maxleonov.pw"
+                }
+            ],
+            "description": "AWS CloudWatch Handler for Monolog library",
+            "homepage": "https://github.com/maxbanton/cwh",
+            "keywords": [
+                "aws",
+                "cloudwatch",
+                "monolog"
+            ],
+            "time": "2020-01-17T09:08:44+00:00"
         },
         {
             "name": "monolog/monolog",

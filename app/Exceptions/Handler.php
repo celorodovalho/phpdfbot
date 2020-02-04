@@ -99,7 +99,7 @@ class Handler extends ExceptionHandler
     public function log(Exception $exception, $message = '', $context = null): void
     {
         try {
-            $referenceLog = $message . time() . '.log';
+            $referenceLog = $message . (date('Y-m-d-H-i-s') . time()) . '.log';
 
             Log::error('ERROR', [$exception->getMessage()]);
             Log::error('FILE', [$exception->getFile()]);

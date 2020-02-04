@@ -32,6 +32,8 @@
         "league/flysystem-aws-s3-v3": "^1.0",
         "league/flysystem-sftp": "^1.0",
         "league/html-to-markdown": "^4.9",
+        "maxbanton/cwh": "^2.0",
+        "monolog/monolog": "^2.0",
         "php-http/guzzle6-adapter": "^2.0",
         "prettus/l5-repository": "^2.6",
         "spatie/emoji": "^2.1",
