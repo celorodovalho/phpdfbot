@@ -141,8 +141,6 @@ class Handler extends ExceptionHandler
 //                'reply_to_message_id' => $sentMessage->getMessageId()
             ]);
         } catch (Exception $exception) {
-            dump($exception);
-            die;
             Log::error('ERRO_LOG_ERRO', [$exception]);
         }
     }

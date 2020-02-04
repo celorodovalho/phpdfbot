@@ -44,25 +44,19 @@ return [
     'disks' => [
 
         'local' => [
-            'driver' => 'sftp',
-            'host' => env('FTP_HOST'),
-            'username' => env('FTP_USERNAME'),
-            'password' => env('FTP_PASSWORD'),
-            'root' => env('FTP_ROOT'),
-            'port' => env('FTP_PORT'),
-//            'driver' => 'local',
-//            'root' => storage_path('app'),
+            'driver' => 's3',
+            'root' => storage_path('app'),
         ],
 
         'public' => [
-            'driver' => 'local',
+            'driver' => 's3',
             'root' => storage_path('app/public'),
             'url' => env('APP_URL').'/storage',
             'visibility' => 'public',
         ],
 
         'logs' => [
-            'driver' => 'local',
+            'driver' => 's3',
             'root' => storage_path('app/logs'),
             'url' => str_replace('/public/index.php', '', env('APP_URL')) . '/storage/app/logs',
             'visibility' => 'public',
@@ -78,7 +72,7 @@ return [
         ],
 
         'uploads' => [
-            'driver' => 'local',
+            'driver' => 's3',
             'root'   => public_path() . '/uploads',
             'url' => str_replace('/index.php', '', env('APP_URL')) . '/uploads',
             'visibility' => 'public',
