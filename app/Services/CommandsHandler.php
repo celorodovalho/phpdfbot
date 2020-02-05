@@ -23,6 +23,7 @@ use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramResponseException;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Objects\CallbackQuery;
+use Telegram\Bot\Objects\Chat;
 use Telegram\Bot\Objects\Document;
 use Telegram\Bot\Objects\Message;
 use Telegram\Bot\Objects\PhotoSize;
@@ -56,10 +57,10 @@ class CommandsHandler
     /**
      * CommandsHandler constructor.
      *
-     * @param BotsManager                               $botsManager
-     * @param string                                    $botName
+     * @param BotsManager $botsManager
+     * @param string $botName
      * @param OpportunityRepository|RepositoryInterface $repository
-     * @param UserRepository                            $userRepository
+     * @param UserRepository $userRepository
      *
      * @throws TelegramSDKException
      */
@@ -68,7 +69,8 @@ class CommandsHandler
         string $botName,
         OpportunityRepository $repository,
         UserRepository $userRepository
-    ) {
+    )
+    {
         $this->botName = $botName;
         $this->telegram = $botsManager->bot($botName);
         $this->repository = $repository;
@@ -206,6 +208,7 @@ class CommandsHandler
             'NEW_MEMBERS' => $newMembers,
         ]);
 
+
         if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE) {
             $telegramUser = $message->from;
             $user = $this->userRepository->updateOrCreate(
@@ -221,14 +224,20 @@ class CommandsHandler
             Log::info('USER_CREATED_processMessage', [$user]);
         }
 
-        // TODO: Melhorar esse if monstruoso
         if (
-            (($reply instanceof Message && filled($reply)
-                    && $reply->from instanceof User && filled($reply->from)
-                    && property_exists($reply->from, 'isBot') && $reply->from->isBot
-                    && $reply->text === NewOpportunityCommand::TEXT)
-                || (($reply->from instanceof User && !$message->from->isBot)
-                    && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE))
+            (
+                (
+                    $reply instanceof Message
+                    && $reply->from instanceof User
+                    && $reply->from->isBot
+                    && $reply->text === NewOpportunityCommand::TEXT
+                ) || (
+                    $message->from instanceof User
+                    && !$message->from->isBot
+                    && $message->chat instanceof Chat
+                    && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE
+                )
+            )
             && !in_array($message->text, $this->telegram->getCommands(), true)
         ) {
             if (blank($message->text) && blank($caption)) {
@@ -326,7 +335,7 @@ class CommandsHandler
      * Process the command
      *
      * @param string $command
-     * @param bool   $triggerProcess
+     * @param bool $triggerProcess
      */
     private function processCommand(string $command, bool $triggerProcess = true): void
     {
