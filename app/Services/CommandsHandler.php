@@ -28,6 +28,7 @@ use Telegram\Bot\Objects\Message;
 use Telegram\Bot\Objects\PhotoSize;
 use Telegram\Bot\Objects\Update;
 use Telegram\Bot\Objects\User as TelegramUser;
+use Telegram\Bot\Objects\User;
 
 /**
  * Class CommandsHandler
@@ -220,11 +221,14 @@ class CommandsHandler
             Log::info('USER_CREATED_processMessage', [$user]);
         }
 
-        if (((filled($reply)
-                    && filled($reply->from)
-                    && $reply->from->isBot
+        // TODO: Melhorar esse if monstruoso
+        if (
+            (($reply instanceof Message && filled($reply)
+                    && $reply->from instanceof User && filled($reply->from)
+                    && property_exists($reply->from, 'isBot') && $reply->from->isBot
                     && $reply->text === NewOpportunityCommand::TEXT)
-                || (!$message->from->isBot && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE))
+                || (($reply->from instanceof User && !$message->from->isBot)
+                    && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE))
             && !in_array($message->text, $this->telegram->getCommands(), true)
         ) {
             if (blank($message->text) && blank($caption)) {
