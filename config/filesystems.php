@@ -43,22 +43,50 @@ return [
 
     'disks' => [
 
+//        'local' => [
+//            'driver' => 'local',
+//            'root' => storage_path('app'),
+//        ],
+
         'local' => [
             'driver' => 's3',
-            'root' => storage_path('app'),
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL'),
+            //
+//            'root' => storage_path('app'),
+            'root' => '/',
         ],
 
         'public' => [
             'driver' => 's3',
-            'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL'),
+            //
+//            'driver' => 'local',
+//            'root' => storage_path('app/public'),
+//            'url' => env('APP_URL').'/storage',
+            'root' => 'public',
             'visibility' => 'public',
         ],
 
         'logs' => [
             'driver' => 's3',
-            'root' => storage_path('app/logs'),
-            'url' => str_replace('/public/index.php', '', env('APP_URL')) . '/storage/app/logs',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL'),
+            //
+//            'driver' => 'local',
+//            'root' => storage_path('app/logs'),
+//            'url' => str_replace('/public/index.php', '', env('APP_URL')) . '/storage/app/logs',
+            'root' => 'logs',
             'visibility' => 'public',
         ],
 
@@ -73,8 +101,16 @@ return [
 
         'uploads' => [
             'driver' => 's3',
-            'root'   => public_path() . '/uploads',
-            'url' => str_replace('/index.php', '', env('APP_URL')) . '/uploads',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL'),
+            //
+//            'driver' => 'local',
+//            'root'   => public_path() . '/uploads',
+//            'url' => str_replace('/index.php', '', env('APP_URL')) . '/uploads',
+            'root' => 'public/uploads',
             'visibility' => 'public',
         ],
 

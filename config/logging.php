@@ -104,6 +104,7 @@ return [
         'cloudwatch' => [
             'driver' => 'custom',
             'via' => CloudWatchLoggerFactory::class,
+            'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
             'sdk' => [
                 'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
                 'version' => 'latest',

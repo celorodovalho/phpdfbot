@@ -49,9 +49,11 @@ Route::get('bot/{type}', function (string $type) {
     return Artisan::output();
 });
 
-Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
-
 Route::get('/', 'Web\OpportunityController@index');
+Route::get('teste', function (){
+//    \Log::info('teste', [654654]);
+    \Log::channel('cloudwatch')->error('Error test');
+});
 
 Route::group(['namespace' => 'Web',], function () {
     Route::resource('opportunities', 'OpportunityController');

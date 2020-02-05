@@ -32,11 +32,9 @@ class CloudWatchLoggerFactory
         // Instantiate AWS SDK CloudWatch Logs Client
         $client = new CloudWatchLogsClient($sdkParams);
 
-        // Log group name, will be created if none
-        $groupName = env('CLOUDWATCH_GROUP');
-
+        $groupName = config('app.name') .  '- ' . config(' app.env ');
         // Log stream name, will be created if none
-        $streamName = env('CLOUDWATCH_STREAM');
+        $streamName = config('app.hostname');
 
         // Days to keep logs, 14 by default. Set to `null` to allow indefinite retention.
         $retentionDays = $config['retention'];
