@@ -6,11 +6,11 @@ namespace App\Exceptions;
 use Exception;
 
 /**
- * Class TelegramOpportunityException
+ * Class InvalidCloudWatchConfigException
  *
  * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
-class TelegramOpportunityException extends Exception
+class InvalidCloudWatchConfigException extends Exception
 {
     //
 }

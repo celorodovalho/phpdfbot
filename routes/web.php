@@ -19,21 +19,21 @@ Route::get('/setWebhook/{bot}', 'Bot\DefaultController@setWebhook');
 Route::any('/webhook/{token}/{bot}', 'Bot\DefaultController@webhook');
 //Route::get('/getMe', 'Bot\DefaultController@getMe');
 
-Route::get('/oauth/gmail', function (){
+Route::get('/oauth/gmail', static function () {
     return LaravelGmail::redirect();
 });
 
-Route::get('/oauth/gmail/callback', function (){
+Route::get('/oauth/gmail/callback', static function () {
     LaravelGmail::makeToken();
     return redirect()->to('/');
 });
 
-Route::get('/oauth/gmail/logout', function (){
+Route::get('/oauth/gmail/logout', static function () {
     LaravelGmail::logout(); //It returns exception if fails
     return redirect()->to('/');
 });
 
-Route::get('me', function (){
+Route::get('me', static function () {
     dump(Telegram::getMe());
     dump(Telegram::sendMessage([
         'chat_id' => 50,
@@ -41,7 +41,7 @@ Route::get('me', function (){
     ]));
 });
 
-Route::get('bot/{type}', function (string $type) {
+Route::get('bot/{type}', static function (string $type) {
     Artisan::call(
         'bot:populate:channel',
         ['type' => $type]
@@ -50,11 +50,7 @@ Route::get('bot/{type}', function (string $type) {
 });
 
 Route::get('/', 'Web\OpportunityController@index');
-Route::get('teste', function (){
-//    \Log::info('teste', [654654]);
-    \Log::channel('cloudwatch')->error('Error test');
-});
 
-Route::group(['namespace' => 'Web',], function () {
+Route::group(['namespace' => 'Web',], static function () {
     Route::resource('opportunities', 'OpportunityController');
 });

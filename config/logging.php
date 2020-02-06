@@ -100,22 +100,7 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
-//
-//        'cloudwatch' => [
-//            'driver' => 'custom',
-//            'via' => CloudWatchLoggerFactory::class,
-//            'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
-//            'sdk' => [
-//                'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
-//                'version' => 'latest',
-//                'credentials' => [
-//                    'key' => env('AWS_ACCESS_KEY_ID'),
-//                    'secret' => env('AWS_SECRET_ACCESS_KEY'),
-//                ]
-//            ],
-//            'retention' => 365,
-//            'level' => 'error',
-//        ],
+
         'cloudwatch' => [
             'name' => 'cloudwatch',
             'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
@@ -123,9 +108,9 @@ return [
                 'key' => env('AWS_ACCESS_KEY_ID', ''),
                 'secret' => env('AWS_SECRET_ACCESS_KEY', '')
             ],
-            'stream_name' => env('APP_NAME', 'laravel_app') . '-' . env('APP_ENV'),
+            'stream_name' => env('APP_ENV', 'environment'),
             'retention' => 30,
-            'group_name' => env('APP_NAME', 'laravel_app'),
+            'group_name' => env('APP_NAME', 'application'),
             'version' => 'latest',
             'disable' => false,
             'formatter' => \Monolog\Formatter\JsonFormatter::class

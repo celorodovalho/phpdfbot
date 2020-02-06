@@ -2,15 +2,17 @@
 
 namespace App\Providers;
 
+use App\Exceptions\InvalidCloudWatchConfigException;
 use Aws\CloudWatchLogs\CloudWatchLogsClient;
 use Illuminate\Support\ServiceProvider;
 use Maxbanton\Cwh\Handler\CloudWatch;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Logger;
-use Exception;
 
 /**
  * Class CloudWatchServiceProvider
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class CloudWatchServiceProvider extends ServiceProvider
 {
@@ -24,14 +26,10 @@ class CloudWatchServiceProvider extends ServiceProvider
             $args = \func_get_args();
 
             // Laravel 5.4 returns a MessageLogged instance only
-            if (1 == \count($args)) {
-                $level = $args[0]->level;
-                $message = $args[0]->message;
-                $context = $args[0]->context;
+            if (1 === \count($args)) {
+                [$level, $message, $context] = [$args[0]->level, $args[0]->message, $args[0]->context];
             } else {
-                $level = $args[0];
-                $message = $args[1];
-                $context = $args[2];
+                [$level, $message, $context] = $args;
             }
 
             if ($message instanceof \ErrorException) {
@@ -41,15 +39,16 @@ class CloudWatchServiceProvider extends ServiceProvider
             if ($app['cloudwatch.logger'] instanceof Logger) {
                 $app['cloudwatch.logger']->log($level, $message, $context);
             }
+            return null;
         });
     }
 
     /**
      * @return Logger
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
-     * @throws \Exception
+     * @throws InvalidCloudWatchConfigException
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException|\Exception
      */
-    public function getLogger()
+    public function getLogger(): Logger
     {
         $cwClient = new CloudWatchLogsClient($this->getCredentials());
         $loggingConfig = $this->app->make('config')->get('logging.channels.cloudwatch');
@@ -57,7 +56,7 @@ class CloudWatchServiceProvider extends ServiceProvider
         $streamName = $loggingConfig['stream_name'];
         $retentionDays = $loggingConfig['retention'];
         $groupName = $loggingConfig['group_name'];
-        $batchSize = isset($loggingConfig['batch_size']) ? $loggingConfig['batch_size'] : 10000;
+        $batchSize = $loggingConfig['batch_size'] ?? 10000;
 
         $logHandler = new CloudWatch($cwClient, $groupName, $streamName, $retentionDays, $batchSize);
         $logger = new Logger($loggingConfig['name']);
@@ -74,13 +73,8 @@ class CloudWatchServiceProvider extends ServiceProvider
      * https://aws.amazon.com/blogs/developer/php-application-logging-with-amazon-cloudwatch-logs-and-monolog
      * Laravel installation mentioned here did not work but PHP with Monolog worked, hence this package.
      */
-    public function register()
+    public function register(): void
     {
-        $this->mergeConfigFrom(
-            __DIR__ . '/../../config/logging.php',
-            'logging.channels'
-        );
-
         if (!$this->app->make('config')->get('logging.channels.cloudwatch.disable')) {
             $this->app->singleton('cloudwatch.logger', function () {
                 return $this->getLogger();
@@ -107,20 +101,21 @@ class CloudWatchServiceProvider extends ServiceProvider
      *
      * @return array
      *
-     * @throws Exception
+     * @throws InvalidCloudWatchConfigException
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     protected function getCredentials()
     {
         $loggingConfig = $this->app->make('config')->get('logging.channels');
 
         if (!isset($loggingConfig['cloudwatch'])) {
-            throw new Exception('Configuration Missing for Cloudwatch Log');
+            throw new InvalidCloudWatchConfigException('Configuration Missing for Cloudwatch Log');
         }
 
         $cloudWatchConfigs = $loggingConfig['cloudwatch'];
 
         if (!isset($cloudWatchConfigs['region'])) {
-            throw new Exception('Missing region key-value');
+            throw new InvalidCloudWatchConfigException('Missing region key-value');
         }
 
         $awsCredentials = [
@@ -143,7 +138,8 @@ class CloudWatchServiceProvider extends ServiceProvider
      *
      * @return mixed
      *
-     * @throws Exception
+     * @throws InvalidCloudWatchConfigException
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     private function resolveFormatter(array $configs)
     {
@@ -166,6 +162,6 @@ class CloudWatchServiceProvider extends ServiceProvider
             return $formatter($configs);
         }
 
-        throw new Exception('Formatter is missing for the logs');
+        throw new InvalidCloudWatchConfigException('Formatter is missing for the logs');
     }
 }
