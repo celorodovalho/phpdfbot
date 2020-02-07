@@ -19,6 +19,11 @@ interface CollectorInterface
     public function collectOpportunities(): Collection;
 
     /**
+     * @return iterable
+     */
+    public function fetchMessages(): iterable;
+
+    /**
      * Create a Opportunity based on previous definition
      *
      * @param $message

@@ -1,12 +1,3 @@
---- src/Services/Message/Mail.php
-+++ src/Services/Message/Mail.php
-@@ -285,5 +285,5 @@
-			$name = preg_replace('/ <(.*)>/', '', $email);
-
--			if (starts_with($name, ' ')) {
-+			if (\Str::startsWith($name, ' ')) {
-				$name = substr($name, 1);
-			}
 --- src/Traits/Filterable.php
 +++ src/Traits/Filterable.php
 @@ -60,4 +60,4 @@

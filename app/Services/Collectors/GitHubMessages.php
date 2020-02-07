@@ -62,15 +62,7 @@ class GitHubMessages implements CollectorInterface
      */
     public function collectOpportunities(): Collection
     {
-        $githubSources = $this->groupRepository->findWhere([['type', '=', GroupTypes::GITHUB]]);
-        $messages = [];
-        foreach ($githubSources as $source) {
-            $username = explode('/', $source->name);
-            $repo = end($username);
-            $username = reset($username);
-            $messages[] = $this->fetchMessages($username, $repo);
-        }
-        $messages = array_merge(...$messages);
+        $messages = $this->fetchMessages();
         foreach ($messages as $message) {
             $this->createOpportunity($message);
         }
@@ -106,17 +98,22 @@ class GitHubMessages implements CollectorInterface
     /**
      * Make a crawler in github opportunities channels
      *
-     * @param string $username
-     * @param string $repo
-     *
-     * @return array
+     * @return iterable|array
      */
-    protected function fetchMessages($username, $repo): array
+    public function fetchMessages(): iterable
     {
-        return $this->gitHubManager->issues()->all($username, $repo, [
-            'state' => 'open',
-            'since' => Carbon::now()->format('Y-m-d')
-        ]);
+        $githubSources = $this->groupRepository->findWhere([['type', '=', GroupTypes::GITHUB]]);
+        $messages = [];
+        foreach ($githubSources as $source) {
+            $username = explode('/', $source->name);
+            $repo = end($username);
+            $username = reset($username);
+            $messages[] = $this->gitHubManager->issues()->all($username, $repo, [
+                'state' => 'open',
+                'since' => Carbon::now()->format('Y-m-d')
+            ]);
+        }
+        return array_merge(...$messages);
     }
 
     /**

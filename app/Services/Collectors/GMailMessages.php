@@ -121,11 +121,11 @@ class GMailMessages implements CollectorInterface
     /**
      * Walks the GMail looking for specifics opportunity messages
      *
-     * @return BaseCollection
+     * @return BaseCollection|iterable
      * @throws AuthException
      * @throws Google_Exception
      */
-    protected function fetchMessages(): BaseCollection
+    public function fetchMessages(): iterable
     {
         $messageService = $this->gMailService->message();
 

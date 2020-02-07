@@ -86,9 +86,9 @@ class ComoQueTaLaMessages implements CollectorInterface
     /**
      * Make a crawler in github opportunities channels
      *
-     * @return array
+     * @return iterable|array
      */
-    protected function fetchMessages(): array
+    public function fetchMessages(): iterable
     {
         $messages = [];
         $client = new Client();

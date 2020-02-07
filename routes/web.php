@@ -54,3 +54,13 @@ Route::get('/', 'Web\OpportunityController@index');
 Route::group(['namespace' => 'Web',], static function () {
     Route::resource('opportunities', 'OpportunityController');
 });
+
+Route::get('phpinfo', function () {
+    $teste = 6546;
+    echo $teste;
+    phpinfo();
+});
+
+Route::any('madeline', static function () {
+
+});
