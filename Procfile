@@ -1,1 +1,1 @@
-web: vendor/bin/heroku-php-apache2 public/
+web: vendor/bin/heroku-php-apache2 public/ && echo $APP_URL && wget https://phpdfbot.s3-sa-east-1.amazonaws.com/online.txt
