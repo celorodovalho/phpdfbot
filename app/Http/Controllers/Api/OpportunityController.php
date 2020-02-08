@@ -6,7 +6,7 @@ use App\Contracts\Repositories\OpportunityRepository;
 use App\Http\Controllers\ApiController;
 use App\Http\Requests\OpportunityCreateRequest;
 use App\Http\Requests\OpportunityUpdateRequest;
-use App\Validators\OpportunityValidator;
+use App\Validators\CollectedOpportunityValidator;
 use Illuminate\Http\Response;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Validator\Contracts\ValidatorInterface;
@@ -23,10 +23,10 @@ class OpportunityController extends ApiController
     /**
      * OpportunityController constructor.
      *
-     * @param OpportunityRepository $repository
-     * @param OpportunityValidator  $validator
+     * @param OpportunityRepository         $repository
+     * @param CollectedOpportunityValidator $validator
      */
-    public function __construct(OpportunityRepository $repository, OpportunityValidator $validator)
+    public function __construct(OpportunityRepository $repository, CollectedOpportunityValidator $validator)
     {
         parent::__construct($repository, $validator);
     }

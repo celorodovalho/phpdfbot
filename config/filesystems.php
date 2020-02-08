@@ -43,10 +43,10 @@ return [
 
     'disks' => [
 
-//        'local' => [
-//            'driver' => 'local',
-//            'root' => storage_path('app'),
-//        ],
+        'tmp' => [
+            'driver' => 'local',
+            'root' => storage_path(),
+        ],
 
         'local' => [
             'driver' => 's3',

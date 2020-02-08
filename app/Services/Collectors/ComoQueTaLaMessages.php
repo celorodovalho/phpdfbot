@@ -2,17 +2,21 @@
 
 namespace App\Services\Collectors;
 
-use App\Contracts\CollectorInterface;
+use App\Contracts\Collector\CollectorInterface;
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
+use App\Validators\CollectedOpportunityValidator;
 use DateTime;
 use DateTimeZone;
 use Exception;
 use Goutte\Client;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
+use Prettus\Validator\Contracts\ValidatorInterface;
+use Prettus\Validator\Exceptions\ValidatorException;
 use Symfony\Component\DomCrawler\Crawler;
 
 /**
@@ -28,18 +32,24 @@ class ComoQueTaLaMessages implements CollectorInterface
     /** @var OpportunityRepository */
     private $repository;
 
+    /** @var CollectedOpportunityValidator */
+    private $validator;
+
     /**
      * ComoQueTaLaMessages constructor.
      *
-     * @param Collection            $opportunities
-     * @param OpportunityRepository $repository
+     * @param Collection                    $opportunities
+     * @param OpportunityRepository         $repository
+     * @param CollectedOpportunityValidator $validator
      */
     public function __construct(
         Collection $opportunities,
-        OpportunityRepository $repository
+        OpportunityRepository $repository,
+        CollectedOpportunityValidator $validator
     ) {
         $this->opportunities = $opportunities;
         $this->repository = $repository;
+        $this->validator = $validator;
     }
 
     /**
@@ -66,21 +76,41 @@ class ComoQueTaLaMessages implements CollectorInterface
     {
         $title = $this->extractTitle($message);
         $description = $this->extractDescription($message);
-        $this->opportunities->add($this->repository->make(
-            [
-                Opportunity::TITLE => $title,
-                Opportunity::DESCRIPTION => $description,
-                Opportunity::FILES => $this->extractFiles($title . $description),
-                Opportunity::POSITION => '',
-                Opportunity::COMPANY => $message[Opportunity::COMPANY],
-                Opportunity::LOCATION => $this->extractLocation($description . $message[Opportunity::LOCATION]),
-                Opportunity::TAGS => $this->extractTags($title . $description . $message[Opportunity::LOCATION]),
-                Opportunity::SALARY => '',
-                Opportunity::URL => $this->extractUrl($description . ' ' . $message[Opportunity::URL]),
-                Opportunity::ORIGIN => $this->extractOrigin($description),
-                Opportunity::EMAILS => $this->extractEmails($description),
-            ]
-        ));
+        $message = [
+            Opportunity::TITLE => $title,
+            Opportunity::DESCRIPTION => $description,
+            Opportunity::FILES => $this->extractFiles($title . $description),
+            Opportunity::POSITION => '',
+            Opportunity::COMPANY => $message[Opportunity::COMPANY],
+            Opportunity::LOCATION => $this->extractLocation($description . $message[Opportunity::LOCATION]),
+            Opportunity::TAGS => $this->extractTags($title . $description . $message[Opportunity::LOCATION]),
+            Opportunity::SALARY => '',
+            Opportunity::URL => $this->extractUrl($description . ' ' . $message[Opportunity::URL]),
+            Opportunity::ORIGIN => $this->extractOrigin($description),
+            Opportunity::EMAILS => $this->extractEmails($description),
+        ];
+
+        try {
+            $this->validator
+                ->with($message)
+                ->passesOrFail(ValidatorInterface::RULE_CREATE);
+
+            /** @var Collection $hasOpportunities */
+            $hasOpportunities = $this->repository->scopeQuery(function ($query) {
+                return $query->withTrashed();
+            })->findWhere([
+                Opportunity::TITLE => $message[Opportunity::TITLE],
+                Opportunity::DESCRIPTION => $message[Opportunity::DESCRIPTION],
+            ]);
+
+            if ($hasOpportunities->isEmpty()) {
+                /** @var Opportunity $opportunity */
+                $opportunity = $this->repository->make($message);
+                $this->opportunities->add($opportunity);
+            }
+        } catch (ValidatorException $exception) {
+            Log::info('VALIDATOR', [$exception]);
+        }
     }
 
     /**

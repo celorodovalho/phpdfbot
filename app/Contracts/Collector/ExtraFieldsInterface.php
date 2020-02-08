@@ -1,14 +1,14 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Contracts;
+namespace App\Contracts\Collector;
 
 /**
- * Interface CollectorExtraFieldsInterface
+ * Interface ExtraFieldsInterface
  *
  * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
-interface CollectorExtraFieldsInterface
+interface ExtraFieldsInterface
 {
     /**
      * Parse the company

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Contracts;
+namespace App\Contracts\Collector;
 
 use Illuminate\Database\Eloquent\Collection;
 

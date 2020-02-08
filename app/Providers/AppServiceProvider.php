@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 /**
  * Class AppServiceProvider
@@ -37,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         }, glob(app_path() . '/{,*/,*/*/,*/*/*/}*.php', GLOB_BRACE));
 
         Schema::defaultStringLength(191);
+
         Validator::extend('alpha_spaces', static function ($attribute, $value) {
             // This will only accept alpha and spaces.
             // If you want to accept hyphens use: /^[\pL\s-]+$/u.

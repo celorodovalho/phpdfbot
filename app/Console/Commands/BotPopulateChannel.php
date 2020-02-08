@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Contracts\CollectorInterface;
+use App\Contracts\Collector\CollectorInterface;
 use App\Contracts\Repositories\GroupRepository;
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Enums\Arguments;
@@ -14,6 +14,7 @@ use App\Models\Opportunity;
 use App\Notifications\GroupSummaryOpportunities;
 use App\Notifications\NotifySenderUser;
 use App\Notifications\SendOpportunity;
+use App\Services\Collectors\TelegramChatMessages;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;

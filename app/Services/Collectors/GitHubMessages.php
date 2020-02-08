@@ -2,17 +2,21 @@
 
 namespace App\Services\Collectors;
 
-use App\Contracts\CollectorInterface;
+use App\Contracts\Collector\CollectorInterface;
 use App\Contracts\Repositories\GroupRepository;
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Enums\GroupTypes;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
+use App\Validators\CollectedOpportunityValidator;
 use Carbon\Carbon;
 use Exception;
 use GrahamCampbell\GitHub\GitHubManager;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
+use Prettus\Validator\Contracts\ValidatorInterface;
+use Prettus\Validator\Exceptions\ValidatorException;
 
 /**
  * Class GitHubMessages
@@ -34,24 +38,30 @@ class GitHubMessages implements CollectorInterface
     /**@var GroupRepository */
     private $groupRepository;
 
+    /** @var CollectedOpportunityValidator */
+    private $validator;
+
     /**
      * GitHubMessages constructor.
      *
-     * @param Collection            $opportunities
-     * @param GitHubManager         $gitHubManager
-     * @param OpportunityRepository $repository
-     * @param GroupRepository       $groupRepository
+     * @param Collection                    $opportunities
+     * @param GitHubManager                 $gitHubManager
+     * @param OpportunityRepository         $repository
+     * @param GroupRepository               $groupRepository
+     * @param CollectedOpportunityValidator $validator
      */
     public function __construct(
         Collection $opportunities,
         GitHubManager $gitHubManager,
         OpportunityRepository $repository,
-        GroupRepository $groupRepository
+        GroupRepository $groupRepository,
+        CollectedOpportunityValidator $validator
     ) {
         $this->gitHubManager = $gitHubManager;
         $this->opportunities = $opportunities;
         $this->repository = $repository;
         $this->groupRepository = $groupRepository;
+        $this->validator = $validator;
     }
 
     /**
@@ -78,21 +88,42 @@ class GitHubMessages implements CollectorInterface
     {
         $title = $this->extractTitle($message);
         $description = $this->extractDescription($message);
-        $this->opportunities->add($this->repository->make(
-            [
-                Opportunity::TITLE => $title,
-                Opportunity::DESCRIPTION => $description,
-                Opportunity::FILES => $this->extractFiles($title . $description),
-                Opportunity::POSITION => '',
-                Opportunity::COMPANY => '',
-                Opportunity::LOCATION => $this->extractLocation($title . $description),
-                Opportunity::TAGS => $this->extractTags($title . $description),
-                Opportunity::SALARY => '',
-                Opportunity::URL => $this->extractUrl($description . $message['html_url']),
-                Opportunity::ORIGIN => $this->extractOrigin($message['html_url']),
-                Opportunity::EMAILS => $this->extractEmails($description),
-            ]
-        ));
+
+        $message = [
+            Opportunity::TITLE => $title,
+            Opportunity::DESCRIPTION => $description,
+            Opportunity::FILES => $this->extractFiles($title . $description),
+            Opportunity::POSITION => '',
+            Opportunity::COMPANY => '',
+            Opportunity::LOCATION => $this->extractLocation($title . $description),
+            Opportunity::TAGS => $this->extractTags($title . $description),
+            Opportunity::SALARY => '',
+            Opportunity::URL => $this->extractUrl($description . $message['html_url']),
+            Opportunity::ORIGIN => $this->extractOrigin($message['html_url']),
+            Opportunity::EMAILS => $this->extractEmails($description),
+        ];
+
+        try {
+            $this->validator
+                ->with($message)
+                ->passesOrFail(ValidatorInterface::RULE_CREATE);
+
+            /** @var Collection $hasOpportunities */
+            $hasOpportunities = $this->repository->scopeQuery(function ($query) {
+                return $query->withTrashed();
+            })->findWhere([
+                Opportunity::TITLE => $message[Opportunity::TITLE],
+                Opportunity::DESCRIPTION => $message[Opportunity::DESCRIPTION],
+            ]);
+
+            if ($hasOpportunities->isEmpty()) {
+                /** @var Opportunity $opportunity */
+                $opportunity = $this->repository->make($message);
+                $this->opportunities->add($opportunity);
+            }
+        } catch (ValidatorException $exception) {
+            Log::info('VALIDATOR', [$exception]);
+        }
     }
 
     /**

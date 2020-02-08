@@ -2,7 +2,7 @@
 
 namespace App\Services\Collectors;
 
-use App\Contracts\CollectorInterface;
+use App\Contracts\Collector\CollectorInterface;
 use App\Contracts\Repositories\GroupRepository;
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Enums\GroupTypes;
@@ -11,6 +11,7 @@ use App\Helpers\Helper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
 use App\Services\GmailService;
+use App\Validators\CollectedOpportunityValidator;
 use Dacastro4\LaravelGmail\Exceptions\AuthException;
 use Dacastro4\LaravelGmail\Services\Message\Attachment;
 use Dacastro4\LaravelGmail\Services\Message\Mail;
@@ -20,7 +21,10 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Prettus\Validator\Contracts\ValidatorInterface;
+use Prettus\Validator\Exceptions\ValidatorException;
 
 /**
  * Class GMailMessages
@@ -49,24 +53,30 @@ class GMailMessages implements CollectorInterface
      */
     private $groupRepository;
 
+    /** @var CollectedOpportunityValidator */
+    private $validator;
+
     /**
      * GMailMessages constructor.
      *
-     * @param Collection            $opportunities
-     * @param GmailService     $gMailService
-     * @param OpportunityRepository $repository
-     * @param GroupRepository       $groupRepository
+     * @param Collection                    $opportunities
+     * @param GmailService                  $gMailService
+     * @param OpportunityRepository         $repository
+     * @param GroupRepository               $groupRepository
+     * @param CollectedOpportunityValidator $validator
      */
     public function __construct(
         Collection $opportunities,
         GmailService $gMailService,
         OpportunityRepository $repository,
-        GroupRepository $groupRepository
+        GroupRepository $groupRepository,
+        CollectedOpportunityValidator $validator
     ) {
         $this->gMailService = $gMailService;
         $this->opportunities = $opportunities;
         $this->repository = $repository;
         $this->groupRepository = $groupRepository;
+        $this->validator = $validator;
     }
 
     /**
@@ -101,21 +111,41 @@ class GMailMessages implements CollectorInterface
     {
         $title = $this->extractTitle($message);
         $description = $this->extractDescription($message);
-        $this->opportunities->add($this->repository->make(
-            [
-                Opportunity::TITLE => $title,
-                Opportunity::DESCRIPTION => $description,
-                Opportunity::FILES => $this->extractFiles($message),
-                Opportunity::POSITION => '',
-                Opportunity::COMPANY => '',
-                Opportunity::LOCATION => $this->extractLocation($title . $description),
-                Opportunity::TAGS => $this->extractTags($title . $description),
-                Opportunity::SALARY => '',
-                Opportunity::URL => $this->extractUrl($description),
-                Opportunity::ORIGIN => $this->extractOrigin($message),
-                Opportunity::EMAILS => $this->extractEmails($description),
-            ]
-        ));
+        $message = [
+            Opportunity::TITLE => $title,
+            Opportunity::DESCRIPTION => $description,
+            Opportunity::FILES => $this->extractFiles($message),
+            Opportunity::POSITION => '',
+            Opportunity::COMPANY => '',
+            Opportunity::LOCATION => $this->extractLocation($title . $description),
+            Opportunity::TAGS => $this->extractTags($title . $description),
+            Opportunity::SALARY => '',
+            Opportunity::URL => $this->extractUrl($description),
+            Opportunity::ORIGIN => $this->extractOrigin($message),
+            Opportunity::EMAILS => $this->extractEmails($description),
+        ];
+
+        try {
+            $this->validator
+                ->with($message)
+                ->passesOrFail(ValidatorInterface::RULE_CREATE);
+
+            /** @var Collection $hasOpportunities */
+            $hasOpportunities = $this->repository->scopeQuery(function ($query) {
+                return $query->withTrashed();
+            })->findWhere([
+                Opportunity::TITLE => $message[Opportunity::TITLE],
+                Opportunity::DESCRIPTION => $message[Opportunity::DESCRIPTION],
+            ]);
+
+            if ($hasOpportunities->isEmpty()) {
+                /** @var Opportunity $opportunity */
+                $opportunity = $this->repository->make($message);
+                $this->opportunities->add($opportunity);
+            }
+        } catch (ValidatorException $exception) {
+            Log::info('VALIDATOR', [$exception]);
+        }
     }
 
     /**
