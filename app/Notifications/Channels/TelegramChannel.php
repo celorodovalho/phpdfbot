@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Channels;
 
+use App\Exceptions\Handler;
 use App\Services\TelegramMessage;
 use Exception;
 use Illuminate\Notifications\Notification;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Config;
 use RuntimeException;
 use Telegram\Bot\Api as Telegram;
 use Telegram\Bot\BotsManager;
+use Telegram\Bot\Exceptions\TelegramResponseException;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Objects\Message;
 
@@ -72,21 +74,24 @@ class TelegramChannel
 
         if ($message instanceof TelegramMessage) {
             $body = $params['text'];
-
-            if (is_array($body)) {
-                foreach ($body as $text) {
-                    $params['text'] = $text;
-                    if ($messages->count()) {
-                        $params['reply_to_message_id'] = $messages->first()['message_id'];
+            try {
+                if (is_array($body)) {
+                    foreach ($body as $text) {
+                        $params['text'] = $text;
+                        if ($messages->count()) {
+                            $params['reply_to_message_id'] = $messages->first()['message_id'];
+                        }
+                        /** @var Message $telegramMessage */
+                        $telegramMessage = $this->telegram->sendMessage($params);
+                        $messages->add($telegramMessage->toArray());
                     }
+                } else {
                     /** @var Message $telegramMessage */
                     $telegramMessage = $this->telegram->sendMessage($params);
                     $messages->add($telegramMessage->toArray());
                 }
-            } else {
-                /** @var Message $telegramMessage */
-                $telegramMessage = $this->telegram->sendMessage($params);
-                $messages->add($telegramMessage->toArray());
+            } catch (TelegramResponseException $exception) {
+                Handler::log($exception, 'SEND_MESSAGE', $params);
             }
         }
         return $messages;

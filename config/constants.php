@@ -113,6 +113,7 @@ return [
         'scala',
         'selenium',
         'senior',
+        'service desk',
         'spring',
         'start-up',
         'startup',
