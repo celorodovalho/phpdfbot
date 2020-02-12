@@ -132,6 +132,7 @@ class TelegramChatMessages implements CollectorInterface
                 }
             }
             yield $madeline->echo('OK, done!');
+            yield $madeline->stop();
             return $messages;
         });
         $this->madeline->stop();
@@ -271,12 +272,12 @@ class TelegramChatMessages implements CollectorInterface
             if (array_key_exists('username', $message['user'])) {
                 $urls[] = sprintf(
                     'https://t.me/%s',
-                    $message['user']['username']
+                    SanitizerHelper::escapeMarkdown($message['user']['username'])
                 );
             } elseif (array_key_exists('first_name', $message['user'])) {
                 $urls[] = sprintf(
                     '[%s](tg://user?id=%s)',
-                    $message['user']['first_name'],
+                    SanitizerHelper::escapeMarkdown($message['user']['first_name']),
                     $message['user']['id']
                 );
             }

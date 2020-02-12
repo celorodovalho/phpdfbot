@@ -178,6 +178,8 @@ class SanitizerHelper
                 $message
             );
 
+            $message = preg_replace('/^(ü)([ A-Za-z0-9]+)/uim', '-$2', $message);
+
             $message = preg_replace('/^(#)([A-Za-z]+)/im', '$1 $2', $message);
 
             $message = self::removeEmptyTagsRecursive($message);
@@ -239,8 +241,19 @@ class SanitizerHelper
             $message = str_ireplace($omitting, '', $message);
 
             $message = str_replace(['![]()', '[]()'], '', $message);
+
+            $messageArray = explode("\n", $message);
+
+            $messageArray = array_map(function ($line) {
+                if (substr_count($line, '*') % 2 !== 0) {
+                    return substr_replace($line, '', strrpos($line, '*'), 1);
+                }
+                return $line;
+            }, $messageArray);
+
+            $message = implode("\n", $messageArray);
         }
-        return trim($message);
+        return trim($message, "- \t\n\r\0\x0B");
     }
 
     /**

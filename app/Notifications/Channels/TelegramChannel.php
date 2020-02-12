@@ -3,6 +3,8 @@
 namespace App\Notifications\Channels;
 
 use App\Exceptions\Handler;
+use App\Helpers\BotHelper;
+use App\Helpers\Helper;
 use App\Services\TelegramMessage;
 use Exception;
 use Illuminate\Notifications\Notification;
@@ -74,24 +76,36 @@ class TelegramChannel
 
         if ($message instanceof TelegramMessage) {
             $body = $params['text'];
-            try {
-                if (is_array($body)) {
-                    foreach ($body as $text) {
-                        $params['text'] = $text;
-                        if ($messages->count()) {
-                            $params['reply_to_message_id'] = $messages->first()['message_id'];
+            $chances = 5;
+            while ($chances > 0) {
+                try {
+                    if (is_array($body)) {
+                        foreach ($body as $text) {
+                            $params['text'] = $text;
+                            if ($messages->count()) {
+                                $params['reply_to_message_id'] = $messages->first()['message_id'];
+                            }
+                            /** @var Message $telegramMessage */
+                            $telegramMessage = $this->telegram->sendMessage($params);
+                            $messages->add($telegramMessage->toArray());
                         }
+                    } else {
                         /** @var Message $telegramMessage */
                         $telegramMessage = $this->telegram->sendMessage($params);
                         $messages->add($telegramMessage->toArray());
                     }
-                } else {
-                    /** @var Message $telegramMessage */
-                    $telegramMessage = $this->telegram->sendMessage($params);
-                    $messages->add($telegramMessage->toArray());
+                    $chances = 0;
+                } catch (TelegramResponseException $exception) {
+                    if (preg_match_all('!\d+!', $exception->getMessage(), $matches)) {
+                        $offset = (int)end($matches[0]) - BotHelper::TELEGRAM_OFFSET;
+                        $params['text'] = Helper::mbSubstrReplace($params['text'], '', $offset, 1);
+                    }
+                    Handler::log($exception, 'SEND_MESSAGE', $params);
+                    if ($chances === 2) {
+                        unset($params['parse_mode']);
+                    }
+                    $chances--;
                 }
-            } catch (TelegramResponseException $exception) {
-                Handler::log($exception, 'SEND_MESSAGE', $params);
             }
         }
         return $messages;

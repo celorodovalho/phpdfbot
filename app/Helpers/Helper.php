@@ -115,4 +115,23 @@ class Helper
         }
         return '';
     }
+
+    /**
+     * @param string   $string
+     * @param string   $replacement
+     * @param int      $start
+     * @param int|null $length
+     *
+     * @return string
+     */
+    public static function mbSubstrReplace(string $string, string $replacement, int $start, ?int $length = null)
+    {
+        preg_match_all('/./us', $string, $smatches);
+        preg_match_all('/./us', $replacement, $rmatches);
+        if ($length === null) {
+            $length = mb_strlen($string);
+        }
+        array_splice($smatches[0], $start, $length, $rmatches[0]);
+        return implode($smatches[0]);
+    }
 }

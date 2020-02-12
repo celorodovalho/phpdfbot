@@ -22,6 +22,7 @@ use Illuminate\Notifications\DatabaseNotification as Notification;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Str;
 use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramSDKException;
@@ -175,7 +176,11 @@ class BotPopulateChannel extends Command
         foreach ($channels as $channel) {
             if (blank($channel->tags) || ExtractorHelper::hasTags($channel->tags, $opportunity->getText())) {
                 $channel->notify(new SendOpportunity($opportunity));
-                if ($channel->main && $channel->type === GroupTypes::CHANNEL && $opportunity->telegram_user_id) {
+                if ($channel->main
+                    && $channel->type === GroupTypes::CHANNEL
+                    && $opportunity->telegram_user_id
+                    && !Str::contains($opportunity->origin, 'channel_id')
+                ) {
                     $opportunity->notify(new NotifySenderUser($channel));
                 }
             }

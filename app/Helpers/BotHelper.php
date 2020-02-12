@@ -22,6 +22,7 @@ class BotHelper
     use Macroable;
 
     public const TELEGRAM_LIMIT = 4096;
+    public const TELEGRAM_OFFSET = 37;
     public const PARSE_HTML = 'HTML';
     public const PARSE_MARKDOWN = 'Markdown';
     public const PARSE_MARKDOWN2 = 'MarkdownV2';
