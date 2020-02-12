@@ -36,8 +36,9 @@ Route::get('/oauth/gmail/logout', static function () {
 Route::get('me', static function () {
     dump(Telegram::getMe());
     dump(Telegram::sendMessage([
-        'chat_id' => 50,
-        'text' => 'sdfadfas'
+        'chat_id' => 144068960,
+        'parse_mode' => 'HTML',
+        'text' => '<a href="tg://user?id=se45ky">Seasky</a>'
     ]));
 });
 

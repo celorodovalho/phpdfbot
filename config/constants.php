@@ -108,6 +108,7 @@ return [
         'remote',
         'remoto',
         'ruby',
+        'sap',
         'sass',
         'scala',
         'selenium',

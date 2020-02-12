@@ -237,6 +237,8 @@ class SanitizerHelper
             $message = preg_replace('/^\\\$/mu', '', $message);
 
             $message = str_ireplace($omitting, '', $message);
+
+            $message = str_replace(['![]()', '[]()'], '', $message);
         }
         return trim($message);
     }

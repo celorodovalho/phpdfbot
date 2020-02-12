@@ -14,7 +14,6 @@ use App\Models\Opportunity;
 use App\Notifications\GroupSummaryOpportunities;
 use App\Notifications\NotifySenderUser;
 use App\Notifications\SendOpportunity;
-use App\Services\Collectors\TelegramChatMessages;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;

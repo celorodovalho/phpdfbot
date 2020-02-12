@@ -144,7 +144,8 @@ class GMailMessages implements CollectorInterface
                 $this->opportunities->add($opportunity);
             }
         } catch (ValidatorException $exception) {
-            Log::info('VALIDATOR', [$exception]);
+            Log::info('VALIDATOR', $exception->toArray());
+            Log::info('VALIDATOR_MESSAGE', $message);
         }
     }
 

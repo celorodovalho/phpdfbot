@@ -131,8 +131,10 @@ class TelegramChatMessages implements CollectorInterface
                     $messages[] = $message;
                 }
             }
+            yield $madeline->echo('OK, done!');
             return $messages;
         });
+        $this->madeline->stop();
 
         return $messages;
     }
@@ -148,7 +150,7 @@ class TelegramChatMessages implements CollectorInterface
 
         $message = [
             Opportunity::TITLE => $this->extractTitle($message['message']),
-            Opportunity::DESCRIPTION => $this->extractDescription($message['message']),
+            Opportunity::DESCRIPTION => $this->extractDescription($message),
             Opportunity::FILES => $this->extractFiles($message),
             Opportunity::POSITION => '',
             Opportunity::COMPANY => '',
@@ -184,7 +186,8 @@ class TelegramChatMessages implements CollectorInterface
                 $this->opportunities->add($opportunity);
             }
         } catch (ValidatorException $exception) {
-            Log::info('VALIDATOR', [$exception]);
+            Log::info('VALIDATOR', $exception->toArray());
+            Log::info('VALIDATOR_MESSAGE', $message);
         }
     }
 
@@ -205,7 +208,7 @@ class TelegramChatMessages implements CollectorInterface
      */
     public function extractDescription($message): string
     {
-        return SanitizerHelper::sanitizeBody($message);
+        return $message['message'];
     }
 
     /**
@@ -263,12 +266,19 @@ class TelegramChatMessages implements CollectorInterface
      */
     public function extractUrl($message): string
     {
-        $urls = [];
-        if (array_key_exists('entities', $message) && isset($message['entities'])) {
-            foreach ($message['entities'] as $entity) {
-                if ($entity['_'] === 'messageEntityUrl') {
-                    $urls[] = mb_substr($message['message'], $entity['offset'], $entity['length']);
-                }
+        $urls = ExtractorHelper::extractUrls($message['message']);
+        if (blank($urls) && array_key_exists('user', $message)) {
+            if (array_key_exists('username', $message['user'])) {
+                $urls[] = sprintf(
+                    'https://t.me/%s',
+                    $message['user']['username']
+                );
+            } elseif (array_key_exists('first_name', $message['user'])) {
+                $urls[] = sprintf(
+                    '[%s](tg://user?id=%s)',
+                    $message['user']['first_name'],
+                    $message['user']['id']
+                );
             }
         }
         return implode(', ', $urls);
@@ -281,14 +291,7 @@ class TelegramChatMessages implements CollectorInterface
      */
     public function extractEmails($message): string
     {
-        $emails = [];
-        if (array_key_exists('entities', $message) && isset($message['entities'])) {
-            foreach ($message['entities'] as $entity) {
-                if ($entity['_'] === 'messageEntityEmail') {
-                    $emails[] = mb_substr($message['message'], $entity['offset'], $entity['length']);
-                }
-            }
-        }
-        return implode(', ', $emails);
+        $mails = ExtractorHelper::extractEmail($message['message']);
+        return implode(', ', $mails);
     }
 }

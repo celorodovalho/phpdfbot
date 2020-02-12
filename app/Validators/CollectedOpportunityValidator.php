@@ -56,7 +56,8 @@ class CollectedOpportunityValidator extends LaravelValidator
             ],
             Opportunity::TAGS => [
                 Rule::requiredIf(function () {
-                    return filled($this->data[Opportunity::DESCRIPTION]);
+                    return filled($this->data[Opportunity::DESCRIPTION])
+                        && blank($this->data[Opportunity::FILES]);
                 })
             ],
             Opportunity::TITLE => [
