@@ -9,6 +9,6 @@ return [
     'logger' => [
         'logger' => \danog\MadelineProto\Logger::DEFAULT_LOGGER,
         'logger_level' => \danog\MadelineProto\Logger::VERBOSE,
-        'param' => storage_path('logs/madeline.log')
+        'param' => storage_path('logs/laravel.log')
     ]
 ];
