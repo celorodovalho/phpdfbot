@@ -130,6 +130,8 @@ return [
     ],
     'deniedWords' => [
         'forex',
+        'joinchat',
+        'The best thing that has happen in my life',
     ],
     'cities' => [
         BrazilianStates::getKey('Distrito Federal') => [
