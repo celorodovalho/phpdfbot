@@ -33,7 +33,7 @@ class MadelineProtoService
         $sessionPath = Storage::disk('tmp')->path($sessionPath);
         $this->api = new API(
             $sessionPath,
-            $config['app_info']
+            $config
         );
     }
 
