@@ -268,7 +268,7 @@ class TelegramChatMessages implements CollectorInterface
     public function extractUrl($message): string
     {
         $urls = ExtractorHelper::extractUrls($message['message']);
-        if (blank($urls) && array_key_exists('user', $message)) {
+        if (array_key_exists('user', $message) && blank($urls)) {
             if (array_key_exists('username', $message['user'])) {
                 $urls[] = sprintf(
                     'https://t.me/%s',

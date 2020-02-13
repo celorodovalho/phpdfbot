@@ -69,8 +69,7 @@ class CommandsHandler
         string $botName,
         OpportunityRepository $repository,
         UserRepository $userRepository
-    )
-    {
+    ) {
         $this->botName = $botName;
         $this->telegram = $botsManager->bot($botName);
         $this->repository = $repository;
@@ -161,9 +160,11 @@ class CommandsHandler
                 'message_id' => $callbackQuery->message->messageId
             ]);
         } catch (TelegramResponseException $exception) {
-            Log::info('COMMAND', $data);
-            Log::info('DELETE_MESSAGE', [$exception]);
-            Log::info('CALLBACK_MESSAGE', [$callbackQuery->message]);
+            Log::info(TelegramResponseException::class, [
+                'DATA' => $data,
+                'EXCEPTION' => $exception,
+                'CALLBACK_MESSAGE' => $callbackQuery->message
+            ]);
             /**
              * A message can only be deleted if it was sent less than 48 hours ago.
              * Bots can delete outgoing messages in groups and supergroups.
@@ -224,22 +225,14 @@ class CommandsHandler
             Log::info('USER_CREATED_processMessage', [$user]);
         }
 
-        if (
-            (
-                (
-                    $reply instanceof Message
-                    && $reply->from instanceof User
-                    && $reply->from->isBot
-                    && $reply->text === NewOpportunityCommand::TEXT
-                ) || (
-                    $message->from instanceof User
-                    && !$message->from->isBot
-                    && $message->chat instanceof Chat
-                    && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE
-                )
-            )
-            && !in_array($message->text, $this->telegram->getCommands(), true)
-        ) {
+        /** @var bool $isRealUserPvtMsg Check if the message come from a real user in a Private chat*/
+        $isRealUserPvtMsg = $message->from instanceof User
+            && !$message->from->isBot
+            && $message->chat instanceof Chat
+            && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE;
+
+        /** Check if is a private message and not a command */
+        if ($isRealUserPvtMsg && !in_array($message->text, $this->telegram->getCommands(), true)) {
             if (blank($message->text) && blank($caption)) {
                 throw new TelegramOpportunityException(
                     'Envie um texto da vaga, ou o nome da vaga na legenda da imagem/documento.'
@@ -249,6 +242,25 @@ class CommandsHandler
             $text = $message->text ?? $caption;
 
             $urls = ExtractorHelper::extractUrls($text);
+
+            $userName = null;
+            if (property_exists('from', $message) && blank($urls)) {
+                if (property_exists('username', $message->from)) {
+                    $urls[] = sprintf(
+                        'https://t.me/%s',
+                        SanitizerHelper::escapeMarkdown($message->from->username)
+                    );
+                    $userName = $message->from->username;
+                } elseif (property_exists('firstName', $message->from)) {
+                    $urls[] = sprintf(
+                        '[%s](tg://user?id=%s)',
+                        SanitizerHelper::escapeMarkdown($message->from->firstName),
+                        $message->from->id
+                    );
+                    $userName = $message->from->firstName . ' ' . $message->from->lastName;
+                }
+            }
+
             $emails = ExtractorHelper::extractEmail($text);
 
             if (blank($photos) && blank($urls) && blank($emails)) {
@@ -276,8 +288,7 @@ class CommandsHandler
                 Opportunity::DESCRIPTION => SanitizerHelper::sanitizeBody($text),
                 Opportunity::FILES => $files,
                 Opportunity::URL => implode(', ', $urls),
-                Opportunity::ORIGIN => implode('|', [$this->botName, $message->from->username ?:
-                    $message->from->firstName . ' ' . $message->from->lastName]),
+                Opportunity::ORIGIN => implode('|', [$this->botName, $userName]),
                 Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
                 Opportunity::TAGS => ExtractorHelper::extractTags($text),
                 Opportunity::EMAILS => SanitizerHelper::replaceMarkdown(implode(', ', $emails)),

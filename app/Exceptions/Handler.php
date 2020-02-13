@@ -100,26 +100,27 @@ class Handler extends ExceptionHandler
     {
         try {
             $referenceLog = $message . (date('Y-m-d-H-i-s') . time()) . '.log';
+            $logMessage = [
+                'ERROR_MSG' => $exception->getMessage(),
+                'CONTEXT' => $context,
+                'FILE' => $exception->getFile(),
+                'LINE' => $exception->getLine(),
+                'CODE' => $exception->getCode(),
+                'MESSAGE' => $message,
+                'TRACE' => $exception->getTrace(),
+            ];
 
-            Log::error('ERROR', [$exception->getMessage()]);
-            Log::error('FILE', [$exception->getFile()]);
-            Log::error('LINE', [$exception->getLine()]);
-            Log::error('CODE', [$exception->getCode()]);
-            Log::error('TRACE', [$exception->getTrace()]);
-            Log::error('MESSAGE', [$message]);
-            Log::error('CONTEXT', [$context]);
+            Log::error('ERROR_LOG', $logMessage);
+            Storage::disk('logs')->put($referenceLog, json_encode($logMessage));
 
-            Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
             $referenceLog = Storage::disk('logs')->url($referenceLog);
 
             $issueBody = sprintf(
                 "⚠️\nMessage:\n%s\n\n" .
                 "File/Line:\n%s\n\n" .
-                "Code:\n%s\n\n" .
                 "Log:\n%s",
                 $exception->getMessage(),
                 $exception->getFile() . '::' . $exception->getLine(),
-                $exception->getCode(),
                 $referenceLog
             );
 
@@ -131,7 +132,7 @@ class Handler extends ExceptionHandler
                 'text' => $issueBody,
             ]);
         } catch (Exception $exception) {
-            Log::error('ERRO_LOG_ERRO', [$exception]);
+            Log::error('ERROR_LOG_ERROR', [$exception]);
         }
     }
 }

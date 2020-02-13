@@ -55,8 +55,6 @@ return [
             'region' => env('AWS_DEFAULT_REGION'),
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL'),
-            //
-//            'root' => storage_path('app'),
             'root' => '/',
         ],
 
@@ -67,10 +65,6 @@ return [
             'region' => env('AWS_DEFAULT_REGION'),
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL'),
-            //
-//            'driver' => 'local',
-//            'root' => storage_path('app/public'),
-//            'url' => env('APP_URL').'/storage',
             'root' => 'public',
             'visibility' => 'public',
         ],
@@ -82,10 +76,6 @@ return [
             'region' => env('AWS_DEFAULT_REGION'),
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL'),
-            //
-//            'driver' => 'local',
-//            'root' => storage_path('app/logs'),
-//            'url' => str_replace('/public/index.php', '', env('APP_URL')) . '/storage/app/logs',
             'root' => 'logs',
             'visibility' => 'public',
         ],
@@ -106,10 +96,6 @@ return [
             'region' => env('AWS_DEFAULT_REGION'),
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL'),
-            //
-//            'driver' => 'local',
-//            'root'   => public_path() . '/uploads',
-//            'url' => str_replace('/index.php', '', env('APP_URL')) . '/uploads',
             'root' => 'public/uploads',
             'visibility' => 'public',
         ],
