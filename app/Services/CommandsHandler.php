@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Commands\NewOpportunityCommand;
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Contracts\Repositories\UserRepository;
 use App\Enums\Arguments;
@@ -127,10 +126,10 @@ class CommandsHandler
             case Callbacks::APPROVE:
                 if ($opportunity) {
                     Artisan::call(
-                        'bot:populate:channel',
+                        'process:messages',
                         [
-                            'type' => Arguments::SEND,
-                            'opportunity' => $opportunity->id
+                            '--type' => Arguments::SEND,
+                            '--opportunity' => $opportunity->id
                         ]
                     );
                     $this->sendMessage(Artisan::output());
@@ -143,7 +142,7 @@ class CommandsHandler
                 break;
             case Callbacks::OPTIONS:
                 if (in_array($data[1], [Arguments::PROCESS, Arguments::NOTIFY], true)) {
-                    Artisan::call('bot:populate:channel', ['type' => $data[1]]);
+                    Artisan::call('process:messages', ['--type' => $data[1]]);
                     $this->sendMessage(Artisan::output());
                 }
                 break;
@@ -333,10 +332,10 @@ class CommandsHandler
     private function sendOpportunityToApproval(Opportunity $opportunity): void
     {
         Artisan::call(
-            'bot:populate:channel',
+            'process:messages',
             [
-                'type' => Arguments::APPROVAL,
-                'opportunity' => $opportunity->id,
+                '--type' => Arguments::APPROVAL,
+                '--opportunity' => $opportunity->id,
             ]
         );
         $this->sendMessage('A vaga foi enviada para aprovação. Você receberá uma confirmação assim que for aprovada!');

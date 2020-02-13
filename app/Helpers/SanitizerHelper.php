@@ -114,7 +114,7 @@ class SanitizerHelper
         $message = trim($message, '[]{}()');
         $message = str_replace(["\n", '[', '{', '}', '(', ')'], '', $message);
         $message = str_replace([']'], ' -', $message);
-        return trim($message);
+        return trim($message, "- \t\n\r\0\x0B");
     }
 
     /**

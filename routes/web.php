@@ -1,7 +1,6 @@
 <?php
 
 use Dacastro4\LaravelGmail\Facade\LaravelGmail;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
@@ -42,13 +41,7 @@ Route::get('me', static function () {
     ]));
 });
 
-Route::get('bot/{type}', static function (string $type) {
-    Artisan::call(
-        'bot:populate:channel',
-        ['type' => $type]
-    );
-    return Artisan::output();
-});
+Route::get('process/messages/{type}/{collectors?}', 'Web\OpportunityController@processMessages');
 
 Route::get('/', 'Web\OpportunityController@index');
 
@@ -56,12 +49,18 @@ Route::group(['namespace' => 'Web',], static function () {
     Route::resource('opportunities', 'OpportunityController');
 });
 
-Route::get('phpinfo', function () {
-    $teste = 6546;
-    echo $teste;
-    phpinfo();
-});
+Route::get('teste', function () {
+    $a = file_get_contents(base_path('teste'));
 
-Route::any('madeline', static function () {
+    $b = mb_substr($a, 431, 1);
 
+    dump(mb_strlen($a));
+    dump($a);
+    dump($b);
+
+    Telegram::sendMessage([
+        'chat_id' => 144068960,
+        'parse_mode' => 'Markdown',
+        'text' => $a
+    ]);
 });

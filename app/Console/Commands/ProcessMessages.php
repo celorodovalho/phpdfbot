@@ -14,6 +14,10 @@ use App\Models\Opportunity;
 use App\Notifications\GroupSummaryOpportunities;
 use App\Notifications\NotifySenderUser;
 use App\Notifications\SendOpportunity;
+use App\Services\Collectors\ComoQueTaLaMessages;
+use App\Services\Collectors\GitHubMessages;
+use App\Services\Collectors\GMailMessages;
+use App\Services\Collectors\TelegramChatMessages;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
@@ -32,7 +36,7 @@ use Telegram\Bot\Exceptions\TelegramSDKException;
  *
  * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
-class BotPopulateChannel extends Command
+class ProcessMessages extends Command
 {
 
     /**
@@ -40,7 +44,7 @@ class BotPopulateChannel extends Command
      *
      * @var string
      */
-    protected $signature = 'bot:populate:channel {type} {opportunity?}';
+    protected $signature = 'process:messages {--type=process} {--opportunity=} {--collectors=*}';
 
     /**
      * The console command description.
@@ -53,7 +57,12 @@ class BotPopulateChannel extends Command
     protected $channels;
 
     /** @var array */
-    private $collectors;
+    private $collectors = [
+        'comoquetala' => ComoQueTaLaMessages::class,
+        'github' => GitHubMessages::class,
+        'gmail' => GMailMessages::class,
+        'telegram' => TelegramChatMessages::class,
+    ];
 
     /** @var OpportunityRepository */
     private $repository;
@@ -73,29 +82,31 @@ class BotPopulateChannel extends Command
      *
      * @throws TelegramSDKException
      */
-    public function __construct(
+    public function handle(
         BotsManager $botsManager,
         OpportunityRepository $repository,
         GroupRepository $groupRepository
-    ) {
+    ): void {
         $this->telegram = $botsManager->bot(Config::get('telegram.default'));
-        $this->collectors = Helper::getImplementations(CollectorInterface::class);
         $this->repository = $repository;
         $this->groupRepository = $groupRepository;
 
-        parent::__construct();
-    }
+        $collectorsOption = $this->option('collectors');
+        if (filled($collectorsOption)) {
+            $this->collectors = array_filter(
+                $this->collectors,
+                static function ($key) use ($collectorsOption) {
+                    return in_array($key, $collectorsOption, true);
+                },
+                ARRAY_FILTER_USE_KEY
+            );
+        }
 
-    /**
-     * Execute the console command.
-     */
-    public function handle(): void
-    {
         $this->channels = $this->groupRepository->findWhere([
             ['type', '=', GroupTypes::CHANNEL]
         ]);
 
-        switch ($this->argument('type')) {
+        switch ($this->option('type')) {
             case Arguments::PROCESS:
                 $this->processOpportunities();
                 break;
@@ -103,10 +114,10 @@ class BotPopulateChannel extends Command
                 $this->notifyGroup();
                 break;
             case Arguments::SEND:
-                $this->sendOpportunityToChannels($this->argument('opportunity'));
+                $this->sendOpportunityToChannels($this->option('opportunity'));
                 break;
             case Arguments::APPROVAL:
-                $this->sendTelegramOpportunityToApproval($this->argument('opportunity'));
+                $this->sendTelegramOpportunityToApproval($this->option('opportunity'));
                 break;
             default:
                 // Do something

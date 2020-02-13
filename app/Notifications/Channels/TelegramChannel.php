@@ -5,6 +5,7 @@ namespace App\Notifications\Channels;
 use App\Exceptions\Handler;
 use App\Helpers\BotHelper;
 use App\Helpers\Helper;
+use App\Helpers\SanitizerHelper;
 use App\Services\TelegramMessage;
 use Exception;
 use Illuminate\Notifications\Notification;
@@ -103,6 +104,7 @@ class TelegramChannel
                     Handler::log($exception, 'SEND_MESSAGE', $params);
                     if ($chances === 2) {
                         unset($params['parse_mode']);
+                        $params['text'] = SanitizerHelper::removeMarkdown($params['text']);
                     }
                     $chances--;
                 }
