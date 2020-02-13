@@ -248,6 +248,9 @@ class SanitizerHelper
                 if (substr_count($line, '*') % 2 !== 0) {
                     return substr_replace($line, '', strrpos($line, '*'), 1);
                 }
+                if (substr_count($line, '_') % 2 !== 0) {
+                    return substr_replace($line, '', strrpos($line, '*'), 1);
+                }
                 return $line;
             }, $messageArray);
 
