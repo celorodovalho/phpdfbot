@@ -120,15 +120,17 @@ class TelegramChatMessages implements CollectorInterface
 
             $messages = [];
             foreach ($history as $message) {
-                $user = $users->where('id', '=', $message['from_id'])->first();
                 if (isset($message['media'])
                     && in_array($message['media']['_'], ['messageMediaPhoto', 'messageMediaDocument'], true)) {
                     $files = yield $this->madeline->downloadToDir($message['media'], storage_path());
                     $message['files'] = $files;
                 }
-                if (array_key_exists('message', $message) && !$user['bot']) {
-                    $message['user'] = $user;
-                    $messages[] = $message;
+                if (array_key_exists('from_id', $message)) {
+                    $user = $users->where('id', '=', $message['from_id'])->first();
+                    if (array_key_exists('message', $message) && !$user['bot']) {
+                        $message['user'] = $user;
+                        $messages[] = $message;
+                    }
                 }
             }
             yield $madeline->echo('OK, done!');
