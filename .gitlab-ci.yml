@@ -1,0 +1,18 @@
+image: docker:git
+
+before_script:
+- mkdir -p ~/.ssh
+- echo "${DEPLOY_SERVER_PRIVATE_KEY}" | tr -d '\r' > ~/.ssh/id_rsa
+- chmod 600 ~/.ssh/id_rsa
+- eval "$(ssh-agent -s)"
+- ssh-add ~/.ssh/id_rsa
+- echo ${DEPLOY_HOST}
+- ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+deploy:
+  only:
+  - master
+  script:
+  - echo "Deploy to ${DEPLOY_REMOTE}"
+  - git remote add deploy ${DEPLOY_REMOTE}
+  - git push deploy master --force

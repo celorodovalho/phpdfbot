@@ -1,0 +1,31 @@
+version: '3'
+
+networks:
+  reverse-proxy:
+    external:
+      name: reverse-proxy
+
+services:
+  phpdfbot.devi.tools-app:
+    image: webdevops/php-apache:7.3
+#    build:
+#      dockerfile: ./.docker/app/Dockerfile
+#      context: .
+    container_name: phpdfbot.devi.tools-app
+    restart: always
+    networks:
+      - reverse-proxy
+    volumes:
+      - .:/var/www/app
+    environment:
+      - VIRTUAL_HOST=phpdfbot.devi.tools
+      - WEB_DOCUMENT_ROOT=/var/www/app/public
+#      - LETSENCRYPT_EMAIL=certificate@phpdfbot.devi.tools
+#      - LETSENCRYPT_HOST=phpdfbot.devi.tools
+#      - PHP_DEBUGGER="xdebug"
+#      export XDEBUG_REMOTE_HOST=$(ifconfig wlan0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
+#      - XDEBUG_REMOTE_HOST=${XDEBUG_REMOTE_HOST}
+#      - XDEBUG_REMOTE_AUTOSTART=1
+#    expose:
+#      - 9000
+
