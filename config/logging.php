@@ -38,7 +38,7 @@ return [
     'channels' => [
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['daily', 'cloudwatch'],
+            'channels' => ['daily', 'errorlog'],
             'ignore_exceptions' => false,
         ],
 
