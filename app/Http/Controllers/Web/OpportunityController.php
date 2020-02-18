@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Web;
 
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Http\Controllers\Controller;
-use App\Validators\OpportunityValidator;
+use App\Validators\CollectedOpportunityValidator;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\View\View;
 
 /**
@@ -19,10 +20,10 @@ class OpportunityController extends Controller
     /**
      * OpportunityController constructor.
      *
-     * @param OpportunityRepository $repository
-     * @param OpportunityValidator  $validator
+     * @param OpportunityRepository         $repository
+     * @param CollectedOpportunityValidator $validator
      */
-    public function __construct(OpportunityRepository $repository, OpportunityValidator $validator)
+    public function __construct(OpportunityRepository $repository, CollectedOpportunityValidator $validator)
     {
         parent::__construct($repository, $validator);
     }
@@ -32,9 +33,30 @@ class OpportunityController extends Controller
      */
     public function index()
     {
+
         $opportunities = $this->repository->scopeQuery(static function ($query) {
             return $query->withTrashed()->where('status', '<>', '0');
         })->orderBy('created_at', 'DESC')->paginate();
         return view('home', compact('opportunities'));
+    }
+
+    /**
+     * @param string      $type
+     * @param string|null $collectors
+     *
+     * @return string
+     */
+    public function processMessages(
+        string $type,
+        ?string $collectors = null
+    ): string {
+        Artisan::call(
+            'process:messages',
+            [
+                '--type' => $type,
+                '--collectors' => [$collectors],
+            ]
+        );
+        return Artisan::output();
     }
 }

@@ -2,17 +2,21 @@
 
 namespace App\Services\Collectors;
 
-use App\Contracts\CollectorInterface;
+use App\Contracts\Collector\CollectorInterface;
 use App\Contracts\Repositories\GroupRepository;
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Enums\GroupTypes;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
+use App\Validators\CollectedOpportunityValidator;
 use Carbon\Carbon;
 use Exception;
 use GrahamCampbell\GitHub\GitHubManager;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
+use Prettus\Validator\Contracts\ValidatorInterface;
+use Prettus\Validator\Exceptions\ValidatorException;
 
 /**
  * Class GitHubMessages
@@ -34,24 +38,30 @@ class GitHubMessages implements CollectorInterface
     /**@var GroupRepository */
     private $groupRepository;
 
+    /** @var CollectedOpportunityValidator */
+    private $validator;
+
     /**
      * GitHubMessages constructor.
      *
-     * @param Collection            $opportunities
-     * @param GitHubManager         $gitHubManager
-     * @param OpportunityRepository $repository
-     * @param GroupRepository       $groupRepository
+     * @param Collection                    $opportunities
+     * @param GitHubManager                 $gitHubManager
+     * @param OpportunityRepository         $repository
+     * @param GroupRepository               $groupRepository
+     * @param CollectedOpportunityValidator $validator
      */
     public function __construct(
         Collection $opportunities,
         GitHubManager $gitHubManager,
         OpportunityRepository $repository,
-        GroupRepository $groupRepository
+        GroupRepository $groupRepository,
+        CollectedOpportunityValidator $validator
     ) {
         $this->gitHubManager = $gitHubManager;
         $this->opportunities = $opportunities;
         $this->repository = $repository;
         $this->groupRepository = $groupRepository;
+        $this->validator = $validator;
     }
 
     /**
@@ -62,14 +72,7 @@ class GitHubMessages implements CollectorInterface
      */
     public function collectOpportunities(): Collection
     {
-        $githubSources = $this->groupRepository->findWhere([['type', '=', GroupTypes::GITHUB]]);
-        $messages = [];
-        foreach ($githubSources as $source) {
-            $username = explode('/', $source->name);
-            $repo = end($username);
-            $username = reset($username);
-            $messages = array_merge($messages, $this->fetchMessages($username, $repo));
-        }
+        $messages = $this->fetchMessages();
         foreach ($messages as $message) {
             $this->createOpportunity($message);
         }
@@ -85,37 +88,64 @@ class GitHubMessages implements CollectorInterface
     {
         $title = $this->extractTitle($message);
         $description = $this->extractDescription($message);
-        $this->opportunities->add($this->repository->make(
-            [
-                Opportunity::TITLE => $title,
-                Opportunity::DESCRIPTION => $description,
-                Opportunity::FILES => $this->extractFiles($title . $description),
-                Opportunity::POSITION => $this->extractPosition($title),
-                Opportunity::COMPANY => $this->extractCompany($title . $description),
-                Opportunity::LOCATION => $this->extractLocation($title . $description),
-                Opportunity::TAGS => $this->extractTags($title . $description),
-                Opportunity::SALARY => $this->extractSalary($title . $description),
-                Opportunity::URL => $this->extractUrl($description . $message['html_url']),
-                Opportunity::ORIGIN => $this->extractOrigin($message['html_url']),
-                Opportunity::EMAILS => $this->extractEmails($description),
-            ]
-        ));
+
+        $message = [
+            Opportunity::TITLE => $title,
+            Opportunity::DESCRIPTION => $description,
+            Opportunity::FILES => $this->extractFiles($title . $description),
+            Opportunity::POSITION => '',
+            Opportunity::COMPANY => '',
+            Opportunity::LOCATION => $this->extractLocation($title . $description),
+            Opportunity::TAGS => $this->extractTags($title . $description),
+            Opportunity::SALARY => '',
+            Opportunity::URL => $this->extractUrl($description . $message['html_url']),
+            Opportunity::ORIGIN => $this->extractOrigin($message['html_url']),
+            Opportunity::EMAILS => $this->extractEmails($description),
+        ];
+
+        try {
+            $this->validator
+                ->with($message)
+                ->passesOrFail(ValidatorInterface::RULE_CREATE);
+
+            /** @var Collection $hasOpportunities */
+            $hasOpportunities = $this->repository->scopeQuery(function ($query) {
+                return $query->withTrashed();
+            })->findWhere([
+                Opportunity::TITLE => $message[Opportunity::TITLE],
+                Opportunity::DESCRIPTION => $message[Opportunity::DESCRIPTION],
+            ]);
+
+            if ($hasOpportunities->isEmpty()) {
+                /** @var Opportunity $opportunity */
+                $opportunity = $this->repository->make($message);
+                $this->opportunities->add($opportunity);
+            }
+        } catch (ValidatorException $exception) {
+            Log::info('VALIDATOR', $exception->toArray());
+            Log::info('VALIDATOR_MESSAGE', $message);
+        }
     }
 
     /**
      * Make a crawler in github opportunities channels
      *
-     * @param string $username
-     * @param string $repo
-     *
-     * @return array
+     * @return iterable|array
      */
-    protected function fetchMessages($username, $repo): array
+    public function fetchMessages(): iterable
     {
-        return $this->gitHubManager->issues()->all($username, $repo, [
-            'state' => 'open',
-            'since' => Carbon::now()->format('Y-m-d')
-        ]);
+        $githubSources = $this->groupRepository->findWhere([['type', '=', GroupTypes::GITHUB]]);
+        $messages = [];
+        foreach ($githubSources as $source) {
+            $username = explode('/', $source->name);
+            $repo = end($username);
+            $username = reset($username);
+            $messages[] = $this->gitHubManager->issues()->all($username, $repo, [
+                'state' => 'open',
+                'since' => Carbon::now()->format('Y-m-d')
+            ]);
+        }
+        return array_merge(...$messages);
     }
 
     /**
@@ -150,7 +180,7 @@ class GitHubMessages implements CollectorInterface
      */
     public function extractOrigin($message): string
     {
-        return preg_replace('#(https://github.com/)(.+?)(/issues/[0-9]+)#i', '$2', $message);
+        return preg_replace('#(https://github.com/)(.+?)(/issues/\d+)#i', '$2', $message);
     }
 
     /**
@@ -203,23 +233,5 @@ class GitHubMessages implements CollectorInterface
     {
         $mails = ExtractorHelper::extractEmail($message);
         return implode(', ', $mails);
-    }
-
-    /** @todo Match position */
-    public function extractPosition($message): string
-    {
-        return '';
-    }
-
-    /** @todo Match salary */
-    public function extractSalary($message): string
-    {
-        return '';
-    }
-
-    /** @todo Match company */
-    public function extractCompany($message): string
-    {
-        return '';
     }
 }

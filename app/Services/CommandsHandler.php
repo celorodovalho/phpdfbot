@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Commands\NewOpportunityCommand;
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Contracts\Repositories\UserRepository;
 use App\Enums\Arguments;
@@ -23,11 +22,13 @@ use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramResponseException;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Objects\CallbackQuery;
+use Telegram\Bot\Objects\Chat;
 use Telegram\Bot\Objects\Document;
 use Telegram\Bot\Objects\Message;
 use Telegram\Bot\Objects\PhotoSize;
 use Telegram\Bot\Objects\Update;
 use Telegram\Bot\Objects\User as TelegramUser;
+use Telegram\Bot\Objects\User;
 
 /**
  * Class CommandsHandler
@@ -55,10 +56,12 @@ class CommandsHandler
     /**
      * CommandsHandler constructor.
      *
-     * @param BotsManager                               $botsManager
-     * @param string                                    $botName
+     * @param BotsManager $botsManager
+     * @param string $botName
      * @param OpportunityRepository|RepositoryInterface $repository
-     * @param UserRepository                            $userRepository
+     * @param UserRepository $userRepository
+     *
+     * @throws TelegramSDKException
      */
     public function __construct(
         BotsManager $botsManager,
@@ -79,6 +82,7 @@ class CommandsHandler
      *
      * @return mixed
      * @throws TelegramSDKException
+     * @throws Exception
      */
     public function processUpdate(Update $update): void
     {
@@ -122,10 +126,10 @@ class CommandsHandler
             case Callbacks::APPROVE:
                 if ($opportunity) {
                     Artisan::call(
-                        'bot:populate:channel',
+                        'process:messages',
                         [
-                            'type' => Arguments::SEND,
-                            'opportunity' => $opportunity->id
+                            '--type' => Arguments::SEND,
+                            '--opportunity' => $opportunity->id
                         ]
                     );
                     $this->sendMessage(Artisan::output());
@@ -138,7 +142,7 @@ class CommandsHandler
                 break;
             case Callbacks::OPTIONS:
                 if (in_array($data[1], [Arguments::PROCESS, Arguments::NOTIFY], true)) {
-                    Artisan::call('bot:populate:channel', ['type' => $data[1]]);
+                    Artisan::call('process:messages', ['--type' => $data[1]]);
                     $this->sendMessage(Artisan::output());
                 }
                 break;
@@ -155,9 +159,11 @@ class CommandsHandler
                 'message_id' => $callbackQuery->message->messageId
             ]);
         } catch (TelegramResponseException $exception) {
-            Log::info('COMMAND', $data);
-            Log::info('DELETE_MESSAGE', [$exception]);
-            Log::info('CALLBACK_MESSAGE', [$callbackQuery->message]);
+            Log::info(TelegramResponseException::class, [
+                'DATA' => $data,
+                'EXCEPTION' => $exception,
+                'CALLBACK_MESSAGE' => $callbackQuery->message
+            ]);
             /**
              * A message can only be deleted if it was sent less than 48 hours ago.
              * Bots can delete outgoing messages in groups and supergroups.
@@ -202,6 +208,7 @@ class CommandsHandler
             'NEW_MEMBERS' => $newMembers,
         ]);
 
+
         if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE) {
             $telegramUser = $message->from;
             $user = $this->userRepository->updateOrCreate(
@@ -217,10 +224,14 @@ class CommandsHandler
             Log::info('USER_CREATED_processMessage', [$user]);
         }
 
-        if (((filled($reply) && $reply->from->isBot && $reply->text === NewOpportunityCommand::TEXT)
-                || (!$message->from->isBot && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE))
-            && !in_array($message->text, $this->telegram->getCommands(), true)
-        ) {
+        /** @var bool $isRealUserPvtMsg Check if the message come from a real user in a Private chat*/
+        $isRealUserPvtMsg = $message->from instanceof User
+            && !$message->from->isBot
+            && $message->chat instanceof Chat
+            && $message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE;
+
+        /** Check if is a private message and not a command */
+        if ($isRealUserPvtMsg && !in_array($message->text, $this->telegram->getCommands(), true)) {
             if (blank($message->text) && blank($caption)) {
                 throw new TelegramOpportunityException(
                     'Envie um texto da vaga, ou o nome da vaga na legenda da imagem/documento.'
@@ -230,6 +241,25 @@ class CommandsHandler
             $text = $message->text ?? $caption;
 
             $urls = ExtractorHelper::extractUrls($text);
+
+            $userName = null;
+            if (property_exists('from', $message) && blank($urls)) {
+                if (property_exists('username', $message->from)) {
+                    $urls[] = sprintf(
+                        'https://t.me/%s',
+                        SanitizerHelper::escapeMarkdown($message->from->username)
+                    );
+                    $userName = $message->from->username;
+                } elseif (property_exists('firstName', $message->from)) {
+                    $urls[] = sprintf(
+                        '[%s](tg://user?id=%s)',
+                        SanitizerHelper::escapeMarkdown($message->from->firstName),
+                        $message->from->id
+                    );
+                    $userName = $message->from->firstName . ' ' . $message->from->lastName;
+                }
+            }
+
             $emails = ExtractorHelper::extractEmail($text);
 
             if (blank($photos) && blank($urls) && blank($emails)) {
@@ -257,8 +287,7 @@ class CommandsHandler
                 Opportunity::DESCRIPTION => SanitizerHelper::sanitizeBody($text),
                 Opportunity::FILES => $files,
                 Opportunity::URL => implode(', ', $urls),
-                Opportunity::ORIGIN => implode('|', [$this->botName, $message->from->username ?:
-                    $message->from->firstName . ' ' . $message->from->lastName]),
+                Opportunity::ORIGIN => implode('|', [$this->botName, $userName]),
                 Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
                 Opportunity::TAGS => ExtractorHelper::extractTags($text),
                 Opportunity::EMAILS => SanitizerHelper::replaceMarkdown(implode(', ', $emails)),
@@ -276,7 +305,8 @@ class CommandsHandler
         }
 
         // TODO: Think more about this
-        if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE && filled($newMembers) && $newMembers->isNotEmpty()) {
+        if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE
+            && filled($newMembers) && $newMembers->isNotEmpty()) {
             $newMembers->each(function (TelegramUser $telegramUser) {
                 $this->userRepository->updateOrCreate(
                     ['id' => $telegramUser->id,],
@@ -302,10 +332,10 @@ class CommandsHandler
     private function sendOpportunityToApproval(Opportunity $opportunity): void
     {
         Artisan::call(
-            'bot:populate:channel',
+            'process:messages',
             [
-                'type' => Arguments::APPROVAL,
-                'opportunity' => $opportunity->id,
+                '--type' => Arguments::APPROVAL,
+                '--opportunity' => $opportunity->id,
             ]
         );
         $this->sendMessage('A vaga foi enviada para aprovação. Você receberá uma confirmação assim que for aprovada!');
@@ -315,31 +345,18 @@ class CommandsHandler
      * Process the command
      *
      * @param string $command
+     * @param bool $triggerProcess
      */
-    private function processCommand(string $command): void
+    private function processCommand(string $command, bool $triggerProcess = true): void
     {
+        $triggerProcess = $triggerProcess ? 'processCommand' : 'triggerCommand';
+
         $command = str_replace('/', '', $command);
 
         $commands = $this->telegram->getCommands();
 
         if (array_key_exists($command, $commands)) {
-            $this->telegram->processCommand($this->update);
-        }
-    }
-
-    /**
-     * Process the command
-     *
-     * @param string $command
-     */
-    private function triggerCommand(string $command): void
-    {
-        $command = str_replace('/', '', $command);
-
-        $commands = $this->telegram->getCommands();
-
-        if (array_key_exists($command, $commands)) {
-            $this->telegram->triggerCommand($command, $this->update);
+            $this->telegram->{$triggerProcess}($this->update);
         }
     }
 

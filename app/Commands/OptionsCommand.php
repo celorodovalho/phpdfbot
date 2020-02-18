@@ -32,8 +32,6 @@ class OptionsCommand extends Command
      */
     public function handle()
     {
-        Log::info('OPTIONS_COMMAND', [$this->arguments, $this->getArguments()]);
-
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
         // TODO: chage way of get owner id

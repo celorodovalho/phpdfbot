@@ -2,13 +2,19 @@
 
 namespace App\Notifications\Channels;
 
+use App\Exceptions\Handler;
+use App\Helpers\BotHelper;
+use App\Helpers\Helper;
+use App\Helpers\SanitizerHelper;
 use App\Services\TelegramMessage;
 use Exception;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
+use RuntimeException;
 use Telegram\Bot\Api as Telegram;
 use Telegram\Bot\BotsManager;
+use Telegram\Bot\Exceptions\TelegramResponseException;
 use Telegram\Bot\Exceptions\TelegramSDKException;
 use Telegram\Bot\Objects\Message;
 
@@ -27,6 +33,8 @@ class TelegramChannel
      * Channel constructor.
      *
      * @param BotsManager $botsManager
+     *
+     * @throws TelegramSDKException
      */
     public function __construct(BotsManager $botsManager)
     {
@@ -41,6 +49,8 @@ class TelegramChannel
      *
      * @return Collection
      * @throws TelegramSDKException
+     * @throws Exception
+     * @throws Exception
      */
     public function send($notifiable, Notification $notification): Collection
     {
@@ -52,14 +62,14 @@ class TelegramChannel
 
         if ($message->chatIdNotGiven()) {
             if (!$chatId = $notifiable->routeNotificationFor('telegram')) {
-                throw new Exception('Telegram notification chat ID was not provided. Please refer usage docs.');
+                throw new RuntimeException('Telegram notification chat ID was not provided. Please refer usage docs.');
             }
 
             $message->to($chatId);
         }
 
         if ($message->sizeLimitExceed()) {
-            throw new Exception('Telegram text limit size was exceeded. Please refer usage docs.');
+            throw new RuntimeException('Telegram text limit size was exceeded. Please refer usage docs.');
         }
 
         $params = $message->toArray();
@@ -67,21 +77,37 @@ class TelegramChannel
 
         if ($message instanceof TelegramMessage) {
             $body = $params['text'];
-
-            if (is_array($body)) {
-                foreach ($body as $text) {
-                    $params['text'] = $text;
-                    if ($messages->count()) {
-                        $params['reply_to_message_id'] = $messages->first()['message_id'];
+            $chances = 5;
+            while ($chances > 0) {
+                try {
+                    if (is_array($body)) {
+                        foreach ($body as $text) {
+                            $params['text'] = $text;
+                            if ($messages->count()) {
+                                $params['reply_to_message_id'] = $messages->first()['message_id'];
+                            }
+                            /** @var Message $telegramMessage */
+                            $telegramMessage = $this->telegram->sendMessage($params);
+                            $messages->add($telegramMessage->toArray());
+                        }
+                    } else {
+                        /** @var Message $telegramMessage */
+                        $telegramMessage = $this->telegram->sendMessage($params);
+                        $messages->add($telegramMessage->toArray());
                     }
-                    /** @var Message $telegramMessage */
-                    $telegramMessage = $this->telegram->sendMessage($params);
-                    $messages->add($telegramMessage->toArray());
+                    $chances = 0;
+                } catch (TelegramResponseException $exception) {
+                    if (preg_match_all('!\d+!', $exception->getMessage(), $matches)) {
+                        $offset = (int)end($matches[0]) - BotHelper::TELEGRAM_OFFSET;
+                        $params['text'] = Helper::mbSubstrReplace($params['text'], '', $offset, 1);
+                    }
+                    Handler::log($exception, 'SEND_MESSAGE', $params);
+                    if ($chances === 2) {
+                        unset($params['parse_mode']);
+                        $params['text'] = SanitizerHelper::removeMarkdown($params['text']);
+                    }
+                    $chances--;
                 }
-            } else {
-                /** @var Message $telegramMessage */
-                $telegramMessage = $this->telegram->sendMessage($params);
-                $messages->add($telegramMessage->toArray());
             }
         }
         return $messages;

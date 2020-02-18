@@ -2,8 +2,9 @@
 
 namespace App\Helpers;
 
+use DOMDocument;
+use DOMNode;
 use GrahamCampbell\Markdown\Facades\Markdown;
-use function GuzzleHttp\Psr7\str;
 use Illuminate\Support\Traits\Macroable;
 use League\CommonMark\CommonMarkConverter;
 use League\HTMLToMarkdown\HtmlConverter;
@@ -113,7 +114,7 @@ class SanitizerHelper
         $message = trim($message, '[]{}()');
         $message = str_replace(["\n", '[', '{', '}', '(', ')'], '', $message);
         $message = str_replace([']'], ' -', $message);
-        return trim($message);
+        return trim($message, "- \t\n\r\0\x0B");
     }
 
     /**
@@ -177,6 +178,8 @@ class SanitizerHelper
                 $message
             );
 
+            $message = preg_replace('/^(ü)([ A-Za-z0-9]+)/uim', '-$2', $message);
+
             $message = preg_replace('/^(#)([A-Za-z]+)/im', '$1 $2', $message);
 
             $message = self::removeEmptyTagsRecursive($message);
@@ -236,8 +239,24 @@ class SanitizerHelper
             $message = preg_replace('/^\\\$/mu', '', $message);
 
             $message = str_ireplace($omitting, '', $message);
+
+            $message = str_replace(['![]()', '[]()'], '', $message);
+
+            $messageArray = explode("\n", $message);
+
+            $messageArray = array_map(function ($line) {
+                if (substr_count($line, '*') % 2 !== 0) {
+                    return substr_replace($line, '', strrpos($line, '*'), 1);
+                }
+                if (substr_count($line, '_') % 2 !== 0) {
+                    return substr_replace($line, '', strrpos($line, '*'), 1);
+                }
+                return $line;
+            }, $messageArray);
+
+            $message = implode("\n", $messageArray);
         }
-        return trim($message);
+        return trim($message, "- \t\n\r\0\x0B");
     }
 
     /**
@@ -261,11 +280,11 @@ class SanitizerHelper
      */
     public static function closeOpenTags(string $message): string
     {
-        $dom = new \DOMDocument;
+        $dom = new DOMDocument;
         @$dom->loadHTML(mb_convert_encoding($message, 'HTML-ENTITIES', 'UTF-8'));
-        $mock = new \DOMDocument;
+        $mock = new DOMDocument;
         $body = $dom->getElementsByTagName('body')->item(0);
-        if (is_object($body) && filled($body->childNodes)) {
+        if ($body instanceof DOMNode && filled($body->childNodes)) {
             foreach ($body->childNodes as $child) {
                 $mock->appendChild($mock->importNode($child, true));
             }
@@ -283,7 +302,7 @@ class SanitizerHelper
      */
     public static function removeEmptyTagsRecursive(string $str, string $repto = ''): string
     {
-        return trim($str) === '' ? $str : preg_replace('/<([^<\/>]*)>([\s]*?|(?R))<\/\1>/imsU', $repto, $str);
+        return trim($str) === '' ? $str : preg_replace('/<([^<\/>]*)>([\s]*?|(?R))<\/\1>/imU', $repto, $str);
     }
 
     /**

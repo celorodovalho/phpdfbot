@@ -22,6 +22,7 @@ class BotHelper
     use Macroable;
 
     public const TELEGRAM_LIMIT = 4096;
+    public const TELEGRAM_OFFSET = 37;
     public const PARSE_HTML = 'HTML';
     public const PARSE_MARKDOWN = 'Markdown';
     public const PARSE_MARKDOWN2 = 'MarkdownV2';
@@ -75,7 +76,7 @@ class BotHelper
 
                 $extension = File::extension($file['file_path']);
                 $fileName = Helper::base64UrlEncode($file['file_path']) . '.' . $extension;
-                Storage::disk('uploads')->put($fileName, $download);
+                Storage::disk('tmp')->put($fileName, $download);
                 $files[$key] = Helper::cloudinaryUpload($fileName);
             }
         }

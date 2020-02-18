@@ -6,11 +6,14 @@ use App\Helpers\BotHelper;
 use App\Models\Group;
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\HttpFoundation\Response;
 use Telegram\Bot\Laravel\Facades\Telegram;
+use Telegram\Bot\Objects\Message;
 
 /**
  * Class Handler
@@ -41,15 +44,16 @@ class Handler extends ExceptionHandler
     /**
      * Report or log an exception.
      *
-     * @param  \Exception $exception
+     * @param Exception $exception
+     *
      * @return void
      *
-     * @throws \Exception
+     * @throws Exception
      */
-    public function report(Exception $exception)
+    public function report(Exception $exception): void
     {
         if (App::environment('production')) {
-            $this->log($exception);
+            self::log($exception);
         }
 
         parent::report($exception);
@@ -58,27 +62,28 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Exception $exception
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @param Request   $request
+     * @param Exception $exception
      *
-     * @throws \Exception
+     * @return Response
+     *
+     * @throws Exception
      */
-    public function render($request, Exception $exception)
+    public function render($request, Exception $exception): Response
     {
         return parent::render($request, $exception);
     }
 
     /**
      * @param OutputInterface $output
-     * @param Exception $exception
+     * @param Exception       $exception
      */
     public function renderForConsole($output, Exception $exception): void
     {
         $output->writeln('<error>Something wrong!</error>', 32);
         $output->writeln("<error>{$exception->getMessage()}</error>", 32);
         if (App::environment('production')) {
-            $this->log($exception);
+            self::log($exception);
         }
 
         parent::renderForConsole($output, $exception);
@@ -88,53 +93,46 @@ class Handler extends ExceptionHandler
      * Generate a log on server, and send a notification to admin
      *
      * @param Exception $exception
-     * @param string $message
-     * @param null $context
+     * @param string    $message
+     * @param null      $context
      */
-    public function log(Exception $exception, $message = '', $context = null): void
+    public static function log(Exception $exception, $message = '', $context = null): void
     {
-        $referenceLog = $message . time() . '.log';
-
-        Log::error('ERROR', [$exception->getMessage()]);
-        Log::error('FILE', [$exception->getFile()]);
-        Log::error('LINE', [$exception->getLine()]);
-        Log::error('CODE', [$exception->getCode()]);
-        Log::error('TRACE', [$exception->getTrace()]);
-
-        Storage::disk('logs')->put($referenceLog, json_encode([$context, $exception->getTrace()]));
-        $referenceLog = Storage::disk('logs')->url($referenceLog);
-
-        $issueBody = sprintf(
-            "*Message*:\n```\n%s\n```\n\n" .
-            "*File/Line*:\n```\n%s\n```\n\n" .
-            "*Code*:\n```php\n%s\n```\n\n" .
-            "*Log*:\n```php\n%s\n```\n",
-            $exception->getMessage(),
-            $exception->getFile() . '::' . $exception->getLine(),
-            $exception->getCode(),
-            $referenceLog
-        );
-
-        /** @todo remover isso */
-        $group = Group::where('admin', true)->first();
-        /** @todo Usar DI ao inves de static */
-
         try {
-            /** @var \Telegram\Bot\Objects\Message $sentMessage */
-//            $sentMessage = Telegram::sendDocument([
-//                'chat_id' => $group->name,
-//                'document' => $referenceLog,
-//                'caption' => $exception->getMessage()
-//            ]);
+            $referenceLog = $message . (date('Y-m-d-H-i-s') . time()) . '.log';
+            $logMessage = [
+                'ERROR_MSG' => $exception->getMessage(),
+                'CONTEXT' => $context,
+                'FILE' => $exception->getFile(),
+                'LINE' => $exception->getLine(),
+                'CODE' => $exception->getCode(),
+                'MESSAGE' => $message,
+                'TRACE' => $exception->getTrace(),
+            ];
+
+            Log::error('ERROR_LOG', $logMessage);
+            Storage::disk('logs')->put($referenceLog, json_encode($logMessage));
+
+            $referenceLog = Storage::disk('logs')->url($referenceLog);
+
+            $issueBody = sprintf(
+                "⚠️\nMessage:\n%s\n\n" .
+                "File/Line:\n%s\n\n" .
+                "Log:\n%s",
+                $exception->getMessage(),
+                $exception->getFile() . '::' . $exception->getLine(),
+                $referenceLog
+            );
+
+            /** @todo remover isso */
+            $group = Group::where('admin', true)->first();
 
             Telegram::sendMessage([
                 'chat_id' => $group->name,
                 'text' => $issueBody,
-                'parse_mode' => BotHelper::PARSE_MARKDOWN,
-//                'reply_to_message_id' => $sentMessage->getMessageId()
             ]);
         } catch (Exception $exception) {
-            Log::error('ERRO_LOG_ERRO', [$exception]);
+            Log::error('ERROR_LOG_ERROR', [$exception]);
         }
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\RoutesNotifications;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\HasDatabaseNotifications;
@@ -30,6 +31,8 @@ use Prettus\Repository\Traits\TransformableTrait;
  * @property string     $origin
  * @property Collection $tags
  * @property string     $emails
+ * @property Carbon     created_at
+ * @property Carbon     updated_at
  */
 class Opportunity extends Model implements Transformable
 {

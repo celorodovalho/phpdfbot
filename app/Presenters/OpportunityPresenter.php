@@ -18,7 +18,7 @@ class OpportunityPresenter extends FractalPresenter
      *
      * @return TransformerAbstract
      */
-    public function getTransformer()
+    public function getTransformer(): TransformerAbstract
     {
         return new OpportunityTransformer();
     }

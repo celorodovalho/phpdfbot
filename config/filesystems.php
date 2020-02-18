@@ -43,22 +43,40 @@ return [
 
     'disks' => [
 
-        'local' => [
+        'tmp' => [
             'driver' => 'local',
-            'root' => storage_path('app'),
+            'root' => storage_path(),
+        ],
+
+        'local' => [
+            'driver' => 's3',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL'),
+            'root' => '/',
         ],
 
         'public' => [
-            'driver' => 'local',
-            'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'driver' => 's3',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL'),
+            'root' => 'public',
             'visibility' => 'public',
         ],
 
         'logs' => [
-            'driver' => 'local',
-            'root' => storage_path('app/logs'),
-            'url' => str_replace('/public/index.php', '', env('APP_URL')) . '/storage/app/logs',
+            'driver' => 's3',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL'),
+            'root' => 'logs',
             'visibility' => 'public',
         ],
 
@@ -72,9 +90,13 @@ return [
         ],
 
         'uploads' => [
-            'driver' => 'local',
-            'root'   => public_path() . '/uploads',
-            'url' => str_replace('/index.php', '', env('APP_URL')) . '/uploads',
+            'driver' => 's3',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL'),
+            'root' => 'public/uploads',
             'visibility' => 'public',
         ],
 

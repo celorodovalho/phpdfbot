@@ -4,6 +4,11 @@ namespace App\Http\Middleware;
 
 use Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode as Middleware;
 
+/**
+ * Class CheckForMaintenanceMode
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class CheckForMaintenanceMode extends Middleware
 {
     /**

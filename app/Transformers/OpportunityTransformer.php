@@ -2,8 +2,8 @@
 
 namespace App\Transformers;
 
-use League\Fractal\TransformerAbstract;
 use App\Models\Opportunity;
+use League\Fractal\TransformerAbstract;
 
 /**
  * Class OpportunityTransformer
@@ -15,11 +15,11 @@ class OpportunityTransformer extends TransformerAbstract
     /**
      * Transform the Opportunity entity.
      *
-     * @param \App\Models\Opportunity $model
+     * @param Opportunity $model
      *
      * @return array
      */
-    public function transform(Opportunity $model)
+    public function transform(Opportunity $model): array
     {
         return [
             'id' => (int)$model->id,

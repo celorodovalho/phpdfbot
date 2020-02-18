@@ -7,8 +7,6 @@ use App\Helpers\BotHelper;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
-use Telegram\Bot\Keyboard\Keyboard;
-use Telegram\Bot\Objects\User as TelegramUser;
 
 /**
  * Class StartCommand
@@ -66,7 +64,10 @@ class StartCommand extends Command
 
         $this->replyWithMessage([
 //            'parse_mode' => BotHelper::PARSE_MARKDOWN,
-            'text' => "Olá $username! Eu sou o Bot de vagas. Voce pode começar me enviando o texto da vaga que quer publicar:",
+            'text' => sprintf(
+                'Olá %s! Eu sou o Bot de vagas. Voce pode começar me enviando o texto da vaga que quer publicar:',
+                $username
+            ),
 //            'reply_markup' => $keyboard
         ]);
 

@@ -7,7 +7,7 @@ use App\Contracts\Repositories\UserRepository;
 use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
 use App\Services\CommandsHandler;
-use App\Validators\OpportunityValidator;
+use App\Validators\CollectedOpportunityValidator;
 use Exception;
 use Illuminate\Support\Arr;
 use Telegram\Bot\Api as Telegram;
@@ -37,19 +37,19 @@ class DefaultController extends Controller
     /**
      * DefaultController constructor.
      *
-     * @param BotsManager           $botsManager
-     * @param Telegram              $telegram
-     * @param Handler               $handler
-     * @param OpportunityRepository $repository
-     * @param OpportunityValidator  $validator
-     * @param UserRepository        $userRepository
+     * @param BotsManager                   $botsManager
+     * @param Telegram                      $telegram
+     * @param Handler                       $handler
+     * @param OpportunityRepository         $repository
+     * @param CollectedOpportunityValidator $validator
+     * @param UserRepository                $userRepository
      */
     public function __construct(
         BotsManager $botsManager,
         Telegram $telegram,
         Handler $handler,
         OpportunityRepository $repository,
-        OpportunityValidator $validator,
+        CollectedOpportunityValidator $validator,
         UserRepository $userRepository
     ) {
         $this->botsManager = $botsManager;
