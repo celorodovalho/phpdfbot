@@ -2,9 +2,14 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\ServiceProvider;
 
+/**
+ * Class BroadcastServiceProvider
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class BroadcastServiceProvider extends ServiceProvider
 {
     /**
@@ -12,7 +17,7 @@ class BroadcastServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         Broadcast::routes();
 

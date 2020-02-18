@@ -66,7 +66,7 @@ class Helper
         $composer = require base_path('/vendor/autoload.php');
 
         $namespaces = array_keys($composer->getClassMap());
-        return array_filter($namespaces, function ($item) use ($namespace) {
+        return array_filter($namespaces, static function ($item) use ($namespace) {
             return Str::startsWith($item, $namespace);
         });
     }
@@ -95,7 +95,9 @@ class Helper
      */
     public static function cloudinaryUpload(string $filePath): string
     {
-        $filePath = Storage::disk('uploads')->path($filePath);
+        if (Storage::disk('tmp')->exists($filePath)) {
+            $filePath = Storage::disk('tmp')->url($filePath);
+        }
         try {
             [$width, $height] = getimagesize($filePath);
             /** @var CloudinaryWrapper $cloudImage */
@@ -112,5 +114,24 @@ class Helper
             Log::error(__CLASS__, [$exception]);
         }
         return '';
+    }
+
+    /**
+     * @param string   $string
+     * @param string   $replacement
+     * @param int      $start
+     * @param int|null $length
+     *
+     * @return string
+     */
+    public static function mbSubstrReplace(string $string, string $replacement, int $start, ?int $length = null)
+    {
+        preg_match_all('/./us', $string, $smatches);
+        preg_match_all('/./us', $replacement, $rmatches);
+        if ($length === null) {
+            $length = mb_strlen($string);
+        }
+        array_splice($smatches[0], $start, $length, $rmatches[0]);
+        return implode($smatches[0]);
     }
 }

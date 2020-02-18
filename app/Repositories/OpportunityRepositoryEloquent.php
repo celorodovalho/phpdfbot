@@ -2,12 +2,13 @@
 
 namespace App\Repositories;
 
-use Illuminate\Support\Collection;
-use Prettus\Repository\Eloquent\BaseRepository;
-use Prettus\Repository\Criteria\RequestCriteria;
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Models\Opportunity;
-use App\Validators\OpportunityValidator;
+use App\Validators\CollectedOpportunityValidator;
+use Illuminate\Support\Collection;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Prettus\Repository\Eloquent\BaseRepository;
+use Prettus\Repository\Exceptions\RepositoryException;
 
 /**
  * Class OpportunityRepositoryEloquent
@@ -33,11 +34,13 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
      */
     public function validator(): string
     {
-        return OpportunityValidator::class;
+        return CollectedOpportunityValidator::class;
     }
 
     /**
      * Boot up the repository, pushing criteria
+     *
+     * @throws RepositoryException
      */
     public function boot()
     {
@@ -51,7 +54,7 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
      */
     public function make(array $data): Opportunity
     {
-        $opportunity = $this->firstOrNew([
+        $opportunity = $this->model->newInstance([
             Opportunity::TITLE => $data[Opportunity::TITLE],
             Opportunity::DESCRIPTION => $data[Opportunity::DESCRIPTION],
         ]);
@@ -65,6 +68,8 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
         $opportunity->{Opportunity::URL} = $data[Opportunity::URL];
         $opportunity->{Opportunity::ORIGIN} = $data[Opportunity::ORIGIN];
         $opportunity->{Opportunity::EMAILS} = $data[Opportunity::EMAILS];
+
+        $opportunity->save();
 
         return $opportunity;
     }

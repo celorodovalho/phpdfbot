@@ -6,7 +6,7 @@ use App\Contracts\Repositories\OpportunityRepository;
 use App\Http\Controllers\ApiController;
 use App\Http\Requests\OpportunityCreateRequest;
 use App\Http\Requests\OpportunityUpdateRequest;
-use App\Validators\OpportunityValidator;
+use App\Validators\CollectedOpportunityValidator;
 use Illuminate\Http\Response;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Validator\Contracts\ValidatorInterface;
@@ -23,10 +23,10 @@ class OpportunityController extends ApiController
     /**
      * OpportunityController constructor.
      *
-     * @param OpportunityRepository $repository
-     * @param OpportunityValidator  $validator
+     * @param OpportunityRepository         $repository
+     * @param CollectedOpportunityValidator $validator
      */
-    public function __construct(OpportunityRepository $repository, OpportunityValidator $validator)
+    public function __construct(OpportunityRepository $repository, CollectedOpportunityValidator $validator)
     {
         parent::__construct($repository, $validator);
     }
@@ -36,7 +36,7 @@ class OpportunityController extends ApiController
      *
      * @return Response
      */
-    public function index()
+    public function index(): Response
     {
         $this->repository->pushCriteria(app(RequestCriteria::class));
         $opportunities = $this->repository->all();
@@ -57,7 +57,7 @@ class OpportunityController extends ApiController
      *
      * @return Response
      */
-    public function store(OpportunityCreateRequest $request)
+    public function store(OpportunityCreateRequest $request): ?Response
     {
         try {
             $this->validator->with($request->all())->passesOrFail(ValidatorInterface::RULE_CREATE);
@@ -93,7 +93,7 @@ class OpportunityController extends ApiController
      *
      * @return Response
      */
-    public function show($id)
+    public function show($id): Response
     {
         $opportunity = $this->repository->find($id);
 
@@ -113,7 +113,7 @@ class OpportunityController extends ApiController
      *
      * @return Response
      */
-    public function edit($id)
+    public function edit($id): Response
     {
         $opportunity = $this->repository->find($id);
 
@@ -128,7 +128,7 @@ class OpportunityController extends ApiController
      *
      * @return Response
      */
-    public function update(OpportunityUpdateRequest $request, $id)
+    public function update(OpportunityUpdateRequest $request, $id): ?Response
     {
         try {
             $this->validator->with($request->all())->passesOrFail(ValidatorInterface::RULE_UPDATE);
@@ -141,7 +141,6 @@ class OpportunityController extends ApiController
             ];
 
             if ($request->wantsJson()) {
-
                 return response()->json($response);
             }
 
@@ -166,7 +165,7 @@ class OpportunityController extends ApiController
      *
      * @return Response
      */
-    public function destroy($id)
+    public function destroy($id): Response
     {
         $deleted = $this->repository->delete($id);
 

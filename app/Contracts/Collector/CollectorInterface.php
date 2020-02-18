@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Contracts;
+namespace App\Contracts\Collector;
 
 use Illuminate\Database\Eloquent\Collection;
 
@@ -17,6 +17,11 @@ interface CollectorInterface
      * @return Collection
      */
     public function collectOpportunities(): Collection;
+
+    /**
+     * @return iterable
+     */
+    public function fetchMessages(): iterable;
 
     /**
      * Create a Opportunity based on previous definition
@@ -64,15 +69,6 @@ interface CollectorInterface
     public function extractOrigin($message): string;
 
     /**
-     * Parse the company
-     *
-     * @param $message
-     *
-     * @return string
-     */
-    public function extractCompany($message): string;
-
-    /**
      * Parse the location
      *
      * @param $message
@@ -89,24 +85,6 @@ interface CollectorInterface
      * @return array
      */
     public function extractTags($message): array;
-
-    /**
-     * Parse the position
-     *
-     * @param $message
-     *
-     * @return string
-     */
-    public function extractPosition($message): string;
-
-    /**
-     * Parse the salary
-     *
-     * @param $message
-     *
-     * @return string
-     */
-    public function extractSalary($message): string;
 
     /**
      * Parse the URL

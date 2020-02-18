@@ -3,6 +3,7 @@
 namespace App\Commands;
 
 use Telegram\Bot\Commands\Command;
+use Telegram\Bot\Exceptions\TelegramSDKException;
 
 /**
  * Class HelpCommand
@@ -28,6 +29,7 @@ class HelpCommand extends Command
 
     /**
      * {@inheritdoc}
+     * @throws TelegramSDKException
      */
     public function handle(): void
     {

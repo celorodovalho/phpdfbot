@@ -6,6 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 
+/**
+ * Class LoginController
+ *
+ * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
+ */
 class LoginController extends Controller
 {
     /*
