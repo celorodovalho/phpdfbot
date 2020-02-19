@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-cd ${1}
+cd "${1}" || exit
 
 echo " ~> [hooks\setup.sh] on [${1}, ${2}]"
 
-cp .env.stage .env
-cp docker-compose.yml.stage docker-compose.yml
+# apply seeds on database
+# docker exec -it phpdfbot bash -c "php artisan db:seed"
