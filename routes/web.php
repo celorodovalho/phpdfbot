@@ -44,10 +44,11 @@ Route::get('me', static function () {
 Route::get('process/messages/{type}/{collectors?}', 'Web\OpportunityController@processMessages');
 
 Route::get('/', 'Web\OpportunityController@index');
+Route::get('opportunity/{opportunity}', 'Web\OpportunityController@show');
 
-Route::group(['namespace' => 'Web',], static function () {
-    Route::resource('opportunities', 'OpportunityController');
-});
+//Route::group(['namespace' => 'Web',], static function () {
+//    Route::resource('opportunities', 'OpportunityController');
+//});
 
 Route::get('teste', function () {
     $a = file_get_contents(base_path('teste'));

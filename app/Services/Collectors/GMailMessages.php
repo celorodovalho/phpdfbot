@@ -110,10 +110,12 @@ class GMailMessages implements CollectorInterface
     public function createOpportunity($message)
     {
         $title = $this->extractTitle($message);
-        $description = $this->extractDescription($message);
+        $body = $this->getBody($message);
+        $description = $this->extractDescription($body);
         $message = [
             Opportunity::TITLE => $title,
             Opportunity::DESCRIPTION => $description,
+            Opportunity::ORIGINAL => $body,
             Opportunity::FILES => $this->extractFiles($message),
             Opportunity::POSITION => '',
             Opportunity::COMPANY => '',
@@ -224,6 +226,17 @@ class GMailMessages implements CollectorInterface
      */
     public function extractDescription($message): string
     {
+        return SanitizerHelper::sanitizeBody($message);
+    }
+    /**
+     * Get message body from GMail content
+     *
+     * @param Mail $message
+     *
+     * @return bool|string
+     */
+    public function getBody($message): string
+    {
         $htmlBody = $message->getHtmlBody();
         if (empty($htmlBody)) {
             $parts = $message->payload->getParts();
@@ -235,7 +248,7 @@ class GMailMessages implements CollectorInterface
                 $htmlBody = $message->getDecodedBody($body);
             }
         }
-        return SanitizerHelper::sanitizeBody($htmlBody);
+        return $htmlBody;
     }
 
     /**

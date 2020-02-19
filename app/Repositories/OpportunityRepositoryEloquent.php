@@ -56,7 +56,7 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
     {
         $opportunity = $this->model->newInstance([
             Opportunity::TITLE => $data[Opportunity::TITLE],
-            Opportunity::DESCRIPTION => $data[Opportunity::DESCRIPTION],
+            Opportunity::ORIGINAL => $data[Opportunity::ORIGINAL],
         ]);
 
         $opportunity->{Opportunity::FILES} = new Collection($data[Opportunity::FILES]);

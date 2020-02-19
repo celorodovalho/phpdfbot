@@ -14,6 +14,7 @@ use App\Models\Group;
 use App\Models\Opportunity;
 use Exception;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Prettus\Repository\Contracts\RepositoryInterface;
@@ -56,10 +57,10 @@ class CommandsHandler
     /**
      * CommandsHandler constructor.
      *
-     * @param BotsManager $botsManager
-     * @param string $botName
+     * @param BotsManager                               $botsManager
+     * @param string                                    $botName
      * @param OpportunityRepository|RepositoryInterface $repository
-     * @param UserRepository $userRepository
+     * @param UserRepository                            $userRepository
      *
      * @throws TelegramSDKException
      */
@@ -137,7 +138,14 @@ class CommandsHandler
                 break;
             case Callbacks::REMOVE:
                 if ($opportunity) {
-                    $opportunity->delete();
+                    //$opportunity->delete();
+                    $this->sendMessage(
+                        sprintf(
+                            'Mensagem rejeitada: %s',
+                            url("opportunity/{$opportunity->id}")
+                        ),
+                        Config::get('constants.owner')
+                    );
                 }
                 break;
             case Callbacks::OPTIONS:
@@ -224,7 +232,7 @@ class CommandsHandler
             Log::info('USER_CREATED_processMessage', [$user]);
         }
 
-        /** @var bool $isRealUserPvtMsg Check if the message come from a real user in a Private chat*/
+        /** @var bool $isRealUserPvtMsg Check if the message come from a real user in a Private chat */
         $isRealUserPvtMsg = $message->from instanceof User
             && !$message->from->isBot
             && $message->chat instanceof Chat
@@ -345,7 +353,7 @@ class CommandsHandler
      * Process the command
      *
      * @param string $command
-     * @param bool $triggerProcess
+     * @param bool   $triggerProcess
      */
     private function processCommand(string $command, bool $triggerProcess = true): void
     {
@@ -361,15 +369,16 @@ class CommandsHandler
     }
 
     /**
-     * @param $message
+     * @param null|string $message
+     * @param null|int    $chatId
      *
      * @throws TelegramSDKException
      */
-    private function sendMessage($message): void
+    private function sendMessage($message, $chatId = null): void
     {
         if (filled($message)) {
             $this->telegram->sendMessage([
-                'chat_id' => $this->update->getChat()->id,
+                'chat_id' => $chatId ?? $this->update->getChat()->id,
                 'reply_to_message_id' => $this->update->getMessage()->messageId,
                 'text' => $message
             ]);

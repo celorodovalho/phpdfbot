@@ -92,6 +92,7 @@ class GitHubMessages implements CollectorInterface
         $message = [
             Opportunity::TITLE => $title,
             Opportunity::DESCRIPTION => $description,
+            Opportunity::ORIGINAL => $message['body'],
             Opportunity::FILES => $this->extractFiles($title . $description),
             Opportunity::POSITION => '',
             Opportunity::COMPANY => '',

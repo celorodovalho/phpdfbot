@@ -3,6 +3,7 @@
 use App\Enums\BrazilianStates;
 
 return [
+    'owner' => env('TELEGRAM_OWNER_ID', '@se45ky'),
     'requiredWords' => [
         'administrador de dados',
         'analista de dados',

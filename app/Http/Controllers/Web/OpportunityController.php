@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Http\Controllers\Controller;
+use App\Models\Opportunity;
 use App\Validators\CollectedOpportunityValidator;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Support\Facades\Artisan;
@@ -38,6 +39,16 @@ class OpportunityController extends Controller
             return $query->withTrashed()->where('status', '<>', '0');
         })->orderBy('created_at', 'DESC')->paginate();
         return view('home', compact('opportunities'));
+    }
+
+    /**
+     * @param Opportunity $opportunity
+     *
+     * @return Factory|View
+     */
+    public function show(Opportunity $opportunity)
+    {
+        return view('opportunities.show', compact('opportunity'));
     }
 
     /**

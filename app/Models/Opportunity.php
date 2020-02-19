@@ -20,6 +20,7 @@ use Prettus\Repository\Traits\TransformableTrait;
  * @property string     $title
  * @property string     $position
  * @property string     $description
+ * @property string     $original
  * @property string     $salary
  * @property string     $company
  * @property string     $location
@@ -46,6 +47,7 @@ class Opportunity extends Model implements Transformable
     public const LOCATION = 'location';
     public const FILES = 'files';
     public const DESCRIPTION = 'description';
+    public const ORIGINAL = 'original';
     public const TITLE = 'title';
     public const URL = 'url';
     public const ORIGIN = 'origin';
@@ -64,6 +66,7 @@ class Opportunity extends Model implements Transformable
         self::TITLE,
         self::POSITION,
         self::DESCRIPTION,
+        self::ORIGINAL,
         self::SALARY,
         self::COMPANY,
         self::LOCATION,

@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use App\Enums\Arguments;
 use App\Enums\Callbacks;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Actions;
 use Telegram\Bot\Commands\Command;
@@ -34,8 +35,8 @@ class OptionsCommand extends Command
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
-        // TODO: chage way of get owner id
-        if ($this->getUpdate()->getMessage()->from->id !== (int)env('TELEGRAM_OWNER_ID')) {
+        // TODO: change way of get owner id
+        if ($this->getUpdate()->getMessage()->from->id !== (int)Config::get('constants.owner')) {
             return $this->replyWithMessage([
                 'text' => 'Lamento, mas esse comando é restrito. Para maiores informações entre em contato: @se45ky',
             ]);

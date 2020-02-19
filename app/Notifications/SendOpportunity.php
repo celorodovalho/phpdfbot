@@ -91,7 +91,7 @@ class SendOpportunity extends Notification
                 '%%%%%%%',
                 wordwrap(
                     $messageText,
-                    (BotHelper::TELEGRAM_LIMIT - strlen("\n00/00\n")),
+                    BotHelper::TELEGRAM_LIMIT - strlen("\n00/00\n"),
                     '%%%%%%%'
                 )
             );

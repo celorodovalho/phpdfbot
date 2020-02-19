@@ -79,6 +79,7 @@ class ComoQueTaLaMessages implements CollectorInterface
         $message = [
             Opportunity::TITLE => $title,
             Opportunity::DESCRIPTION => $description,
+            Opportunity::ORIGINAL => $message[Opportunity::DESCRIPTION],
             Opportunity::FILES => $this->extractFiles($title . $description),
             Opportunity::POSITION => '',
             Opportunity::COMPANY => $message[Opportunity::COMPANY],
