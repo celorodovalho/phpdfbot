@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 
-cd ${1}
+cd "${1}" || exit
 
 echo " ~> [hooks\pre-checkout.sh] on [${1}, ${2}]"
 
-if [[ "$(docker ps -q -f name=${2}-app)" ]]; then
-  docker-compose down
-fi
-
-# rm -rf ./*
+# echo "@ put the containers down before checkout the new codes"
+# docker-compose down
