@@ -293,6 +293,7 @@ class CommandsHandler
             $opportunity = $this->repository->make([
                 Opportunity::TITLE => Str::limit($title, 50),
                 Opportunity::DESCRIPTION => SanitizerHelper::sanitizeBody($text),
+                Opportunity::ORIGINAL => $text,
                 Opportunity::FILES => $files,
                 Opportunity::URL => implode(', ', $urls),
                 Opportunity::ORIGIN => implode('|', [$this->botName, $userName]),
