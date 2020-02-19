@@ -2,18 +2,15 @@
 
 namespace App\Exceptions;
 
-use App\Helpers\BotHelper;
 use App\Models\Group;
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Telegram\Bot\Laravel\Facades\Telegram;
-use Telegram\Bot\Objects\Message;
 
 /**
  * Class Handler
@@ -99,7 +96,6 @@ class Handler extends ExceptionHandler
     public static function log(Exception $exception, $message = '', $context = null): void
     {
         try {
-            $referenceLog = $message . (date('Y-m-d-H-i-s') . time()) . '.log';
             $logMessage = [
                 'ERROR_MSG' => $exception->getMessage(),
                 'CONTEXT' => $context,
@@ -111,17 +107,12 @@ class Handler extends ExceptionHandler
             ];
 
             Log::error('ERROR_LOG', $logMessage);
-            Storage::disk('logs')->put($referenceLog, json_encode($logMessage));
-
-            $referenceLog = Storage::disk('logs')->url($referenceLog);
 
             $issueBody = sprintf(
                 "⚠️\nMessage:\n%s\n\n" .
-                "File/Line:\n%s\n\n" .
-                "Log:\n%s",
+                "File/Line:\n%s\n\n",
                 $exception->getMessage(),
-                $exception->getFile() . '::' . $exception->getLine(),
-                $referenceLog
+                $exception->getFile() . '::' . $exception->getLine()
             );
 
             /** @todo remover isso */

@@ -24,7 +24,6 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->register(RepositoryServiceProvider::class);
         $this->app->register(ResponseMacroServiceProvider::class);
-        $this->app->register(CloudWatchServiceProvider::class);
     }
 
     /**

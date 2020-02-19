@@ -1,6 +1,5 @@
 <?php
 
-use App\Logging\CloudWatchLoggerFactory;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -38,7 +37,7 @@ return [
     'channels' => [
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['daily', 'errorlog'],
+            'channels' => ['daily'],
             'ignore_exceptions' => false,
         ],
 
@@ -100,21 +99,5 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
-
-        'cloudwatch' => [
-            'name' => 'cloudwatch',
-            'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
-            'credentials' => [
-                'key' => env('AWS_ACCESS_KEY_ID', ''),
-                'secret' => env('AWS_SECRET_ACCESS_KEY', '')
-            ],
-            'stream_name' => env('APP_ENV', 'environment'),
-            'retention' => 30,
-            'group_name' => env('APP_NAME', 'application'),
-            'version' => 'latest',
-            'disable' => false,
-            'formatter' => \Monolog\Formatter\JsonFormatter::class
-        ],
     ],
-
 ];

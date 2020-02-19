@@ -181,7 +181,7 @@ return [
         Telegram\Bot\Laravel\TelegramServiceProvider::class,
         JD\Cloudder\CloudderServiceProvider::class,
         GrahamCampbell\GitHub\GitHubServiceProvider::class,
-        Aws\Laravel\AwsServiceProvider::class,
+        Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::class,
     ],
 
     /*
@@ -237,7 +237,6 @@ return [
         'Cloudder' => JD\Cloudder\Facades\Cloudder::class,
         'GitHub' => GrahamCampbell\GitHub\Facades\GitHub::class,
         'Markdown' => GrahamCampbell\Markdown\Facades\Markdown::class,
-        'AWS' => Aws\Laravel\AwsFacade::class,
     ],
 
 ];

@@ -76,7 +76,7 @@ class BotHelper
 
                 $extension = File::extension($file['file_path']);
                 $fileName = Helper::base64UrlEncode($file['file_path']) . '.' . $extension;
-                Storage::disk('tmp')->put($fileName, $download);
+                Storage::put($fileName, $download);
                 $files[$key] = Helper::cloudinaryUpload($fileName);
             }
         }

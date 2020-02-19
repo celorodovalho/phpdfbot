@@ -65,3 +65,5 @@ Route::get('teste', function () {
         'text' => $a
     ]);
 });
+
+Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
