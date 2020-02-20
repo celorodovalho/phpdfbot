@@ -16,7 +16,7 @@ class SeederGroupsTable extends Migration
     {
         DB::table('groups')->insert([
             [
-                'name' => '@botphpdf',
+                'name' => '-1001253504077',
                 'main' => false,
                 'admin' => true,
                 'type' => GroupTypes::GROUP,
