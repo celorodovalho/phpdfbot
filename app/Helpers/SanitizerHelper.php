@@ -179,7 +179,7 @@ class SanitizerHelper
                 $message
             );
 
-            $message = preg_replace('/^(ü)([ A-Za-z0-9]+)/uim', '-$2', $message);
+            $message = preg_replace('/^(ü|Ø)([ A-Za-z0-9]+)/uim', '-$2', $message);
 
             $message = preg_replace('/^(#)([A-Za-z]+)/im', '$1 $2', $message);
 
@@ -241,7 +241,7 @@ class SanitizerHelper
 
             $message = str_ireplace($omitting, '', $message);
 
-            $message = str_replace(['![]()', '[]()'], '', $message);
+            $message = str_replace(['![]()', '[]()', 'hashtag\\'], '', $message);
 
             $messageArray = explode("\n", $message);
 

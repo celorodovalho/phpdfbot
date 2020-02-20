@@ -209,7 +209,10 @@ class GMailMessages implements CollectorInterface
                 ) {
                     $extension = File::extension($attachment->getFileName());
                     $fileName = Helper::base64UrlEncode($attachment->getFileName()) . '.' . $extension;
-                    $filePath = $attachment->saveAttachmentTo($message->getId(), $fileName, 'local');
+                    $filePath = $attachment->saveAttachmentTo(
+                        'attachments/' . $message->getId(),
+                        $fileName
+                    );
                     $files[] = Helper::cloudinaryUpload($filePath);
                 }
             }
