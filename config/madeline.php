@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'ses-sion_path' => storage_path('session.madeline'),
+    'session_path' => storage_path('app/session.madeline'),
     'app_info' => [
         'api_id' => env('TELEGRAM_API_ID'),
         'api_hash' => env('TELEGRAM_API_HASH'),
