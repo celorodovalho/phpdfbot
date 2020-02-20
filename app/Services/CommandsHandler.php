@@ -378,11 +378,15 @@ class CommandsHandler
     private function sendMessage($message, $chatId = null): void
     {
         if (filled($message)) {
-            $this->telegram->sendMessage([
+            $param = [
                 'chat_id' => $chatId ?? $this->update->getChat()->id,
-                'reply_to_message_id' => $this->update->getMessage()->messageId,
                 'text' => $message
-            ]);
+            ];
+            if (null === $chatId) {
+                $param['reply_to_message_id'] = $this->update->getMessage()->messageId;
+            }
+
+            $this->telegram->sendMessage($param);
         }
     }
 }
