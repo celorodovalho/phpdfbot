@@ -8,7 +8,9 @@ $files = [];
 @if(filled($opportunity->files) && $opportunity->files->isNotEmpty())
 
 @foreach($opportunity->files as $file)
-@php($files[] = sprintf(($isEmail ? '!' : '') . '[🖼](%s)', $file))
+@php
+$files[] = sprintf(($isEmail ? '!' : '') . '[🖼](%s)', $file)
+@endphp
 @endforeach
 {{implode('', $files)}}
 @endif
