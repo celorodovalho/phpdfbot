@@ -27,10 +27,6 @@ class MadelineProtoService
     {
         $config = Config::get('madeline');
         $sessionPath = $config['session_path'];
-        if (!Storage::exists($sessionPath)) {
-            Storage::put($sessionPath, Storage::get($sessionPath));
-        }
-        $sessionPath = Storage::path($sessionPath);
         $this->api = new API(
             $sessionPath,
             $config
