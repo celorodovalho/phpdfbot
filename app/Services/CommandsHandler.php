@@ -257,7 +257,7 @@ class CommandsHandler
 
         /** Check if is a private message and not a command */
         if ($isRealUserPvtMsg && !in_array($message->text, $this->telegram->getCommands(), true)) {
-            $text = $message->text ?? $caption;
+            $text = $message->text ?: $caption;
 
             $urls = ExtractorHelper::extractUrls($text);
 
