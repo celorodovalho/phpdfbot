@@ -116,7 +116,7 @@ class CommandsHandler
         } catch (TelegramOpportunityException $exception) {
             $this->sendMessage($exception->getMessage());
         } catch (ValidatorException $exception) {
-            $errors = $exception->getMessageBag()->toArray();
+            $errors = $exception->getMessageBag()->all();
             Log::info('VALIDATION_ERRORS', $errors);
             $this->sendMessage(sprintf(
                 "Ao menos uma das validações abaixo precisa ser observada: \n\n%s",
