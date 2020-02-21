@@ -73,6 +73,7 @@ class BotHelper
             /** @var PhotoSize $file */
             foreach ($files as $file) {
                 Log::info('FILE_BEFORE', [$file]);
+                /** @var \Telegram\Bot\Objects\File $file */
                 $file = Telegram::getFile($file);
                 Log::info('FILE_AFTER', [$file]);
                 $url = str_replace('/bot', '/file/bot', TelegramClient::BASE_BOT_URL);
@@ -82,6 +83,7 @@ class BotHelper
 
                 $extension = File::extension($file['file_path']);
                 $fileName = Helper::base64UrlEncode($file['file_path']) . '.' . $extension;
+                Log::info('FILENAME', [$fileName]);
                 Storage::put($fileName, $download);
                 $files[] = Helper::cloudinaryUpload($fileName);
             }

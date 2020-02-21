@@ -96,7 +96,7 @@ class Helper
     public static function cloudinaryUpload(string $filePath): string
     {
         if (Storage::exists($filePath)) {
-            $filePath = storage_path('app/' . $filePath);
+            $filePath = Storage::path($filePath);
         }
         try {
             [$width, $height] = getimagesize($filePath);
