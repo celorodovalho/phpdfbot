@@ -225,6 +225,7 @@ class CommandsHandler
         $newMembers = $message->newChatMembers;
 
         Log::info('PROCESS_MESSAGE', [
+            'MESSAGE' => $message,
             'TEXT' => $message->text,
             'REPLY' => $reply,
             'PHOTOS' => $photos,
@@ -232,7 +233,6 @@ class CommandsHandler
             'CAPTION' => $caption,
             'NEW_MEMBERS' => $newMembers,
         ]);
-
 
         if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE) {
             $telegramUser = $message->from;
