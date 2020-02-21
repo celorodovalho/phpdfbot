@@ -43,7 +43,9 @@ class BotHelper
      */
     public static function getGroupSign(bool $isWeb = false): string
     {
-        $groups = Group::whereIn('type', [GroupTypes::CHANNEL, GroupTypes::GROUP])->get();
+        $groups = Group::whereIn('type', [GroupTypes::CHANNEL, GroupTypes::GROUP])
+            ->where('admin', false)
+            ->get();
 
         $channels = $groups->where('type', GroupTypes::CHANNEL)->pluck('name')->all();
         $groups = $groups->where('type', GroupTypes::GROUP)->pluck('name')->all();
