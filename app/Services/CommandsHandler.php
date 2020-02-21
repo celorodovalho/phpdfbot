@@ -259,7 +259,12 @@ class CommandsHandler
         if ($isRealUserPvtMsg && !in_array($message->text, $this->telegram->getCommands(), true)) {
             $text = $message->text ?: $caption;
 
-            $urls = ExtractorHelper::extractUrls($text);
+            $urls = [];
+            $emails = [];
+            if ($text) {
+                $urls = ExtractorHelper::extractUrls($text);
+                $emails = ExtractorHelper::extractEmail($text);
+            }
 
             $userName = null;
             if (property_exists('from', $message) && blank($urls)) {
@@ -278,8 +283,6 @@ class CommandsHandler
                     $userName = $message->from->firstName . ' ' . $message->from->lastName;
                 }
             }
-
-            $emails = ExtractorHelper::extractEmail($text);
 
             $files = [];
             if (filled($photos)) {
