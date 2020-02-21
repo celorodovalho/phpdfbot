@@ -300,7 +300,7 @@ class CommandsHandler
 
             $messageOpportunity = [
                 Opportunity::TITLE => SanitizerHelper::sanitizeSubject(Str::limit($title, 50)),
-                Opportunity::DESCRIPTION => SanitizerHelper::sanitizeBody($text),
+                Opportunity::DESCRIPTION => $text ? SanitizerHelper::sanitizeBody($text) : '',
                 Opportunity::ORIGINAL => $text,
                 Opportunity::FILES => $files,
                 Opportunity::URL => implode(', ', $urls),
