@@ -77,8 +77,8 @@ class TelegramChannel
 
         if ($message instanceof TelegramMessage) {
             $body = $params['text'];
-            $chances = 5;
-            while ($chances > 0) {
+            $chances = true;
+            while ($chances) {
                 try {
                     if (is_array($body)) {
                         foreach ($body as $text) {
@@ -97,16 +97,9 @@ class TelegramChannel
                     }
                     $chances = 0;
                 } catch (TelegramResponseException $exception) {
-                    if (preg_match_all('!\d+!', $exception->getMessage(), $matches)) {
-                        $offset = (int)end($matches[0]) - BotHelper::TELEGRAM_OFFSET;
-                        $params['text'] = Helper::mbSubstrReplace($params['text'], '', $offset, 1);
-                    }
                     Handler::log($exception, 'SEND_MESSAGE', $params);
-                    if ($chances === 2) {
-                        unset($params['parse_mode']);
-                        $params['text'] = SanitizerHelper::removeMarkdown($params['text']);
-                    }
-                    $chances--;
+                    unset($params['parse_mode']);
+                    $params['text'] = SanitizerHelper::removeMarkdown($params['text']);
                 }
             }
         }
