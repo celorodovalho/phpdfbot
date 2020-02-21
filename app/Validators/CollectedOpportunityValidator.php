@@ -72,12 +72,12 @@ class CollectedOpportunityValidator extends LaravelValidator
                 function ($attribute, $value, $fail) {
                     if (blank($this->data[Opportunity::FILES])
                         && !Str::contains(mb_strtolower($value), Config::get('constants.requiredWords'))) {
-                        return $fail(ucfirst($attribute) . ' must contains required tags.');
+                        return $fail(ucfirst($attribute) . ' enviada não bate com os critérios de tecnologia.');
                     }
                 },
                 function ($attribute, $value, $fail) {
                     if (Str::contains(mb_strtolower($value), Config::get('constants.deniedWords'))) {
-                        return $fail($attribute . ' cannot contains denied tags.');
+                        return $fail($attribute . ' contém conteúdo proibido.');
                     }
                 }
             ]
