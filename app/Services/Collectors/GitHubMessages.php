@@ -86,22 +86,23 @@ class GitHubMessages implements CollectorInterface
      */
     public function createOpportunity($message)
     {
+        $original = $message['body'];
         $title = $this->extractTitle($message);
         $description = $this->extractDescription($message);
 
         $message = [
             Opportunity::TITLE => $title,
             Opportunity::DESCRIPTION => $description,
-            Opportunity::ORIGINAL => $message['body'],
-            Opportunity::FILES => $this->extractFiles($title . $description),
+            Opportunity::ORIGINAL => $original,
+            Opportunity::FILES => $this->extractFiles($title . $original),
             Opportunity::POSITION => '',
             Opportunity::COMPANY => '',
-            Opportunity::LOCATION => $this->extractLocation($title . $description),
-            Opportunity::TAGS => $this->extractTags($title . $description),
+            Opportunity::LOCATION => $this->extractLocation($title . $original),
+            Opportunity::TAGS => $this->extractTags($title . $original),
             Opportunity::SALARY => '',
-            Opportunity::URL => $this->extractUrl($description . $message['html_url']),
+            Opportunity::URL => $this->extractUrl($original . $message['html_url']),
             Opportunity::ORIGIN => $this->extractOrigin($message['html_url']),
-            Opportunity::EMAILS => $this->extractEmails($description),
+            Opportunity::EMAILS => $this->extractEmails($original),
         ];
 
         try {
@@ -123,8 +124,7 @@ class GitHubMessages implements CollectorInterface
                 $this->opportunities->add($opportunity);
             }
         } catch (ValidatorException $exception) {
-            Log::info('VALIDATOR', $exception->toArray());
-            Log::info('VALIDATOR_MESSAGE', $message);
+            Log::info('VALIDATION', [$exception->toArray(), $message]);
         }
     }
 

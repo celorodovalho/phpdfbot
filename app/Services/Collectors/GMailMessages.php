@@ -103,28 +103,29 @@ class GMailMessages implements CollectorInterface
     }
 
     /**
-     * @param Mail $message
+     * @param Mail $mail
      *
      * @throws Exception
      */
-    public function createOpportunity($message)
+    public function createOpportunity($mail)
     {
-        $title = $this->extractTitle($message);
-        $body = $this->getBody($message);
-        $description = $this->extractDescription($body);
+        $original = $this->getBody($mail);
+        $title = $this->extractTitle($mail);
+        $description = $this->extractDescription($original);
+
         $message = [
             Opportunity::TITLE => $title,
             Opportunity::DESCRIPTION => $description,
-            Opportunity::ORIGINAL => $body,
-            Opportunity::FILES => $this->extractFiles($message),
+            Opportunity::ORIGINAL => $original,
+            Opportunity::FILES => $this->extractFiles($mail),
             Opportunity::POSITION => '',
             Opportunity::COMPANY => '',
-            Opportunity::LOCATION => $this->extractLocation($title . $description),
-            Opportunity::TAGS => $this->extractTags($title . $description),
+            Opportunity::LOCATION => $this->extractLocation($title . $original),
+            Opportunity::TAGS => $this->extractTags($title . $original),
             Opportunity::SALARY => '',
-            Opportunity::URL => $this->extractUrl($description),
-            Opportunity::ORIGIN => $this->extractOrigin($message),
-            Opportunity::EMAILS => $this->extractEmails($description),
+            Opportunity::URL => $this->extractUrl($original),
+            Opportunity::ORIGIN => $this->extractOrigin($mail),
+            Opportunity::EMAILS => $this->extractEmails($original),
         ];
 
         try {
@@ -146,8 +147,7 @@ class GMailMessages implements CollectorInterface
                 $this->opportunities->add($opportunity);
             }
         } catch (ValidatorException $exception) {
-            Log::info('VALIDATOR', $exception->toArray());
-            Log::info('VALIDATOR_MESSAGE', $message);
+            Log::info('VALIDATION', [$exception->toArray(), $message]);
         }
     }
 
@@ -223,7 +223,7 @@ class GMailMessages implements CollectorInterface
     /**
      * Get message body from GMail content
      *
-     * @param Mail $message
+     * @param string $message
      *
      * @return bool|string
      */

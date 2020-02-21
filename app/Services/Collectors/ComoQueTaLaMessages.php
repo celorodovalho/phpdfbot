@@ -74,21 +74,22 @@ class ComoQueTaLaMessages implements CollectorInterface
      */
     public function createOpportunity($message)
     {
+        $original = $message[Opportunity::DESCRIPTION];
         $title = $this->extractTitle($message);
         $description = $this->extractDescription($message);
         $message = [
             Opportunity::TITLE => $title,
             Opportunity::DESCRIPTION => $description,
-            Opportunity::ORIGINAL => $message[Opportunity::DESCRIPTION],
-            Opportunity::FILES => $this->extractFiles($title . $description),
+            Opportunity::ORIGINAL => $original,
+            Opportunity::FILES => $this->extractFiles($title . $original),
             Opportunity::POSITION => '',
             Opportunity::COMPANY => $message[Opportunity::COMPANY],
-            Opportunity::LOCATION => $this->extractLocation($description . $message[Opportunity::LOCATION]),
-            Opportunity::TAGS => $this->extractTags($title . $description . $message[Opportunity::LOCATION]),
+            Opportunity::LOCATION => $this->extractLocation($original . $message[Opportunity::LOCATION]),
+            Opportunity::TAGS => $this->extractTags($title . $original . $message[Opportunity::LOCATION]),
             Opportunity::SALARY => '',
-            Opportunity::URL => $this->extractUrl($description . ' ' . $message[Opportunity::URL]),
-            Opportunity::ORIGIN => $this->extractOrigin($description),
-            Opportunity::EMAILS => $this->extractEmails($description),
+            Opportunity::URL => $this->extractUrl($original . ' ' . $message[Opportunity::URL]),
+            Opportunity::ORIGIN => $this->extractOrigin($original),
+            Opportunity::EMAILS => $this->extractEmails($original),
         ];
 
         try {
@@ -110,8 +111,7 @@ class ComoQueTaLaMessages implements CollectorInterface
                 $this->opportunities->add($opportunity);
             }
         } catch (ValidatorException $exception) {
-            Log::info('VALIDATOR', $exception->toArray());
-            Log::info('VALIDATOR_MESSAGE', $message);
+            Log::info('VALIDATION', [$exception->toArray(), $message]);
         }
     }
 

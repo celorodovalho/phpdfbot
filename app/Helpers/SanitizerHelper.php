@@ -164,6 +164,8 @@ class SanitizerHelper
 
             $message = str_ireplace($omitting, '', $message);
 
+            $message = str_ireplace(['<3'], Emoji::blueHeart(), $message);
+
             $message = html_entity_decode($message);
 
             $message = trim($message, '\\');
@@ -216,7 +218,7 @@ class SanitizerHelper
             $message = preg_replace('/([#]){2,}/m', '$1', $message);
             $message = preg_replace("/^(\\\\?)# (.+)$/m", '`$2`', $message);
 
-            $message = str_ireplace(['<3'], Emoji::blueHeart(), $message);
+
 
             $message = preg_replace('/([ \t])+/', ' ', $message);
             $message = preg_replace("/\s{2,}/m", "\n", $message);

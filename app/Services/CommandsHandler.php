@@ -12,12 +12,15 @@ use App\Helpers\ExtractorHelper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Group;
 use App\Models\Opportunity;
+use App\Validators\CollectedOpportunityValidator;
 use Exception;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Prettus\Repository\Contracts\RepositoryInterface;
+use Prettus\Validator\Contracts\ValidatorInterface;
+use Prettus\Validator\Exceptions\ValidatorException;
 use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramResponseException;
@@ -54,6 +57,9 @@ class CommandsHandler
     /** @var UserRepository */
     private $userRepository;
 
+    /** @var CollectedOpportunityValidator */
+    private $validator;
+
     /**
      * CommandsHandler constructor.
      *
@@ -62,18 +68,22 @@ class CommandsHandler
      * @param OpportunityRepository|RepositoryInterface $repository
      * @param UserRepository                            $userRepository
      *
+     * @param CollectedOpportunityValidator             $validator
+     *
      * @throws TelegramSDKException
      */
     public function __construct(
         BotsManager $botsManager,
         string $botName,
         OpportunityRepository $repository,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        CollectedOpportunityValidator $validator
     ) {
         $this->botName = $botName;
         $this->telegram = $botsManager->bot($botName);
         $this->repository = $repository;
         $this->userRepository = $userRepository;
+        $this->validator = $validator;
     }
 
     /**
@@ -105,6 +115,11 @@ class CommandsHandler
             }
         } catch (TelegramOpportunityException $exception) {
             $this->sendMessage($exception->getMessage());
+        } catch (ValidatorException $exception) {
+            $this->sendMessage(sprintf(
+                "Ao menos uma das validações abaixo precisa ser observada: %s\n\n",
+                implode("\n", $exception->getMessageBag())
+            ));
         }
     }
 
@@ -240,12 +255,6 @@ class CommandsHandler
 
         /** Check if is a private message and not a command */
         if ($isRealUserPvtMsg && !in_array($message->text, $this->telegram->getCommands(), true)) {
-            if (blank($message->text) && blank($caption)) {
-                throw new TelegramOpportunityException(
-                    'Envie um texto da vaga, ou o nome da vaga na legenda da imagem/documento.'
-                );
-            }
-
             $text = $message->text ?? $caption;
 
             $urls = ExtractorHelper::extractUrls($text);
@@ -270,12 +279,6 @@ class CommandsHandler
 
             $emails = ExtractorHelper::extractEmail($text);
 
-            if (blank($photos) && blank($urls) && blank($emails)) {
-                throw new TelegramOpportunityException(
-                    'Envie o texto da vaga, contendo uma URL ou E-mail para se candidatar.'
-                );
-            }
-
             $files = [];
             if (filled($photos)) {
                 $files = $photos->filter(static function ($photo) {
@@ -290,8 +293,8 @@ class CommandsHandler
 
             $title = str_replace("\n", ' ', $text);
 
-            $opportunity = $this->repository->make([
-                Opportunity::TITLE => Str::limit($title, 50),
+            $messageOpportunity = [
+                Opportunity::TITLE => SanitizerHelper::sanitizeSubject(Str::limit($title, 50)),
                 Opportunity::DESCRIPTION => SanitizerHelper::sanitizeBody($text),
                 Opportunity::ORIGINAL => $text,
                 Opportunity::FILES => $files,
@@ -303,7 +306,13 @@ class CommandsHandler
                 Opportunity::POSITION => null,
                 Opportunity::SALARY => null,
                 Opportunity::COMPANY => null,
-            ]);
+            ];
+
+            $this->validator
+                ->with($messageOpportunity)
+                ->passesOrFail(ValidatorInterface::RULE_CREATE);
+
+            $opportunity = $this->repository->make($messageOpportunity);
 
             $opportunity->status = Opportunity::STATUS_INACTIVE;
             $opportunity->telegram_user_id = $message->from->id;

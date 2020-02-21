@@ -103,7 +103,8 @@ class DefaultController extends Controller
                 $this->botsManager,
                 $botName,
                 $this->repository,
-                $this->userRepository
+                $this->userRepository,
+                $this->validator
             ))->processUpdate($update);
         } catch (Exception $exception) {
             $this->handler->log($exception);

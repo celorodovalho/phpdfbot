@@ -190,8 +190,7 @@ class TelegramChatMessages implements CollectorInterface
                 $this->opportunities->add($opportunity);
             }
         } catch (ValidatorException $exception) {
-            Log::info('VALIDATOR', $exception->toArray());
-            Log::info('VALIDATOR_MESSAGE', $message);
+            Log::info('VALIDATION', [$exception->toArray(), $message]);
         }
     }
 
@@ -202,7 +201,7 @@ class TelegramChatMessages implements CollectorInterface
      */
     public function extractTitle($message): string
     {
-        return Str::limit(str_replace("\n", ' ', $message), 50);
+        return SanitizerHelper::sanitizeSubject(Str::limit(str_replace("\n", ' ', $message), 50));
     }
 
     /**
