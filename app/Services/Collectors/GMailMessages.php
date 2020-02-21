@@ -123,9 +123,9 @@ class GMailMessages implements CollectorInterface
             Opportunity::LOCATION => $this->extractLocation($title . $original),
             Opportunity::TAGS => $this->extractTags($title . $original),
             Opportunity::SALARY => '',
-            Opportunity::URL => $this->extractUrl($original),
+            Opportunity::URL => $this->extractUrl($description),
             Opportunity::ORIGIN => $this->extractOrigin($mail),
-            Opportunity::EMAILS => $this->extractEmails($original),
+            Opportunity::EMAILS => $this->extractEmails($description),
         ];
 
         try {
