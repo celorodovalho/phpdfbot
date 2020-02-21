@@ -149,6 +149,7 @@ return [
     'attributes' => [
         'files' => 'foto',
         'url' => 'link para vaga',
+        'description' => 'texto para vaga',
     ],
 
 ];
