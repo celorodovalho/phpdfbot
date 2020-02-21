@@ -118,7 +118,7 @@ class CommandsHandler
         } catch (ValidatorException $exception) {
             $this->sendMessage(sprintf(
                 "Ao menos uma das validações abaixo precisa ser observada: %s\n\n",
-                implode("\n", $exception->getMessageBag())
+                implode("\n", $exception->getMessageBag()->toArray())
             ));
         }
     }
