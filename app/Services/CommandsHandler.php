@@ -224,6 +224,8 @@ class CommandsHandler
         /** @var TelegramUser $newMembers */
         $newMembers = $message->newChatMembers;
 
+        $text = $message->text ?: $caption;
+
         Log::info('PROCESS_MESSAGE', [
             'MESSAGE' => $message,
             'TEXT' => $message->text,
@@ -257,13 +259,13 @@ class CommandsHandler
 
         /** Check if is a private message and not a command */
         if ($isRealUserPvtMsg && !in_array($message->text, $this->telegram->getCommands(), true)) {
-            $text = $message->text ?: $caption;
-
             $urls = [];
             $emails = [];
             if ($text) {
                 $urls = ExtractorHelper::extractUrls($text);
                 $emails = ExtractorHelper::extractEmail($text);
+            } else {
+                $text = '';
             }
 
             $userName = null;
@@ -300,7 +302,7 @@ class CommandsHandler
 
             $messageOpportunity = [
                 Opportunity::TITLE => SanitizerHelper::sanitizeSubject(Str::limit($title, 50)),
-                Opportunity::DESCRIPTION => $text ? SanitizerHelper::sanitizeBody($text) : '',
+                Opportunity::DESCRIPTION => SanitizerHelper::sanitizeBody($text),
                 Opportunity::ORIGINAL => $text,
                 Opportunity::FILES => $files,
                 Opportunity::URL => implode(', ', $urls),
