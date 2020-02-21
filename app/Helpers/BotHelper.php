@@ -5,6 +5,7 @@ namespace App\Helpers;
 use App\Enums\GroupTypes;
 use App\Models\Group;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Traits\Macroable;
 use Spatie\Emoji\Emoji;
@@ -70,16 +71,19 @@ class BotHelper
     {
         if (filled($files)) {
             /** @var PhotoSize $file */
-            foreach ($files as $key => $file) {
+            foreach ($files as $file) {
+                Log::info('FILE_BEFORE', [$file]);
                 $file = Telegram::getFile($file);
+                Log::info('FILE_AFTER', [$file]);
                 $url = str_replace('/bot', '/file/bot', TelegramClient::BASE_BOT_URL);
                 $url .= env('TELEGRAM_BOT_TOKEN') . '/' . $file['file_path'];
+                Log::info('URL', [$url]);
                 $download = file_get_contents($url);
 
                 $extension = File::extension($file['file_path']);
                 $fileName = Helper::base64UrlEncode($file['file_path']) . '.' . $extension;
                 Storage::put($fileName, $download);
-                $files[$key] = Helper::cloudinaryUpload($fileName);
+                $files[] = Helper::cloudinaryUpload($fileName);
             }
         }
 

@@ -296,6 +296,8 @@ class CommandsHandler
                 $files[] = $document->first();
             }
 
+            Log::info('FILES', $files);
+
             $files = BotHelper::getFiles($files);
 
             $title = str_replace("\n", ' ', $text);
