@@ -4,11 +4,15 @@ namespace App\Http\Controllers\Web;
 
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Http\Controllers\Controller;
+use App\Models\Group;
 use App\Models\Opportunity;
 use App\Validators\CollectedOpportunityValidator;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
 use Illuminate\View\View;
+use Telegram\Bot\Api as Telegram;
+use Illuminate\Http\Request;
 
 /**
  * Class OpportunityController
@@ -17,16 +21,23 @@ use Illuminate\View\View;
  */
 class OpportunityController extends Controller
 {
+    /** @var Telegram */
+    private $telegram;
 
     /**
      * OpportunityController constructor.
      *
      * @param OpportunityRepository         $repository
      * @param CollectedOpportunityValidator $validator
+     * @param Telegram                      $telegram
      */
-    public function __construct(OpportunityRepository $repository, CollectedOpportunityValidator $validator)
-    {
+    public function __construct(
+        OpportunityRepository $repository,
+        CollectedOpportunityValidator $validator,
+        Telegram $telegram
+    ) {
         parent::__construct($repository, $validator);
+        $this->telegram = $telegram;
     }
 
     /**
@@ -69,5 +80,19 @@ class OpportunityController extends Controller
             ]
         );
         return Artisan::output();
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @throws \Telegram\Bot\Exceptions\TelegramSDKException
+     */
+    public function sendMessage(Request $request): void
+    {
+        $group = Group::where('admin', true)->first();
+        $this->telegram->sendMessage([
+            'chat_id' => $group->name,
+            'text' => $request->get('text')
+        ]);
     }
 }
