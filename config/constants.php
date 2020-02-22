@@ -133,6 +133,7 @@ return [
         'forex',
         'joinchat',
         'The best thing that has happen in my life',
+        'online dating'
     ],
     'cities' => [
         BrazilianStates::getKey('Distrito Federal') => [

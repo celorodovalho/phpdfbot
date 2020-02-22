@@ -69,6 +69,7 @@ class BotHelper
      */
     public static function getFiles(array $files = []): array
     {
+        $resultFiles = [];
         if (filled($files)) {
             /** @var PhotoSize $file */
             foreach ($files as $file) {
@@ -81,10 +82,10 @@ class BotHelper
                 $extension = File::extension($file['file_path']);
                 $fileName = Helper::base64UrlEncode($file['file_path']) . '.' . $extension;
                 Storage::disk('local')->put($fileName, $download);
-                $files[] = Helper::cloudinaryUpload($fileName);
+                $resultFiles[] = Helper::cloudinaryUpload($fileName);
             }
         }
 
-        return $files;
+        return $resultFiles;
     }
 }
