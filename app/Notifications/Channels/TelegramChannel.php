@@ -95,7 +95,7 @@ class TelegramChannel
                         $telegramMessage = $this->telegram->sendMessage($params);
                         $messages->add($telegramMessage->toArray());
                     }
-                    $chances = 0;
+                    $chances = false;
                 } catch (TelegramResponseException $exception) {
                     Handler::log($exception, 'SEND_MESSAGE', $params);
                     unset($params['parse_mode']);

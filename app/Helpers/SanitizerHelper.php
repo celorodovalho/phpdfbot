@@ -33,7 +33,7 @@ class SanitizerHelper
      */
     public static function removeMarkdown(string $message): string
     {
-        $message = Markdown::convertToHtml($message);
+        $message = self::convertToHtml($message);
         return strip_tags($message);
     }
 
@@ -196,9 +196,7 @@ class SanitizerHelper
 
             $message = preg_replace('/([*_`]){2,}/m', '$1', $message);
 
-            $converter = new CommonMarkConverter();
-
-            $message = $converter->convertToHtml($message);
+            $message = self::convertToHtml($message);
 
             $message = preg_replace('/\*(.+?)\*/m', '<strong>$1</strong>', $message);
             $message = preg_replace('/`(.+?)`/m', '<pre>$1</pre>', $message);
@@ -217,7 +215,6 @@ class SanitizerHelper
 
             $message = preg_replace('/([#]){2,}/m', '$1', $message);
             $message = preg_replace("/^(\\\\?)# (.+)$/m", '`$2`', $message);
-
 
 
             $message = preg_replace('/([ \t])+/', ' ', $message);
@@ -339,5 +336,16 @@ class SanitizerHelper
             Transliterator::FORWARD
         );
         return $transliterator->transliterate($string);
+    }
+
+    /**
+     * @param string $message
+     *
+     * @return string
+     */
+    public static function convertToHtml(string $message): string
+    {
+        $converter = new CommonMarkConverter();
+        return $converter->convertToHtml($message);
     }
 }
