@@ -288,9 +288,9 @@ class CommandsHandler
 
             $files = [];
             if (filled($photos)) {
-                $files = $photos->filter(static function ($photo) {
+                $files[] = $photos->filter(static function ($photo) {
                     return ($photo['width'] + $photo['height']) > 1000;
-                })->toArray();
+                })->first();
             }
             if (filled($document)) {
                 $files[] = $document->first();
