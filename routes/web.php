@@ -52,19 +52,18 @@ Route::post('send', 'Web\OpportunityController@sendMessage');
 //});
 
 Route::get('teste', function () {
-    $a = file_get_contents(base_path('teste'));
+    $files = [[
+        "file_id" => "AgACAgEAAxkBAAIhr15QcktSwBryZ4D8-C6rAAEbhzdm1AAC66gxG6kmgEYIZrwK7DPjer8UFDAABAEAAwIAA3gAA6H_BQABGAQ",
+        "file_unique_id" => "AQADvxQUMAAEof8FAAE",
+        "file_size" => 119020,
+        "width" => 777,
+        "height" => 778
+    ]];
 
-    $b = mb_substr($a, 431, 1);
-
-    dump(mb_strlen($a));
+    $a = \App\Helpers\BotHelper::getFiles($files);
     dump($a);
-    dump($b);
 
-    Telegram::sendMessage([
-        'chat_id' => 144068960,
-        'parse_mode' => 'Markdown',
-        'text' => $a
-    ]);
+
 });
 
 Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');

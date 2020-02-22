@@ -80,7 +80,7 @@ class BotHelper
                 $download = file_get_contents($url);
 
                 $extension = File::extension($file['file_path']);
-                $fileName = Helper::base64UrlEncode($file['file_path']) . '.' . $extension;
+                $fileName = 'attachments/' . Helper::base64UrlEncode($file['file_path']) . '.' . $extension;
                 Storage::disk('local')->put($fileName, $download);
                 $resultFiles[] = Helper::cloudinaryUpload($fileName);
             }
