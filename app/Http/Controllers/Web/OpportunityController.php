@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Contracts\Repositories\OpportunityRepository;
+use App\Helpers\BotHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\Opportunity;
@@ -89,10 +90,23 @@ class OpportunityController extends Controller
      */
     public function sendMessage(Request $request): void
     {
+        $texts = $request->get('text');
         $group = Group::where('admin', true)->first();
-        $this->telegram->sendMessage([
-            'chat_id' => $group->name,
-            'text' => $request->get('text')
-        ]);
+
+        $texts = explode(
+            '%%%%%%%',
+            wordwrap(
+                $texts,
+                BotHelper::TELEGRAM_LIMIT,
+                '%%%%%%%'
+            )
+        );
+
+        foreach ($texts as $text) {
+            $this->telegram->sendMessage([
+                'chat_id' => $group->name,
+                'text' => $text
+            ]);
+        }
     }
 }
