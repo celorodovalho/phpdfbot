@@ -107,7 +107,7 @@ class TelegramChatMessages implements CollectorInterface
 
             $history = [];
             $users = new Collection();
-            $offsetDate = (new DateTime())->modify('-1 day')->getTimestamp();
+            $offsetDate = (new DateTime())->modify('-12 hours')->getTimestamp();
             foreach ($groups as $group) {
                 $result = yield $madeline->messages->getHistory([
                     'peer' => $group,
