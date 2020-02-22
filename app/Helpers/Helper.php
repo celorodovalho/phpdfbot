@@ -95,7 +95,7 @@ class Helper
      */
     public static function cloudinaryUpload(string $filePath): string
     {
-        if (Storage::exists($filePath)) {
+        if (Storage::disk('local')->exists($filePath)) {
             $filePath = Storage::disk('local')->path($filePath);
         }
         try {
