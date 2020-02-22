@@ -238,7 +238,7 @@ class CommandsHandler
 
         if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE) {
             $telegramUser = $message->from;
-            $user = $this->userRepository->updateOrCreate(
+            $this->userRepository->updateOrCreate(
                 ['id' => $telegramUser->id,],
                 [
                     'username' => $telegramUser->username,
@@ -248,7 +248,6 @@ class CommandsHandler
                     'language_code' => $telegramUser->languageCode,
                 ]
             );
-            Log::info('USER_CREATED_processMessage', [$user]);
         }
 
         /** @var bool $isRealUserPvtMsg Check if the message come from a real user in a Private chat */
@@ -269,14 +268,14 @@ class CommandsHandler
             }
 
             $userName = null;
-            if (property_exists('from', $message) && blank($urls)) {
-                if (property_exists('username', $message->from)) {
+            if ($message->has('from') && blank($urls)) {
+                if ($message->from->has('username')) {
                     $urls[] = sprintf(
                         'https://t.me/%s',
                         SanitizerHelper::escapeMarkdown($message->from->username)
                     );
                     $userName = $message->from->username;
-                } elseif (property_exists('firstName', $message->from)) {
+                } elseif ($message->from->has('firstName')) {
                     $urls[] = sprintf(
                         '[%s](tg://user?id=%s)',
                         SanitizerHelper::escapeMarkdown($message->from->firstName),
@@ -285,19 +284,6 @@ class CommandsHandler
                     $userName = $message->from->firstName . ' ' . $message->from->lastName;
                 }
             }
-
-            Log::info('URLS', $urls);
-            Log::info('property_exists(from, $message)', [property_exists('from', $message)]);
-            Log::info('property_exists(username, $message->from)', [property_exists('username', $message->from)]);
-            Log::info('property_exists(username, $message->from)', [property_exists('firstName', $message->from)]);
-
-            Log::info('simple_test', [
-                $message->has('from'),
-                $message->from->has('username'),
-                $message->from->has('firstName'),
-                filled($message->from->username),
-                filled($message->from->firstName),
-            ]);
 
             $files = [];
             if (filled($photos)) {
