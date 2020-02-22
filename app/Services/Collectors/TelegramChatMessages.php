@@ -41,6 +41,9 @@ class TelegramChatMessages implements CollectorInterface
     /** @var CollectedOpportunityValidator */
     private $validator;
 
+    /** @var callable */
+    private $output;
+
     /**
      * TelegramChatMessages constructor.
      *
@@ -48,17 +51,20 @@ class TelegramChatMessages implements CollectorInterface
      * @param MadelineProtoService          $madeline
      * @param OpportunityRepository         $repository
      * @param CollectedOpportunityValidator $validator
+     * @param callable                      $output
      */
     public function __construct(
         Collection $opportunities,
         MadelineProtoService $madeline,
         OpportunityRepository $repository,
-        CollectedOpportunityValidator $validator
+        CollectedOpportunityValidator $validator,
+        callable $output
     ) {
         $this->madeline = $madeline;
         $this->opportunities = $opportunities;
         $this->repository = $repository;
         $this->validator = $validator;
+        $this->output = $output;
     }
 
     /**
@@ -150,9 +156,10 @@ class TelegramChatMessages implements CollectorInterface
     public function createOpportunity($message)
     {
         $telegramUserId = $message['user']['id'];
+        $title = $this->extractTitle($message['message']);
 
         $message = [
-            Opportunity::TITLE => $this->extractTitle($message['message']),
+            Opportunity::TITLE => $title,
             Opportunity::DESCRIPTION => $this->extractDescription($message),
             Opportunity::ORIGINAL => $message['message'],
             Opportunity::FILES => $this->extractFiles($message),
@@ -190,7 +197,14 @@ class TelegramChatMessages implements CollectorInterface
                 $this->opportunities->add($opportunity);
             }
         } catch (ValidatorException $exception) {
-            Log::info('VALIDATION', [$exception->toArray(), $message]);
+            $errors = $exception->getMessageBag()->all();
+            $info = $this->output;
+            $info(sprintf(
+                "%s: \n\n%s",
+                $title,
+                implode("\n", $errors)
+            ));
+            Log::info('VALIDATION', [$errors, $message]);
         }
     }
 

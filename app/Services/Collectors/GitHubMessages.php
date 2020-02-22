@@ -41,6 +41,9 @@ class GitHubMessages implements CollectorInterface
     /** @var CollectedOpportunityValidator */
     private $validator;
 
+    /** @var callable */
+    private $output;
+
     /**
      * GitHubMessages constructor.
      *
@@ -49,19 +52,22 @@ class GitHubMessages implements CollectorInterface
      * @param OpportunityRepository         $repository
      * @param GroupRepository               $groupRepository
      * @param CollectedOpportunityValidator $validator
+     * @param callable                      $output
      */
     public function __construct(
         Collection $opportunities,
         GitHubManager $gitHubManager,
         OpportunityRepository $repository,
         GroupRepository $groupRepository,
-        CollectedOpportunityValidator $validator
+        CollectedOpportunityValidator $validator,
+        callable $output
     ) {
         $this->gitHubManager = $gitHubManager;
         $this->opportunities = $opportunities;
         $this->repository = $repository;
         $this->groupRepository = $groupRepository;
         $this->validator = $validator;
+        $this->output = $output;
     }
 
     /**
@@ -124,7 +130,14 @@ class GitHubMessages implements CollectorInterface
                 $this->opportunities->add($opportunity);
             }
         } catch (ValidatorException $exception) {
-            Log::info('VALIDATION', [$exception->toArray(), $message]);
+            $errors = $exception->getMessageBag()->all();
+            $info = $this->output;
+            $info(sprintf(
+                "%s: \n\n%s",
+                $title,
+                implode("\n", $errors)
+            ));
+            Log::info('VALIDATION', [$errors, $message]);
         }
     }
 

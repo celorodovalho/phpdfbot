@@ -134,7 +134,10 @@ class ProcessMessages extends Command
         foreach ($opportunities as $opportunity) {
             $this->sendOpportunityToApproval($opportunity);
         }
-        $this->info('Opportunities sent to approval');
+        $this->info(sprintf(
+            'Opportunities sent to approval: %s',
+            $opportunities->count()
+        ));
     }
 
     /**
@@ -146,7 +149,7 @@ class ProcessMessages extends Command
     {
         $opportunities = new EloquentCollection();
         foreach ($this->collectors as $collector) {
-            $collector = resolve($collector);
+            $collector = resolve($collector, ['output' => array($this, 'info')]);
             if ($collector instanceof CollectorInterface) {
                 $collection = $collector->collectOpportunities();
                 if ($collection->isEmpty()) {
@@ -277,12 +280,16 @@ class ProcessMessages extends Command
             $opportunities->each(static function (Opportunity $opportunity) {
                 $opportunity->delete();
             });
-            $this->info('The group was notified!');
+            $this->info(sprintf(
+                'The notification were sent: %s opportunities to %s groups',
+                $opportunities->count(),
+                $groups->count()
+            ));
         } else {
             $this->info(sprintf(
-                'There is no notification to send - Groups: %s - Opportunities: %s',
-                $groups->count(),
-                $opportunities->count()
+                'There is no notification to send: %s opportunities to %s groups',
+                $opportunities->count(),
+                $groups->count()
             ));
         }
     }

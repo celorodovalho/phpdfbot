@@ -35,21 +35,27 @@ class ComoQueTaLaMessages implements CollectorInterface
     /** @var CollectedOpportunityValidator */
     private $validator;
 
+    /** @var callable */
+    private $output;
+
     /**
      * ComoQueTaLaMessages constructor.
      *
      * @param Collection                    $opportunities
      * @param OpportunityRepository         $repository
      * @param CollectedOpportunityValidator $validator
+     * @param callable                      $output
      */
     public function __construct(
         Collection $opportunities,
         OpportunityRepository $repository,
-        CollectedOpportunityValidator $validator
+        CollectedOpportunityValidator $validator,
+        callable $output
     ) {
         $this->opportunities = $opportunities;
         $this->repository = $repository;
         $this->validator = $validator;
+        $this->output = $output;
     }
 
     /**
@@ -111,7 +117,14 @@ class ComoQueTaLaMessages implements CollectorInterface
                 $this->opportunities->add($opportunity);
             }
         } catch (ValidatorException $exception) {
-            Log::info('VALIDATION', [$exception->toArray(), $message]);
+            $errors = $exception->getMessageBag()->all();
+            $info = $this->output;
+            $info(sprintf(
+                "%s: \n\n%s",
+                $title,
+                implode("\n", $errors)
+            ));
+            Log::info('VALIDATION', [$errors, $message]);
         }
     }
 

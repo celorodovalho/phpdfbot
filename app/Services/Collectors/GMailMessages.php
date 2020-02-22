@@ -34,10 +34,10 @@ use Prettus\Validator\Exceptions\ValidatorException;
 class GMailMessages implements CollectorInterface
 {
 
-    /**
-     * Gmail Labels
-     */
+    /** @var string */
     protected const LABEL_ENVIADO_PRO_BOT = 'Label_5391527689646879721';
+
+    /** @var string */
     protected const LABEL_STILL_UNREAD = 'Label_3143736512522239870';
 
     /** @var Collection */
@@ -48,13 +48,15 @@ class GMailMessages implements CollectorInterface
 
     /** @var OpportunityRepository */
     private $repository;
-    /**
-     * @var GroupRepository
-     */
+
+    /** @var GroupRepository */
     private $groupRepository;
 
     /** @var CollectedOpportunityValidator */
     private $validator;
+
+    /** @var callable */
+    private $output;
 
     /**
      * GMailMessages constructor.
@@ -64,19 +66,22 @@ class GMailMessages implements CollectorInterface
      * @param OpportunityRepository         $repository
      * @param GroupRepository               $groupRepository
      * @param CollectedOpportunityValidator $validator
+     * @param callable                      $output
      */
     public function __construct(
         Collection $opportunities,
         GmailService $gMailService,
         OpportunityRepository $repository,
         GroupRepository $groupRepository,
-        CollectedOpportunityValidator $validator
+        CollectedOpportunityValidator $validator,
+        callable $output
     ) {
         $this->gMailService = $gMailService;
         $this->opportunities = $opportunities;
         $this->repository = $repository;
         $this->groupRepository = $groupRepository;
         $this->validator = $validator;
+        $this->output = $output;
     }
 
     /**
@@ -147,7 +152,14 @@ class GMailMessages implements CollectorInterface
                 $this->opportunities->add($opportunity);
             }
         } catch (ValidatorException $exception) {
-            Log::info('VALIDATION', [$exception->toArray(), $message]);
+            $errors = $exception->getMessageBag()->all();
+            $info = $this->output;
+            $info(sprintf(
+                "%s: \n\n%s",
+                $title,
+                implode("\n", $errors)
+            ));
+            Log::info('VALIDATION', [$errors, $message]);
         }
     }
 
@@ -231,6 +243,7 @@ class GMailMessages implements CollectorInterface
     {
         return SanitizerHelper::sanitizeBody($message);
     }
+
     /**
      * Get message body from GMail content
      *

@@ -113,8 +113,6 @@ class CommandsHandler
             } elseif (filled($message) && strpos($message->text, '/') !== 0) {
                 $this->processMessage($message);
             }
-        } catch (TelegramOpportunityException $exception) {
-            $this->sendMessage($exception->getMessage());
         } catch (ValidatorException $exception) {
             $errors = $exception->getMessageBag()->all();
             Log::info('VALIDATION_ERRORS', $errors);
@@ -267,21 +265,30 @@ class CommandsHandler
                 $text = '';
             }
 
+            $sender = null;
             $userName = null;
-            if ($message->has('from') && blank($urls)) {
-                if ($message->from->has('username')) {
+            $from = null;
+            if ($message->has('forward_from')) {
+                $from = $message->forwardFrom;
+            } elseif ($message->has('from')) {
+                $from = $message->from;
+                $sender = $from->username ?: $from->firstName;
+            }
+
+            if ($from) {
+                if ($from->has('username')) {
                     $urls[] = sprintf(
                         'https://t.me/%s',
-                        SanitizerHelper::escapeMarkdown($message->from->username)
+                        SanitizerHelper::escapeMarkdown($from->username)
                     );
-                    $userName = $message->from->username;
-                } elseif ($message->from->has('firstName')) {
+                    $userName = $from->username;
+                } elseif ($from->has('firstName')) {
                     $urls[] = sprintf(
                         '[%s](tg://user?id=%s)',
-                        SanitizerHelper::escapeMarkdown($message->from->firstName),
-                        $message->from->id
+                        SanitizerHelper::escapeMarkdown($from->firstName),
+                        $from->id
                     );
-                    $userName = $message->from->firstName . ' ' . $message->from->lastName;
+                    $userName = $from->firstName . ' ' . $from->lastName;
                 }
             }
 
@@ -307,7 +314,7 @@ class CommandsHandler
                 Opportunity::ORIGINAL => $text,
                 Opportunity::FILES => $files,
                 Opportunity::URL => implode(', ', $urls),
-                Opportunity::ORIGIN => implode('|', [$this->botName, $userName]),
+                Opportunity::ORIGIN => implode('|', [$this->botName, $userName, $sender]),
                 Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
                 Opportunity::TAGS => ExtractorHelper::extractTags($text),
                 Opportunity::EMAILS => SanitizerHelper::replaceMarkdown(implode(', ', $emails)),
