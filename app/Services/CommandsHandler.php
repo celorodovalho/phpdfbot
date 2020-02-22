@@ -286,6 +286,9 @@ class CommandsHandler
                 }
             }
 
+            Log::info('URLS', $urls);
+            Log::info('USERNAME', $userName);
+
             $files = [];
             if (filled($photos)) {
                 $files[] = $photos->filter(static function ($photo) {
