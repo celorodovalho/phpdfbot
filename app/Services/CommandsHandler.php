@@ -287,7 +287,9 @@ class CommandsHandler
             }
 
             Log::info('URLS', $urls);
-            Log::info('USERNAME', $userName);
+            Log::info('$message', [$message]);
+            Log::info('$message', [$message->from]);
+            Log::info('$message', [$message->from->username]);
 
             $files = [];
             if (filled($photos)) {
