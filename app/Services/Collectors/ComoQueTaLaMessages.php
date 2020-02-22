@@ -8,8 +8,7 @@ use App\Helpers\ExtractorHelper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
 use App\Validators\CollectedOpportunityValidator;
-use DateTime;
-use DateTimeZone;
+use Carbon\Carbon;
 use Exception;
 use Goutte\Client;
 use Illuminate\Database\Eloquent\Collection;
@@ -143,8 +142,8 @@ class ComoQueTaLaMessages implements CollectorInterface
             $pattern = '#(' . implode('|', Config::get('constants.requiredWords')) . ')#i';
             if (preg_match_all($pattern, $node->text())) {
                 $data = $node->filter('[itemprop="datePosted"]')->attr('content');
-                $data = new DateTime($data);
-                $today = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+                $data = Carbon::now($data);
+                $today = Carbon::now();
                 if ($data->format('Ymd') === $today->format('Ymd')) {
                     $link = $node->filter('[itemprop="url"]')->attr('content');
                     $subCrawler = $client->request('GET', $link);

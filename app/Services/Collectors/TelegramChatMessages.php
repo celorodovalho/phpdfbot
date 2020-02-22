@@ -12,8 +12,8 @@ use App\Models\Opportunity;
 use App\Repositories\OpportunityRepositoryEloquent;
 use App\Services\MadelineProtoService;
 use App\Validators\CollectedOpportunityValidator;
+use Carbon\Carbon;
 use danog\MadelineProto\API;
-use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -107,7 +107,7 @@ class TelegramChatMessages implements CollectorInterface
 
             $history = [];
             $users = new Collection();
-            $offsetDate = (new DateTime())->modify('-12 hours')->getTimestamp();
+            $offsetDate = Carbon::now()->modify('-12 hours')->getTimestamp();
             foreach ($groups as $group) {
                 $result = yield $madeline->messages->getHistory([
                     'peer' => $group,

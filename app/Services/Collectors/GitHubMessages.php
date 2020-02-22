@@ -150,13 +150,14 @@ class GitHubMessages implements CollectorInterface
     {
         $githubSources = $this->groupRepository->findWhere([['type', '=', GroupTypes::GITHUB]]);
         $messages = [];
+        $since = Carbon::now()->modify('-12 hours')->format('Y-m-d\TH:i:s\Z');
         foreach ($githubSources as $source) {
             $username = explode('/', $source->name);
             $repo = end($username);
             $username = reset($username);
             $messages[] = $this->gitHubManager->issues()->all($username, $repo, [
                 'state' => 'open',
-                'since' => Carbon::now()->format('Y-m-d')
+                'since' => $since
             ]);
         }
         return array_merge(...$messages);
