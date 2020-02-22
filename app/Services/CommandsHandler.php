@@ -287,7 +287,17 @@ class CommandsHandler
             }
 
             Log::info('URLS', $urls);
-            Log::info('$userName', [$userName]);
+            Log::info('property_exists(from, $message)', [property_exists('from', $message)]);
+            Log::info('property_exists(username, $message->from)', [property_exists('username', $message->from)]);
+            Log::info('property_exists(username, $message->from)', [property_exists('firstName', $message->from)]);
+
+            Log::info('simple_test', [
+                $message->has('from'),
+                $message->from->has('username'),
+                $message->from->has('firstName'),
+                filled($message->from->username),
+                filled($message->from->firstName),
+            ]);
 
             $files = [];
             if (filled($photos)) {
