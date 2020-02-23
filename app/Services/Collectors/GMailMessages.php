@@ -116,17 +116,32 @@ class GMailMessages implements CollectorInterface
     {
         $original = $this->getBody($mail);
         $title = $this->extractTitle($mail);
-        $description = $this->extractDescription($original);
+
+        $files = $this->extractFiles($mail);
+
+        $annotations = '';
+        if (filled($files)) {
+            $localFiles = array_keys($files);
+            $files = array_values($files);
+
+            foreach ($localFiles as $file) {
+                if ($annotation = Helper::getImageAnnotation($file)) {
+                    $annotations .= $annotation."\n\n";
+                }
+            }
+        }
+
+        $description = $this->extractDescription($annotations . $original);
 
         $message = [
             Opportunity::TITLE => $title,
             Opportunity::DESCRIPTION => $description,
             Opportunity::ORIGINAL => $original,
-            Opportunity::FILES => $this->extractFiles($mail),
+            Opportunity::FILES => $files,
             Opportunity::POSITION => '',
             Opportunity::COMPANY => '',
-            Opportunity::LOCATION => $this->extractLocation($title . $original),
-            Opportunity::TAGS => $this->extractTags($title . $original),
+            Opportunity::LOCATION => $this->extractLocation($title . $description),
+            Opportunity::TAGS => $this->extractTags($title . $description),
             Opportunity::SALARY => '',
             Opportunity::URL => $this->extractUrl($description),
             Opportunity::ORIGIN => $this->extractOrigin($mail),
@@ -225,7 +240,7 @@ class GMailMessages implements CollectorInterface
                         'attachments/' . $message->getId(),
                         $fileName
                     );
-                    $files[] = Helper::cloudinaryUpload($filePath);
+                    $files[$filePath] = Helper::cloudinaryUpload($filePath);
                 }
             }
         }

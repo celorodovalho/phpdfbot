@@ -41,7 +41,7 @@ Route::get('me', static function () {
     ]));
 });
 
-Route::get('process/messages/{type}/{collectors?}', 'Web\OpportunityController@processMessages');
+Route::any('process/messages/{type}/{collectors?}', 'Web\OpportunityController@processMessages');
 
 Route::get('/', 'Web\OpportunityController@index');
 Route::get('opportunity/{opportunity}', 'Web\OpportunityController@show');
@@ -67,3 +67,17 @@ Route::get('teste', function () {
 });
 
 Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
+
+Route::get('vision', function() {
+    $url = 'https://api.telegram.org/file/bot545873070:AAGgn56Ybmo0RJjCSJaTXeSiGJQ4KCV9Mkw/photos/file_451.jpg';
+    $path = '/var/www/phpdfbot/storage/app/attachments/1705d812f624b194/aW1hZ2UucG5n.png';
+//    $tst = \App\Helpers\Helper::cloudinaryUpload($url);
+//    dump($tst);die;
+
+
+
+    $teste = \App\Helpers\Helper::getImageAnnotation($path);
+//    $teste = \App\Helpers\Helper::getImageAnnotation('/var/www/phpdfbot/storage/app/attachments/1705d812f624b194/aW1hZ2UucG5n.png');
+//    $teste = \App\Helpers\Helper::getImageAnnotation('attachments/1705d812f624b194/aW1hZ2UucG5n.png');
+    dump($teste);
+});

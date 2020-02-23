@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use danog\MadelineProto\API;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Prettus\Validator\Contracts\ValidatorInterface;
 use Prettus\Validator\Exceptions\ValidatorException;
@@ -127,8 +128,11 @@ class TelegramChatMessages implements CollectorInterface
             $messages = [];
             foreach ($history as $message) {
                 if (isset($message['media'])
-                    && in_array($message['media']['_'], ['messageMediaPhoto', 'messageMediaDocument'], true)) {
-                    $files = yield $this->madeline->downloadToDir($message['media'], storage_path());
+                    && $message['media']['_'] === 'messageMediaPhoto') {
+                    $files = yield $this->madeline->downloadToDir(
+                        $message['media'],
+                        Storage::path('attachments/telegram')
+                    );
                     $message['files'] = $files;
                 }
                 if (array_key_exists('from_id', $message)) {
@@ -156,13 +160,32 @@ class TelegramChatMessages implements CollectorInterface
     public function createOpportunity($message)
     {
         $telegramUserId = $message['user']['id'];
+
+        $original = $message['message'];
+
+        $files = $this->extractFiles($message);
+
+        $annotations = '';
+        if (filled($files)) {
+            $localFiles = array_keys($files);
+            $files = array_values($files);
+
+            foreach ($localFiles as $file) {
+                if ($annotation = Helper::getImageAnnotation($file)) {
+                    $annotations .= $annotation."\n\n";
+                }
+            }
+        }
+
+        $message['message'] = $this->extractDescription($annotations . $message['message']);
+
         $title = $this->extractTitle($message['message']);
 
         $message = [
             Opportunity::TITLE => $title,
-            Opportunity::DESCRIPTION => $this->extractDescription($message),
-            Opportunity::ORIGINAL => $message['message'],
-            Opportunity::FILES => $this->extractFiles($message),
+            Opportunity::DESCRIPTION => $message['message'],
+            Opportunity::ORIGINAL => $original,
+            Opportunity::FILES => $files,
             Opportunity::POSITION => '',
             Opportunity::COMPANY => '',
             Opportunity::LOCATION => $this->extractLocation($message['message']),
@@ -225,7 +248,7 @@ class TelegramChatMessages implements CollectorInterface
      */
     public function extractDescription($message): string
     {
-        return $message['message'];
+        return $message;
     }
 
     /**
@@ -237,7 +260,7 @@ class TelegramChatMessages implements CollectorInterface
     {
         $files = [];
         if (array_key_exists('files', $message) && is_string($message['files'])) {
-            $files[] = Helper::cloudinaryUpload($message['files']);
+            $files[$message['files']] = Helper::cloudinaryUpload($message['files']);
         }
         return $files;
     }
@@ -284,7 +307,7 @@ class TelegramChatMessages implements CollectorInterface
     public function extractUrl($message): string
     {
         $urls = ExtractorHelper::extractUrls($message['message']);
-        if (array_key_exists('user', $message) && blank($urls)) {
+        if (array_key_exists('user', $message)) {
             if (array_key_exists('username', $message['user'])) {
                 $urls[] = sprintf(
                     'https://t.me/%s',
@@ -298,6 +321,13 @@ class TelegramChatMessages implements CollectorInterface
                 );
             }
         }
+        if (array_key_exists('media', $message)
+            && $message['media']['_'] === 'messageMediaWebPage'
+            && isset($message['media']['webpage']['url'])
+        ) {
+            $urls[] = $message['media']['webpage']['url'];
+        }
+        $urls = array_unique($urls);
         return implode(', ', $urls);
     }
 

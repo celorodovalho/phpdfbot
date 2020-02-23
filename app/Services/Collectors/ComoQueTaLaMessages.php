@@ -142,7 +142,7 @@ class ComoQueTaLaMessages implements CollectorInterface
             $pattern = '#(' . implode('|', Config::get('constants.requiredWords')) . ')#i';
             if (preg_match_all($pattern, $node->text())) {
                 $data = $node->filter('[itemprop="datePosted"]')->attr('content');
-                $data = Carbon::now($data);
+                $data = new Carbon($data);
                 $today = Carbon::now();
                 if ($data->format('Ymd') === $today->format('Ymd')) {
                     $link = $node->filter('[itemprop="url"]')->attr('content');

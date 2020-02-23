@@ -2,7 +2,11 @@
 
 namespace App\Helpers;
 
+use App\Services\GoogleVisionService;
 use Exception;
+use Google\Cloud\Vision\V1\AnnotateImageResponse;
+use Google\Cloud\Vision\V1\Feature\Type;
+use Google\Cloud\Vision\V1\ImageAnnotatorClient;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -17,6 +21,7 @@ use JD\Cloudder\CloudinaryWrapper;
 class Helper
 {
     use Macroable;
+
 
     /**
      * Base64 encode URL safe
@@ -95,8 +100,8 @@ class Helper
      */
     public static function cloudinaryUpload(string $filePath): string
     {
-        if (Storage::disk('local')->exists($filePath)) {
-            $filePath = Storage::disk('local')->path($filePath);
+        if (Storage::exists($filePath)) {
+            $filePath = Storage::path($filePath);
         }
         try {
             [$width, $height] = getimagesize($filePath);
@@ -133,5 +138,42 @@ class Helper
         }
         array_splice($smatches[0], $start, $length, $rmatches[0]);
         return implode($smatches[0]);
+    }
+
+    /**
+     * Retrieve OCR description from image using Google Vision
+     *
+     * @param string $image URL or file path
+     *
+     * @return string
+     */
+    public static function getImageAnnotation(string $image): string
+    {
+        $description = '';
+        try {
+            $image = str_replace(Storage::path(''), '', $image);
+            if (Storage::exists($image)) {
+                $imagePath = Storage::get($image);
+            } else {
+                $imagePath = file_get_contents($image);
+            }
+            if ($imagePath) {
+                /** @var ImageAnnotatorClient $visioClient */
+                $visioClient = (new GoogleVisionService())->getClient();
+                /** @var AnnotateImageResponse $annotate */
+                $annotate = $visioClient->annotateImage($imagePath, [Type::TEXT_DETECTION]);
+                $repeatFields = $annotate->getTextAnnotations();
+                if ($repeatFields->count()
+                    && $repeatFields->offsetExists(GoogleVisionService::GOOGLE_VISION_REPEAT_OFFSET)
+                ) {
+                    $description = $repeatFields
+                        ->offsetGet(GoogleVisionService::GOOGLE_VISION_REPEAT_OFFSET)
+                        ->getDescription();
+                }
+            }
+        } catch (Exception $exception) {
+            $description = '';
+        }
+        return $description;
     }
 }

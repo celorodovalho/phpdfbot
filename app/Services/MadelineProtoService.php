@@ -5,7 +5,6 @@ namespace App\Services;
 
 use danog\MadelineProto\API;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Class MadelineProtoService

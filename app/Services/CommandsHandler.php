@@ -9,6 +9,7 @@ use App\Enums\Callbacks;
 use App\Exceptions\TelegramOpportunityException;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
+use App\Helpers\Helper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Group;
 use App\Models\Opportunity;
@@ -256,6 +257,31 @@ class CommandsHandler
 
         /** Check if is a private message and not a command */
         if ($isRealUserPvtMsg && !in_array($message->text, $this->telegram->getCommands(), true)) {
+            $files = [];
+            if (filled($photos)) {
+                $files[] = $photos->filter(static function ($photo) {
+                    return ($photo['width'] + $photo['height']) > 1000;
+                })->first();
+            }
+            if (filled($document)) {
+                $files[] = $document->first();
+            }
+
+            Log::info('FILES_BEFORE', $files);
+            $files = BotHelper::getFiles($files);
+            Log::info('FILES_AFTER', $files);
+
+            if (filled($files)) {
+                $localFiles = array_keys($files);
+                $files = array_values($files);
+
+                foreach ($localFiles as $file) {
+                    if ($annotation = Helper::getImageAnnotation($file)) {
+                        $text = $annotation . $text;
+                    }
+                }
+            }
+
             $urls = [];
             $emails = [];
             if ($text) {
@@ -291,20 +317,6 @@ class CommandsHandler
                     $userName = $from->firstName . ' ' . $from->lastName;
                 }
             }
-
-            $files = [];
-            if (filled($photos)) {
-                $files[] = $photos->filter(static function ($photo) {
-                    return ($photo['width'] + $photo['height']) > 1000;
-                })->first();
-            }
-            if (filled($document)) {
-                $files[] = $document->first();
-            }
-
-            Log::info('FILES_BEFORE', $files);
-            $files = BotHelper::getFiles($files);
-            Log::info('FILES_AFTER', $files);
 
             $title = str_replace("\n", ' ', $text);
 
