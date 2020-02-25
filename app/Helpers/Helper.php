@@ -162,13 +162,9 @@ class Helper
                 $visioClient = (new GoogleVisionService())->getClient();
                 /** @var AnnotateImageResponse $annotate */
                 $annotate = $visioClient->annotateImage($imagePath, [Type::TEXT_DETECTION]);
-                $repeatFields = $annotate->getTextAnnotations();
-                if ($repeatFields->count()
-                    && $repeatFields->offsetExists(GoogleVisionService::GOOGLE_VISION_REPEAT_OFFSET)
-                ) {
-                    $description = $repeatFields
-                        ->offsetGet(GoogleVisionService::GOOGLE_VISION_REPEAT_OFFSET)
-                        ->getDescription();
+                $fullText = $annotate->getFullTextAnnotation()->getText();
+                if ($fullText) {
+                    $description = $annotate->getFullTextAnnotation()->getText();
                 }
             }
         } catch (Exception $exception) {
