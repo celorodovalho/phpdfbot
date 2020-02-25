@@ -132,8 +132,10 @@ return [
     'deniedWords' => [
         'forex',
         'joinchat',
-        'The best thing that has happen in my life',
-        'online dating'
+        'the best thing that has happen in my life',
+        'online dating',
+        'hotmart',
+        'bitcoin',
     ],
     'cities' => [
         BrazilianStates::getKey('Distrito Federal') => [
