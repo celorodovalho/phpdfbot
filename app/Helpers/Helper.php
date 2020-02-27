@@ -162,9 +162,8 @@ class Helper
                 $visioClient = (new GoogleVisionService())->getClient();
                 /** @var AnnotateImageResponse $annotate */
                 $annotate = $visioClient->annotateImage($imagePath, [Type::TEXT_DETECTION]);
-                $fullText = $annotate->getFullTextAnnotation()->getText();
-                if ($fullText) {
-                    $description = $annotate->getFullTextAnnotation()->getText();
+                if ($annotation = $annotate->getFullTextAnnotation()) {
+                    $description = $annotation->getText();
                 }
             }
         } catch (Exception $exception) {
