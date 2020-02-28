@@ -162,6 +162,12 @@ class SanitizerHelper
                 '!()'
             ];
 
+            //Start sanitize images
+            $message = preg_replace('/^(\d{,2}:\d{,2}|Gostei|Comentar|Compartilhar|Reações|Deixe seus comentários @|aqui\.|PUBLICAR)$/um', '', $message);
+            $message = str_ireplace(['LTE2'], '', $message);
+            //End sanitize images
+
+
             $message = str_ireplace($omitting, '', $message);
 
             $message = str_ireplace(['<3'], Emoji::blueHeart(), $message);
