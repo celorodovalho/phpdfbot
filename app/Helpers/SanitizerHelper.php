@@ -179,8 +179,8 @@ class SanitizerHelper
                 'aqui\.',
                 'PUBLICAR',
                 'ifeed',
-                'Vo)',
-                '(\d\+)?LTE2( \. \d{,2}%)?',
+                'Vo\)',
+                '(.+)?LTE2((.+)?%)?',
             ]);
 
             $message = preg_replace('/^(' . $singleLineWords . ')$/uim', '', $message);
