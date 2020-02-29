@@ -150,6 +150,7 @@ return [
     */
 
     'attributes' => [
+        'tags' => 'palavra-chave',
         'files' => 'foto',
         'url' => 'link para vaga',
         'description' => 'texto para vaga',
