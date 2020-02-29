@@ -169,13 +169,18 @@ class SanitizerHelper
                 '(\w+ )?Gostei',
                 '(\w+ )?Comentar',
                 '(\w+ )?Compartilhar',
+                '(\w+ )?Início',
+                '(\w+ )?Minha rede',
+                '(\w+ )?Publicação',
+                '(\w+ )?Notificações',
+                '(\w+ )?Vagas',
                 'Reações',
                 'Deixe seus comentários @',
                 'aqui\.',
                 'PUBLICAR',
                 'ifeed',
                 'Vo)',
-                'LTE2( \. \d{,2}%)?',
+                '(\d\+)?LTE2( \. \d{,2}%)?',
             ]);
 
             $message = preg_replace('/^(' . $singleLineWords . ')$/uim', '', $message);
