@@ -22,6 +22,7 @@ use Illuminate\Support\Str;
 use Prettus\Repository\Contracts\RepositoryInterface;
 use Prettus\Validator\Contracts\ValidatorInterface;
 use Prettus\Validator\Exceptions\ValidatorException;
+use Spatie\Emoji\Emoji;
 use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
 use Telegram\Bot\Exceptions\TelegramResponseException;
@@ -118,8 +119,10 @@ class CommandsHandler
             $errors = $exception->getMessageBag()->all();
             Log::info('VALIDATION_ERRORS', $errors);
             $this->sendMessage(sprintf(
-                "Ao menos uma das validações abaixo precisa ser observada: \n\n%s",
-                implode("\nou\n", $errors)
+                "Ao menos uma das validações abaixo precisa ser observada:\n%s\n%s %s",
+                Emoji::downRightArrow(),
+                Emoji::crossMark(),
+                implode("\n" . Emoji::crossMark() . ' ', $errors)
             ));
         }
     }

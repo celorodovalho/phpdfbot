@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Prettus\Validator\Contracts\ValidatorInterface;
 use Prettus\Validator\Exceptions\ValidatorException;
+use Spatie\Emoji\Emoji;
 
 /**
  * Class GMailMessages
@@ -170,9 +171,11 @@ class GMailMessages implements CollectorInterface
             $errors = $exception->getMessageBag()->all();
             $info = $this->output;
             $info(sprintf(
-                "===\n%s:\n%s\n",
+                "%s\n%s:\n%s %s\n",
+                Emoji::downRightArrow(),
                 $title,
-                implode("\n", $errors)
+                Emoji::crossMark(),
+                implode("\n" . Emoji::crossMark() . ' ', $errors)
             ));
             Log::info('VALIDATION', [$errors, $message]);
         }
