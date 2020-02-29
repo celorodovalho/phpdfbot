@@ -223,7 +223,7 @@ class TelegramChatMessages implements CollectorInterface
             $errors = $exception->getMessageBag()->all();
             $info = $this->output;
             $info(sprintf(
-                "%s: \n\n%s",
+                "===\n%s:\n%s\n",
                 $title,
                 implode("\n", $errors)
             ));

@@ -12,6 +12,7 @@ use Illuminate\Contracts\View\Factory;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\View\View;
+use Prettus\Validator\Contracts\ValidatorInterface;
 use Telegram\Bot\Api as Telegram;
 use Illuminate\Http\Request;
 
@@ -107,6 +108,28 @@ class OpportunityController extends Controller
                 'chat_id' => $group->name,
                 'text' => $text
             ]);
+        }
+    }
+
+    public function testValidation()
+    {
+        try {
+            $this->validator->with([
+                Opportunity::TITLE => 'testestes',
+                Opportunity::DESCRIPTION => 'forex teste',
+                Opportunity::ORIGINAL => 'teste',
+                Opportunity::FILES => [],
+                Opportunity::POSITION => '',
+                Opportunity::COMPANY => '',
+                Opportunity::LOCATION => 'teste',
+                Opportunity::TAGS => ['teste'],
+                Opportunity::SALARY => '',
+                Opportunity::URL => 'fsdf',
+                Opportunity::ORIGIN => 'sdfs',
+                Opportunity::EMAILS => 'fasdfas',
+            ])->passesOrFail(ValidatorInterface::RULE_CREATE);
+        } catch (\Exception $exception) {
+            dump($exception);
         }
     }
 }

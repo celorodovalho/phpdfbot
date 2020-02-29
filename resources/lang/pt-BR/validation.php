@@ -118,6 +118,9 @@ return [
     'url'                  => 'O campo :attribute tem um formato inválido.',
     'uuid' => 'O campo :attribute deve ser um UUID válido.',
 
+    'not_contains' => 'O :attribute não contém as palavras obrigatórias.',
+    'contains' => 'O :attribute contém palavras proibidas.',
+
     /*
     |--------------------------------------------------------------------------
     | Custom Validation Language Lines

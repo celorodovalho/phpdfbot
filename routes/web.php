@@ -46,6 +46,7 @@ Route::any('process/messages/{type}/{collectors?}', 'Web\OpportunityController@p
 Route::get('/', 'Web\OpportunityController@index');
 Route::get('opportunity/{opportunity}', 'Web\OpportunityController@show');
 Route::post('send', 'Web\OpportunityController@sendMessage');
+Route::get('valid', 'Web\OpportunityController@testValidation');
 
 //Route::group(['namespace' => 'Web',], static function () {
 //    Route::resource('opportunities', 'OpportunityController');
