@@ -163,8 +163,22 @@ class SanitizerHelper
             ];
 
             //Start sanitize images
-            $message = preg_replace('/^(\d{,2}:\d{,2}|Gostei|Comentar|Compartilhar|Reações|Deixe seus comentários @|aqui\.|PUBLICAR)$/um', '', $message);
-            $message = str_ireplace(['LTE2'], '', $message);
+            $singleLineWords = implode('|', [
+                '\d{,2}:\d{,2}( \w){,2}?',
+                '(\w+ )?Pesquisar',
+                '(\w+ )?Gostei',
+                '(\w+ )?Comentar',
+                '(\w+ )?Compartilhar',
+                'Reações',
+                'Deixe seus comentários @',
+                'aqui\.',
+                'PUBLICAR',
+                'ifeed',
+                'Vo)',
+                'LTE2( \. \d{,2}%)?',
+            ]);
+
+            $message = preg_replace('/^(' . $singleLineWords . ')$/uim', '', $message);
             //End sanitize images
 
 

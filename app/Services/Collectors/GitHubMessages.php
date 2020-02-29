@@ -7,6 +7,7 @@ use App\Contracts\Repositories\GroupRepository;
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Enums\GroupTypes;
 use App\Helpers\ExtractorHelper;
+use App\Helpers\Helper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
 use App\Validators\CollectedOpportunityValidator;
@@ -15,6 +16,7 @@ use Exception;
 use GrahamCampbell\GitHub\GitHubManager;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Prettus\Validator\Contracts\ValidatorInterface;
 use Prettus\Validator\Exceptions\ValidatorException;
 
@@ -94,13 +96,28 @@ class GitHubMessages implements CollectorInterface
     {
         $original = $message['body'];
         $title = $this->extractTitle($message);
-        $description = $this->extractDescription($message);
+
+        $files = $this->extractFiles($title . $original);
+
+        $annotations = '';
+        if (filled($files)) {
+            $localFiles = array_keys($files);
+            $files = array_values($files);
+
+            foreach ($localFiles as $file) {
+                if ($annotation = Helper::getImageAnnotation($file)) {
+                    $annotations .= $annotation."\n\n";
+                }
+            }
+        }
+
+        $description = $this->extractDescription($annotations . $original);
 
         $message = [
             Opportunity::TITLE => $title,
             Opportunity::DESCRIPTION => $description,
             Opportunity::ORIGINAL => $original,
-            Opportunity::FILES => $this->extractFiles($title . $original),
+            Opportunity::FILES => $files,
             Opportunity::POSITION => '',
             Opportunity::COMPANY => '',
             Opportunity::LOCATION => $this->extractLocation($title . $original),
@@ -173,19 +190,31 @@ class GitHubMessages implements CollectorInterface
      */
     public function extractFiles($message): array
     {
-        return [];
+        $urls = ExtractorHelper::extractUrls($message);
+        return array_filter($urls, function ($url) {
+            return Str::endsWith($url, [
+                '.jpg',
+                '.jpeg',
+                '.png',
+                '.gif',
+                '.webp',
+                '.tiff',
+                '.tif',
+                '.bmp',
+            ]);
+        });
     }
 
     /**
      * Get message body from github content
      *
-     * @param array $message
+     * @param string $message
      *
      * @return bool|string
      */
     public function extractDescription($message): string
     {
-        return SanitizerHelper::sanitizeBody($message['body']);
+        return SanitizerHelper::sanitizeBody($message);
     }
 
     /**
