@@ -31,7 +31,7 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerPolicies();
 
         Gate::define('viewWebTinker', static function ($user = null) {
-            return env('DB_USERNAME') === request()->get('user');
+            return env('DB_USERNAME') === request()->path();
         });
     }
 }
