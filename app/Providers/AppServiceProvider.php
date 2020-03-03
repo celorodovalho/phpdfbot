@@ -34,9 +34,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        array_map(static function ($filename) {
-            include_once($filename);
-        }, glob(app_path() . '/{,*/,*/*/,*/*/*/}*.php', GLOB_BRACE));
+//        array_map(static function ($filename) {
+//            include_once($filename);
+//        }, glob(app_path() . '/{,*/,*/*/,*/*/*/}*.php', GLOB_BRACE));
+
+        if (env('APP_ENV') !== 'local') {
+            $this->app['request']->server->set('HTTPS', true);
+        }
 
         Schema::defaultStringLength(191);
 
@@ -46,7 +50,7 @@ class AppServiceProvider extends ServiceProvider
             return preg_match('/^[\pL\s]+$/u', $value, $attribute);
         });
 
-        Validator::extend('not_contains', function ($attribute, $value, $parameters, $validator) {
+        Validator::extend('not_contains', static function ($attribute, $value, $parameters, $validator) {
             $param = reset($parameters);
             $dependentValue = Arr::get($validator->getData(), $param);
 
@@ -55,7 +59,7 @@ class AppServiceProvider extends ServiceProvider
                 && Str::contains(mb_strtolower($value), Config::get('constants.requiredWords'));
         });
 
-        Validator::extend('contains', function ($attribute, $value) {
+        Validator::extend('contains', static function ($attribute, $value) {
             return !Str::contains(mb_strtolower($value), Config::get('constants.deniedWords'));
         });
     }
