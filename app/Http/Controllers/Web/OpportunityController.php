@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Web;
 
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Helpers\BotHelper;
+use App\Helpers\ExtractorHelper;
+use App\Helpers\SanitizerHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\Opportunity;
@@ -114,22 +116,30 @@ class OpportunityController extends Controller
     public function testValidation()
     {
         try {
-            $this->validator->with([
+            $original = file_get_contents(storage_path('app/teste2.txt'));
+            $description = SanitizerHelper::sanitizeBody($original);
+
+            $opportunity = [
                 Opportunity::TITLE => 'testestes',
-                Opportunity::DESCRIPTION => 'forex teste',
-                Opportunity::ORIGINAL => 'teste',
+                Opportunity::DESCRIPTION => $description,
+                Opportunity::ORIGINAL => $original,
                 Opportunity::FILES => [],
                 Opportunity::POSITION => '',
                 Opportunity::COMPANY => '',
-                Opportunity::LOCATION => 'teste',
-                Opportunity::TAGS => ['teste'],
+                Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($description)),
+                Opportunity::TAGS => ExtractorHelper::extractTags($description),
                 Opportunity::SALARY => '',
-                Opportunity::URL => 'fsdf',
+                Opportunity::URL => implode(', ', ExtractorHelper::extractUrls($description)),
                 Opportunity::ORIGIN => 'sdfs',
-                Opportunity::EMAILS => 'fasdfas',
-            ])->passesOrFail(ValidatorInterface::RULE_CREATE);
+                Opportunity::EMAILS => implode(', ', ExtractorHelper::extractEmail($description)),
+            ];
+
+            $valid = $this->validator->with($opportunity)->passesOrFail(ValidatorInterface::RULE_CREATE);
+            dump($valid);
         } catch (\Exception $exception) {
-            dump($exception);
+            dump($exception->getMessage());
         }
+
+        dump($opportunity);
     }
 }
