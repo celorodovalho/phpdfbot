@@ -74,7 +74,7 @@ class CollectedOpportunityValidator extends LaravelValidator
                 new Contains(Config::get('constants.deniedWords')),
                 /** IF NOT contains required words */
                 new NotContains(Config::get('constants.requiredWords'), function () {
-                    return blank($this->data[Opportunity::FILES]);
+                    return filled($this->data[Opportunity::FILES]);
                 }),
             ]
 
