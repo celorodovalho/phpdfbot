@@ -11,12 +11,11 @@ use App\Models\Group;
 use App\Models\Opportunity;
 use App\Validators\CollectedOpportunityValidator;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Config;
 use Illuminate\View\View;
 use Prettus\Validator\Contracts\ValidatorInterface;
 use Telegram\Bot\Api as Telegram;
-use Illuminate\Http\Request;
 
 /**
  * Class OpportunityController
@@ -137,7 +136,7 @@ class OpportunityController extends Controller
             $valid = $this->validator->with($opportunity)->passesOrFail(ValidatorInterface::RULE_CREATE);
             dump($valid);
         } catch (\Exception $exception) {
-            dump($exception->getMessage());
+            dump($exception);
         }
 
         dump($opportunity);

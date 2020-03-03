@@ -4,12 +4,13 @@ declare(strict_types=1);
 namespace App\Validators;
 
 use App\Models\Opportunity;
+use App\Rules\Contains;
+use App\Rules\NotContains;
 use Illuminate\Contracts\Validation\Factory;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use \Prettus\Validator\Contracts\ValidatorInterface;
-use \Prettus\Validator\LaravelValidator;
+use Prettus\Validator\Contracts\ValidatorInterface;
+use Prettus\Validator\LaravelValidator;
 
 /**
  * Class OpportunityValidator
@@ -69,8 +70,12 @@ class CollectedOpportunityValidator extends LaravelValidator
                 Rule::requiredIf(function () {
                     return blank($this->data[Opportunity::FILES]);
                 }),
-                'contains',
-                'not_contains:files',
+                /** IF contains denied words */
+                new Contains(Config::get('constants.deniedWords')),
+                /** IF NOT contains required words */
+                new NotContains(Config::get('constants.requiredWords'), function () {
+                    return blank($this->data[Opportunity::FILES]);
+                }),
             ]
 
         ];
