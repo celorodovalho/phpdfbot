@@ -164,7 +164,7 @@ class SanitizerHelper
 
             //Start sanitize images
             $singleLineWords = implode('|', [
-                '\d{,2}:\d{,2}( \w){,2}?',
+                '\d{1,2}:\d{1,2}( \w{0,2})?',
                 '(\w+ )?Pesquisar',
                 '(\w+ )?Gostei',
                 '(\w+ )?Comentar',
@@ -174,13 +174,16 @@ class SanitizerHelper
                 '(\w+ )?Publicação',
                 '(\w+ )?Notificações',
                 '(\w+ )?Vagas',
+                '[\d\.]+ seguidores',
+                '[\d\.]+ comentário(s)?',
                 'Reações',
                 'Deixe seus comentários @',
                 'aqui\.',
                 'PUBLICAR',
                 'ifeed',
-                'Vo\)',
-                '(.+)?LTE2((.+)?%)?',
+                '([\w ]+)?Vo\)( \dG\+)?',
+                '(.+)?[L ][TY]E2((.+)?%)?',
+                '(([\w ]{1,4})?\d{1,2}%)'
             ]);
 
             $message = preg_replace('/^(' . $singleLineWords . ')$/uim', '', $message);

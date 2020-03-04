@@ -35,11 +35,8 @@ class Contains implements Rule
      */
     public function passes($attribute, $value): bool
     {
-        if (blank($this->words)) {
-            return true;
-        }
         // Revert the result of CONTAINS: IF contains return FALSE
-        return !Str::contains(mb_strtolower($value), $this->words);
+        return blank($this->words) || !Str::contains(mb_strtolower($value), $this->words);
     }
 
     /**

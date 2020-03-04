@@ -44,16 +44,11 @@ class NotContains implements Rule
      */
     public function passes($attribute, $value): bool
     {
-        if (blank($this->words)) {
-            return true;
-        }
-
-        if (!$this->condition || (is_callable($this->condition) && !call_user_func($this->condition))) {
-            return false;
-        }
-
         // Passes the result of CONTAINS: IF contains return TRUE
-        return Str::contains(mb_strtolower($value), $this->words);
+        return blank($this->words)
+            || !$this->condition
+            || (is_callable($this->condition) && !call_user_func($this->condition))
+            || Str::contains(mb_strtolower($value), $this->words);
     }
 
     /**
