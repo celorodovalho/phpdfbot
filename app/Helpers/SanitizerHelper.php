@@ -181,6 +181,9 @@ class SanitizerHelper
                 'aqui\.',
                 'PUBLICAR',
                 'ifeed',
+                'Todas as atividades',
+                'Artigos',
+                'Publicaçõe(s)?',
                 '([\w ]+)?Vo\)( \dG\+)?',
                 '(.+)?[L ][TY]E2((.+)?%)?',
                 '(([\w ]{1,4})?\d{1,2}%)'
