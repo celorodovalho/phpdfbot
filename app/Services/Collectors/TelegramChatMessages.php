@@ -251,7 +251,7 @@ class TelegramChatMessages implements CollectorInterface
      */
     public function extractDescription($message): string
     {
-        return $message;
+        return SanitizerHelper::sanitizeBody($message);
     }
 
     /**
