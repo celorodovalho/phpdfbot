@@ -47,6 +47,7 @@ Route::get('/', 'Web\OpportunityController@index');
 Route::get('opportunity/{opportunity}', 'Web\OpportunityController@show');
 Route::post('send', 'Web\OpportunityController@sendMessage');
 Route::get('valid', 'Web\OpportunityController@testValidation');
+Route::get('test', 'Web\OpportunityController@testCode');
 
 //Route::group(['namespace' => 'Web',], static function () {
 //    Route::resource('opportunities', 'OpportunityController');

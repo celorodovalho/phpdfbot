@@ -239,7 +239,7 @@ class ProcessMessages extends Command
                     ->where(static function (Builder $query) use ($opportunitiesIds) {
                         foreach ($opportunitiesIds as $opportunityId) {
                             //$query->orWhereJsonContains('data->opportunity', $opportunityId);
-                            $query->where('data', 'like', '%"opportunity":' . $opportunityId . '%');
+                            $query->orWhere('data', 'like', '%"opportunity":' . $opportunityId . '%');
                         }
                     })
                     ->pluck('data')
