@@ -77,7 +77,7 @@ Route::get('vision', function() {
 
 
 
-    $teste = \App\Helpers\Helper::getImageAnnotation($path);
+    $teste = \App\Helpers\Helper::getImageAnnotation($url);
 //    $teste = \App\Helpers\Helper::getImageAnnotation('/var/www/phpdfbot/storage/app/attachments/1705d812f624b194/aW1hZ2UucG5n.png');
 //    $teste = \App\Helpers\Helper::getImageAnnotation('attachments/1705d812f624b194/aW1hZ2UucG5n.png');
     dump($teste);
