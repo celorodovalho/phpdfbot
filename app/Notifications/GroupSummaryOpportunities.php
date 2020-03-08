@@ -64,7 +64,11 @@ class GroupSummaryOpportunities extends Notification
     {
         $telegramMessage = new TelegramMessage;
         if ($this->opportunities->isNotEmpty()) {
-            $listOpportunities = $this->opportunities->map(static function ($opportunity) use ($group) {
+            /** @var Group $mainChannel */
+            $mainChannel = $this->channels->filter(static function ($item) {
+                return $item->main;
+            })->first();
+            $listOpportunities = $this->opportunities->map(static function ($opportunity) use ($mainChannel) {
                 return sprintf(
                     '➩ [%s](%s)',
                     Helper::excerpt(
@@ -73,7 +77,7 @@ class GroupSummaryOpportunities extends Notification
                         ),
                         41 - strlen($opportunity->telegram_id)
                     ),
-                    sprintf('https://t.me/%s/%s', $group->title, $opportunity->telegram_id)
+                    sprintf('https://t.me/%s/%s', $mainChannel->title, $opportunity->telegram_id)
                 );
             });
 
