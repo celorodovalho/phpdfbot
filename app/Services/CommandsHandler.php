@@ -275,10 +275,9 @@ class CommandsHandler
             Log::info('FILES_AFTER', $files);
 
             if (filled($files)) {
-                $localFiles = array_keys($files);
                 $files = array_values($files);
 
-                foreach ($localFiles as $file) {
+                foreach ($files as $file) {
                     if ($annotation = Helper::getImageAnnotation($file)) {
                         $text = $annotation . $text;
                     }

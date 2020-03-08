@@ -123,10 +123,9 @@ class GMailMessages implements CollectorInterface
 
         $annotations = '';
         if (filled($files)) {
-            $localFiles = array_keys($files);
             $files = array_values($files);
 
-            foreach ($localFiles as $file) {
+            foreach ($files as $file) {
                 if ($annotation = Helper::getImageAnnotation($file)) {
                     $annotations .= $annotation."\n\n";
                 }
