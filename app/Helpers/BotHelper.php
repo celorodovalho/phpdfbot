@@ -83,6 +83,7 @@ class BotHelper
                 $fileName = 'attachments/telegram/' . Helper::base64UrlEncode($file['file_path']) . '.' . $extension;
                 Storage::put($fileName, $download);
                 $resultFiles[$fileName] = Helper::cloudinaryUpload($fileName);
+                Storage::delete($fileName);
             }
         }
 

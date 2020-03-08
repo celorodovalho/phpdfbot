@@ -22,6 +22,7 @@ use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Prettus\Validator\Contracts\ValidatorInterface;
 use Prettus\Validator\Exceptions\ValidatorException;
@@ -244,6 +245,7 @@ class GMailMessages implements CollectorInterface
                         $fileName
                     );
                     $files[$filePath] = Helper::cloudinaryUpload($filePath);
+                    Storage::delete($filePath);
                 }
             }
         }

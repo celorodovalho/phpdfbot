@@ -264,6 +264,7 @@ class TelegramChatMessages implements CollectorInterface
         $files = [];
         if (array_key_exists('files', $message) && is_string($message['files'])) {
             $files[$message['files']] = Helper::cloudinaryUpload($message['files']);
+            Storage::delete($message['files']);
         }
         return $files;
     }
