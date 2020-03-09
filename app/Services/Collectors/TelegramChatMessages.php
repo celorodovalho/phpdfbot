@@ -124,7 +124,9 @@ class TelegramChatMessages implements CollectorInterface
                 $users = $users->concat($result['users']);
                 $history[] = $result['messages'];
                 $messagesIds = Arr::pluck($result['messages'], 'id');
-                yield $madeline->channels->readHistory(['channel' => $group, 'max_id' => max($messagesIds), ]);
+                if (filled($messagesIds)) {
+                    yield $madeline->channels->readHistory(['channel' => $group, 'max_id' => max($messagesIds),]);
+                }
             }
 
             $history = array_merge(...$history);
