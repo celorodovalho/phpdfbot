@@ -15,6 +15,7 @@ use App\Validators\CollectedOpportunityValidator;
 use Carbon\Carbon;
 use danog\MadelineProto\API;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -122,6 +123,8 @@ class TelegramChatMessages implements CollectorInterface
                 ]);
                 $users = $users->concat($result['users']);
                 $history[] = $result['messages'];
+                $messagesIds = Arr::pluck($result['messages'], 'id');
+                yield $madeline->channels->readMessageContents(['channel' => $group, 'id' => $messagesIds]);
             }
 
             $history = array_merge(...$history);
