@@ -32,6 +32,8 @@ return [
         'dev-ops',
         'developer',
         'devops',
+        'dev android',
+        'dev ios',
         'docker',
         'e-commerce',
         'ecommerce',
