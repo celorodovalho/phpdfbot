@@ -113,25 +113,25 @@ class TelegramChatMessages implements CollectorInterface
             $users = new Collection();
             $offsetDate = Carbon::now()->modify('-12 hours')->getTimestamp();
             foreach ($groups as $group) {
-                $result = yield $madeline->messages->getHistory([
-                    'peer' => $group,
-                    'offset_id' => 0,
-                    'offset_date' => $offsetDate,
-                    'add_offset' => -100,
-                    'limit' => 100,
-                    'max_id' => 0,
-                    'min_id' => 0,
-                ]);
-                $users = $users->concat($result['users']);
-                $history[] = $result['messages'];
-                $messagesIds = Arr::pluck($result['messages'], 'id');
-                if (filled($messagesIds)) {
-                    try {
+                try {
+                    $result = yield $madeline->messages->getHistory([
+                        'peer' => $group,
+                        'offset_id' => 0,
+                        'offset_date' => $offsetDate,
+                        'add_offset' => -100,
+                        'limit' => 100,
+                        'max_id' => 0,
+                        'min_id' => 0,
+                    ]);
+                    $users = $users->concat($result['users']);
+                    $history[] = $result['messages'];
+                    $messagesIds = Arr::pluck($result['messages'], 'id');
+                    if (filled($messagesIds)) {
                         yield $madeline->channels->readHistory(['channel' => $group, 'max_id' => max($messagesIds),]);
-                    } catch (Exception $exception) {
-                        Log::info('READ_HISTORY', [$group, max($messagesIds)]);
-                        Log::error('READ_HISTORY_ERROR', [$exception->getMessage()]);
                     }
+                } catch (Exception $exception) {
+                    Log::info('READ_HISTORY', [$group, $messagesIds]);
+                    Log::error('READ_HISTORY_ERROR', [$exception->getMessage()]);
                 }
             }
 
