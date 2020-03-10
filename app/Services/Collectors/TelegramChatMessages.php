@@ -14,6 +14,7 @@ use App\Services\MadelineProtoService;
 use App\Validators\CollectedOpportunityValidator;
 use Carbon\Carbon;
 use danog\MadelineProto\API;
+use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
@@ -125,7 +126,12 @@ class TelegramChatMessages implements CollectorInterface
                 $history[] = $result['messages'];
                 $messagesIds = Arr::pluck($result['messages'], 'id');
                 if (filled($messagesIds)) {
-                    yield $madeline->channels->readHistory(['channel' => $group, 'max_id' => max($messagesIds),]);
+                    try {
+                        yield $madeline->channels->readHistory(['channel' => $group, 'max_id' => max($messagesIds),]);
+                    } catch (Exception $exception) {
+                        Log::info('READ_HISTORY', [$group, max($messagesIds)]);
+                        Log::error('READ_HISTORY_ERROR', [$exception->getMessage()]);
+                    }
                 }
             }
 
