@@ -130,7 +130,7 @@ class TelegramChatMessages implements CollectorInterface
                         yield $madeline->channels->readHistory(['channel' => $group, 'max_id' => max($messagesIds),]);
                     }
                 } catch (Exception $exception) {
-                    Log::info('READ_HISTORY', [$group, $messagesIds]);
+                    Log::info('READ_HISTORY', [$group]);
                     Log::error('READ_HISTORY_ERROR', [$exception->getMessage()]);
                 }
             }
