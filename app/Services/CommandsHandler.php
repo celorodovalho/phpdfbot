@@ -159,13 +159,15 @@ class CommandsHandler
             case Callbacks::REMOVE:
                 if ($opportunity) {
                     //$opportunity->delete();
-                    $this->sendMessage(
-                        sprintf(
+                    $this->telegram->editMessageText([
+                        'message_id' => $callbackQuery->message->messageId,
+                        'text' => sprintf(
                             'Mensagem rejeitada: %s',
                             url("opportunity/{$opportunity->id}")
                         ),
-                        Config::get('constants.owner')
-                    );
+                        'reply_markup' => '',
+                    ]);
+                    return;
                 }
                 break;
             case Callbacks::OPTIONS:
