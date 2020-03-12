@@ -310,7 +310,8 @@ class CommandsHandler
                 $from->has('firstName'),
                 $from->firstName,
                 $from->id,
-                $from->lastName
+                $from->lastName,
+                $from->all()
             ]);
 
             if ($from) {
@@ -320,7 +321,7 @@ class CommandsHandler
                         SanitizerHelper::escapeMarkdown($from->username)
                     );
                     $userName = $from->username;
-                } elseif ($from->has('firstName')) {
+                } elseif ($from->has('first_name')) {
                     $urls[] = sprintf(
                         '[%s](tg://user?id=%s)',
                         SanitizerHelper::escapeMarkdown($from->firstName),
