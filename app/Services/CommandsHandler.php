@@ -159,7 +159,9 @@ class CommandsHandler
             case Callbacks::REMOVE:
                 if ($opportunity) {
                     //$opportunity->delete();
+                    $group = Group::where('admin', true)->first();
                     $this->telegram->editMessageText([
+                        'chat_id' => $group->name,
                         'message_id' => $callbackQuery->message->messageId,
                         'text' => sprintf(
                             'Mensagem rejeitada: %s',
