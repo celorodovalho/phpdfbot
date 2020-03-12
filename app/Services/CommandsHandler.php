@@ -303,6 +303,16 @@ class CommandsHandler
                 $sender = $from->username ?: $from->firstName;
             }
 
+            Log::info('$from', [$from]);
+            Log::info('$from', [
+                $from->has('username'),
+                $from->username,
+                $from->has('firstName'),
+                $from->firstName,
+                $from->id,
+                $from->lastName
+            ]);
+
             if ($from) {
                 if ($from->has('username')) {
                     $urls[] = sprintf(
