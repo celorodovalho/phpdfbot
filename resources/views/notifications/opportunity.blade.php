@@ -44,7 +44,7 @@ $files[] = sprintf(($isEmail ? '!' : '') . '[🖼](%s)', $file)
 {{$bold}}Tags:{{$bold}}
 {{$opportunity->tags->implode(' ')}}
 @endif
-@if($opportunity->emails->isNotEmpty() || $opportunity->urls->isNotEmpty())
+@if((filled($opportunity->emails) && $opportunity->emails->isNotEmpty()) || (filled($opportunity->urls) && $opportunity->urls->isNotEmpty()))
 
 {{$bold}}Como se candidatar:{{$bold}}
 {{$opportunity->emails->concat($opportunity->urls)->filter()->implode(', ')}}
