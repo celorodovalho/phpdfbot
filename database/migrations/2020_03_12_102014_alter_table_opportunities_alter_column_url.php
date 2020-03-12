@@ -1,0 +1,34 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class AlterTableOpportunitiesAlterColumnUrl extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::table('opportunities', function (Blueprint $table) {
+            $table->renameColumn('url', 'urls');
+            $table->text('origin')->change();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::table('opportunities', function (Blueprint $table) {
+            $table->renameColumn('urls', 'url');
+            $table->string('origin')->change();
+        });
+    }
+}

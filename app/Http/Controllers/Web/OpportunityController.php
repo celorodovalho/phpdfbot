@@ -132,9 +132,9 @@ class OpportunityController extends Controller
                 Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($description)),
                 Opportunity::TAGS => ExtractorHelper::extractTags($description),
                 Opportunity::SALARY => '',
-                Opportunity::URL => implode(', ', ExtractorHelper::extractUrls($description)),
-                Opportunity::ORIGIN => 'sdfs',
-                Opportunity::EMAILS => implode(', ', ExtractorHelper::extractEmail($description)),
+                Opportunity::URLS => ExtractorHelper::extractUrls($description),
+                Opportunity::ORIGIN => [],
+                Opportunity::EMAILS => ExtractorHelper::extractEmails($description),
             ];
 
             $valid = $this->validator->with($opportunity)->passesOrFail(ValidatorInterface::RULE_CREATE);

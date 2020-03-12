@@ -28,10 +28,10 @@ use Prettus\Repository\Traits\TransformableTrait;
  * @property int        $status
  * @property int        $telegram_user_id
  * @property Collection $files
- * @property string     $url
- * @property string     $origin
+ * @property Collection $urls
+ * @property Collection $origin
  * @property Collection $tags
- * @property string     $emails
+ * @property Collection $emails
  * @property Carbon     created_at
  * @property Carbon     updated_at
  */
@@ -49,7 +49,7 @@ class Opportunity extends Model implements Transformable
     public const DESCRIPTION = 'description';
     public const ORIGINAL = 'original';
     public const TITLE = 'title';
-    public const URL = 'url';
+    public const URLS = 'urls';
     public const ORIGIN = 'origin';
     public const TAGS = 'tags';
     public const POSITION = 'position';
@@ -74,7 +74,7 @@ class Opportunity extends Model implements Transformable
         self::TELEGRAM_ID,
         self::STATUS,
         self::TELEGRAM_USER_ID,
-        self::URL,
+        self::URLS,
         self::ORIGIN,
         self::TAGS,
         self::EMAILS,
@@ -89,8 +89,11 @@ class Opportunity extends Model implements Transformable
      * @var array
      */
     protected $casts = [
-        'files' => 'collection',
-        'tags' => 'collection',
+        self::FILES => 'collection',
+        self::ORIGIN => 'collection',
+        self::TAGS => 'collection',
+        self::EMAILS => 'collection',
+        self::URLS => 'collection',
     ];
 
     /**

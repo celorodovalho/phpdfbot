@@ -64,9 +64,9 @@ interface CollectorInterface
      *
      * @param $message
      *
-     * @return string
+     * @return array
      */
-    public function extractOrigin($message): string;
+    public function extractOrigin($message): array;
 
     /**
      * Parse the location
@@ -91,16 +91,16 @@ interface CollectorInterface
      *
      * @param $message
      *
-     * @return string
+     * @return array
      */
-    public function extractUrl($message): string;
+    public function extractUrls($message): array;
 
     /**
      * Parse the emails
      *
      * @param $message
      *
-     * @return string
+     * @return array
      */
-    public function extractEmails($message): string;
+    public function extractEmails($message): array;
 }

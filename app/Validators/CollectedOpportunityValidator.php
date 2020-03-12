@@ -39,11 +39,11 @@ class CollectedOpportunityValidator extends LaravelValidator
         $this->rules[ValidatorInterface::RULE_CREATE] = [
             Opportunity::FILES => [
                 Rule::requiredIf(function () {
-                    return blank($this->data[Opportunity::URL])
+                    return blank($this->data[Opportunity::URLS])
                         && blank($this->data[Opportunity::EMAILS]);
                 })
             ],
-            Opportunity::URL => [
+            Opportunity::URLS => [
                 Rule::requiredIf(function () {
                     return blank($this->data[Opportunity::FILES])
                         && blank($this->data[Opportunity::EMAILS]);
@@ -52,7 +52,7 @@ class CollectedOpportunityValidator extends LaravelValidator
             Opportunity::EMAILS => [
                 Rule::requiredIf(function () {
                     return blank($this->data[Opportunity::FILES])
-                        && blank($this->data[Opportunity::URL]);
+                        && blank($this->data[Opportunity::URLS]);
                 })
             ],
             Opportunity::TAGS => [

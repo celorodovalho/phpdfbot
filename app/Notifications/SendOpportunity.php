@@ -83,7 +83,7 @@ class SendOpportunity extends Notification
         $messageText = view('notifications.opportunity', [
             'opportunity' => $this->opportunity,
             'isEmail' => false,
-            'hasAuthor' => $group->admin && Str::contains($this->opportunity->origin, [$botName])
+            'hasAuthor' => $group->admin && $this->opportunity->origin->search($botName)
         ])->render();
 
         if (strlen($messageText) > BotHelper::TELEGRAM_LIMIT) {
@@ -138,7 +138,7 @@ class SendOpportunity extends Notification
     public function toMail($group): ?Mailable
     {
         $mailable = new Mailable;
-        if (!Str::contains($this->opportunity->origin, $group->name) &&
+        if (!$this->opportunity->origin->search($group->name) &&
             (blank($group->tags) || ExtractorHelper::hasTags($group->tags, $this->opportunity->getText()))
         ) {
             $mailable->to($group->name);

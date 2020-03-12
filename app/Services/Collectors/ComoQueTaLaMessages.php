@@ -93,7 +93,7 @@ class ComoQueTaLaMessages implements CollectorInterface
             Opportunity::LOCATION => $this->extractLocation($original . $message[Opportunity::LOCATION]),
             Opportunity::TAGS => $this->extractTags($title . $original . $message[Opportunity::LOCATION]),
             Opportunity::SALARY => '',
-            Opportunity::URL => $this->extractUrl($original . ' ' . $message[Opportunity::URL]),
+            Opportunity::URLS => $this->extractUrls($original . ' ' . $message[Opportunity::URLS]),
             Opportunity::ORIGIN => $this->extractOrigin($original),
             Opportunity::EMAILS => $this->extractEmails($original),
         ];
@@ -168,7 +168,7 @@ class ComoQueTaLaMessages implements CollectorInterface
                         Opportunity::DESCRIPTION => implode("\n\n", $description),
                         Opportunity::COMPANY => trim($company),
                         Opportunity::LOCATION => trim($location),
-                        Opportunity::URL => trim($link),
+                        Opportunity::URLS => trim($link),
                     ];
                 }
             }
@@ -204,11 +204,13 @@ class ComoQueTaLaMessages implements CollectorInterface
     /**
      * @param string $message
      *
-     * @return string
+     * @return array
      */
-    public function extractOrigin($message): string
+    public function extractOrigin($message): array
     {
-        return 'comoequetala.com.br';
+        return [
+            'site' => 'comoequetala.com.br'
+        ];
     }
 
     /**
@@ -244,22 +246,20 @@ class ComoQueTaLaMessages implements CollectorInterface
     /**
      * @param $message
      *
-     * @return string
+     * @return array
      */
-    public function extractUrl($message): string
+    public function extractUrls($message): array
     {
-        $urls = ExtractorHelper::extractUrls($message);
-        return implode(', ', $urls);
+        return ExtractorHelper::extractUrls($message);
     }
 
     /**
      * @param $message
      *
-     * @return string
+     * @return array
      */
-    public function extractEmails($message): string
+    public function extractEmails($message): array
     {
-        $mails = ExtractorHelper::extractEmail($message);
-        return implode(', ', $mails);
+        return ExtractorHelper::extractEmails($message);
     }
 }

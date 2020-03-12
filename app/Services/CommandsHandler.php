@@ -15,6 +15,7 @@ use App\Models\Group;
 use App\Models\Opportunity;
 use App\Validators\CollectedOpportunityValidator;
 use Exception;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
@@ -288,7 +289,7 @@ class CommandsHandler
             $emails = [];
             if ($text) {
                 $urls = ExtractorHelper::extractUrls($text);
-                $emails = ExtractorHelper::extractEmail($text);
+                $emails = ExtractorHelper::extractEmails($text);
             } else {
                 $text = '';
             }
@@ -303,17 +304,6 @@ class CommandsHandler
                 $sender = $from->username ?: $from->firstName;
             }
 
-            Log::info('$from', [$from]);
-            Log::info('$from', [
-                $from->has('username'),
-                $from->username,
-                $from->has('firstName'),
-                $from->firstName,
-                $from->id,
-                $from->lastName,
-                $from->all()
-            ]);
-
             if ($from) {
                 if ($from->has('username')) {
                     $urls[] = sprintf(
@@ -327,7 +317,7 @@ class CommandsHandler
                         SanitizerHelper::escapeMarkdown($from->firstName),
                         $from->id
                     );
-                    $userName = $from->firstName . ' ' . $from->lastName;
+                    $userName = implode(' ', [$from->firstName, $from->lastName]);
                 }
             }
 
@@ -338,11 +328,11 @@ class CommandsHandler
                 Opportunity::DESCRIPTION => SanitizerHelper::sanitizeBody($text),
                 Opportunity::ORIGINAL => $text,
                 Opportunity::FILES => $files,
-                Opportunity::URL => implode(', ', $urls),
-                Opportunity::ORIGIN => implode('|', [$this->botName, $userName, $sender]),
+                Opportunity::URLS => new Collection($urls),
+                Opportunity::ORIGIN => new Collection(['bot' => $this->botName, 'name' => $userName, 'sender' => $sender]),
                 Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
                 Opportunity::TAGS => ExtractorHelper::extractTags($text),
-                Opportunity::EMAILS => SanitizerHelper::replaceMarkdown(implode(', ', $emails)),
+                Opportunity::EMAILS => array_map(fn($email) => SanitizerHelper::replaceMarkdown($email), $emails),
                 Opportunity::POSITION => null,
                 Opportunity::SALARY => null,
                 Opportunity::COMPANY => null,
@@ -352,6 +342,7 @@ class CommandsHandler
                 ->with($messageOpportunity)
                 ->passesOrFail(ValidatorInterface::RULE_CREATE);
 
+            /** @var Opportunity $opportunity */
             $opportunity = $this->repository->make($messageOpportunity);
 
             $opportunity->status = Opportunity::STATUS_INACTIVE;

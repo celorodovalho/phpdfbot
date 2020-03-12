@@ -193,7 +193,7 @@ class ProcessMessages extends Command
                 if ($channel->main
                     && $channel->type === GroupTypes::CHANNEL
                     && $opportunity->telegram_user_id
-                    && !Str::contains($opportunity->origin, 'channel_id')
+                    && !$opportunity->origin->has('channel_id')
                 ) {
                     $opportunity->notify(new NotifySenderUser($channel));
                 }

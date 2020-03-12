@@ -152,8 +152,9 @@ return [
     'attributes' => [
         'tags' => 'palavra-chave',
         'files' => 'foto',
-        'url' => 'link para vaga',
+        'urls' => 'link para vaga',
         'description' => 'texto para vaga',
+        'emails' => 'e-mail para vaga',
     ],
 
 ];

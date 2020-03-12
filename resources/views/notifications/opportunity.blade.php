@@ -44,28 +44,14 @@ $files[] = sprintf(($isEmail ? '!' : '') . '[🖼](%s)', $file)
 {{$bold}}Tags:{{$bold}}
 {{$opportunity->tags->implode(' ')}}
 @endif
-@if(filled($opportunity->emails) || filled($opportunity->url))
+@if($opportunity->emails->isNotEmpty() || $opportunity->urls->isNotEmpty())
 
 {{$bold}}Como se candidatar:{{$bold}}
-{{implode(', ', array_filter([$opportunity->emails, $opportunity->url]))}}
+{{$opportunity->emails->concat($opportunity->urls)->filter()->implode(', ')}}
 @endif
-@if(\Illuminate\Support\Str::contains(strtolower($opportunity->origin), ['clubinfobsb', 'clubedevagas']))
+@if(\Illuminate\Support\Str::contains(strtolower($opportunity->origin->implode('|')), ['clubinfobsb', 'clubedevagas']))
 
 {{$bold}}Fonte:{{$bold}} www.clubedevagas.com.br
 @endif
 
 {{\App\Helpers\BotHelper::getGroupSign($isEmail)}}
-@if($hasAuthor)
-@php
-$userNames = explode('|', $opportunity->origin);
-$userName = end($userNames);
-@endphp
-@if(!blank($userName))
-
-@if(\Illuminate\Support\Str::contains($userName, ' '))
-{{"by [$userName](tg://user?id={$opportunity->telegram_user_id})"}}
-@else
-{{'by @' . $userName}}
-@endif
-@endif
-@endif

@@ -202,7 +202,7 @@ class TelegramChatMessages implements CollectorInterface
             Opportunity::LOCATION => $this->extractLocation($message['message']),
             Opportunity::TAGS => $this->extractTags($message['message']),
             Opportunity::SALARY => '',
-            Opportunity::URL => $this->extractUrl($message),
+            Opportunity::URLS => $this->extractUrls($message),
             Opportunity::ORIGIN => $this->extractOrigin($message),
             Opportunity::EMAILS => $this->extractEmails($message),
         ];
@@ -282,15 +282,15 @@ class TelegramChatMessages implements CollectorInterface
     /**
      * @param $message
      *
-     * @return string
+     * @return array
      */
-    public function extractOrigin($message): string
+    public function extractOrigin($message): array
     {
         if (array_key_exists('to_id', $message) && isset($message['to_id'])) {
             unset($message['to_id']['_']);
-            return json_encode($message['to_id']);
+            return $message['to_id'];
         }
-        return '';
+        return [];
     }
 
     /**
@@ -316,9 +316,9 @@ class TelegramChatMessages implements CollectorInterface
     /**
      * @param $message
      *
-     * @return string
+     * @return array
      */
-    public function extractUrl($message): string
+    public function extractUrls($message): array
     {
         $urls = ExtractorHelper::extractUrls($message['message']);
         if (array_key_exists('user', $message)) {
@@ -341,18 +341,16 @@ class TelegramChatMessages implements CollectorInterface
         ) {
             $urls[] = $message['media']['webpage']['url'];
         }
-        $urls = array_unique($urls);
-        return implode(', ', $urls);
+        return array_unique($urls);
     }
 
     /**
      * @param $message
      *
-     * @return string
+     * @return array
      */
-    public function extractEmails($message): string
+    public function extractEmails($message): array
     {
-        $mails = ExtractorHelper::extractEmail($message['message']);
-        return implode(', ', $mails);
+        return ExtractorHelper::extractEmails($message['message']);
     }
 }

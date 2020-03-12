@@ -92,7 +92,7 @@ class ExtractorHelper
      *
      * @return array
      */
-    public static function extractEmail(string $text): array
+    public static function extractEmails(string $text): array
     {
         if (preg_match_all(
             "/[a-z0-9]+[_a-z0-9\.-]*[a-z0-9]+@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})/i",

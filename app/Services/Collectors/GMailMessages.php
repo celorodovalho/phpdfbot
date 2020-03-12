@@ -144,7 +144,7 @@ class GMailMessages implements CollectorInterface
             Opportunity::LOCATION => $this->extractLocation($title . $description),
             Opportunity::TAGS => $this->extractTags($title . $description),
             Opportunity::SALARY => '',
-            Opportunity::URL => $this->extractUrl($description),
+            Opportunity::URLS => $this->extractUrls($description),
             Opportunity::ORIGIN => $this->extractOrigin($mail),
             Opportunity::EMAILS => $this->extractEmails($description),
         ];
@@ -289,15 +289,17 @@ class GMailMessages implements CollectorInterface
     /**
      * @param Mail $message
      *
-     * @return string
+     * @return array
      */
-    public function extractOrigin($message): string
+    public function extractOrigin($message): array
     {
         $recipient = $message->getTo();
         $recipient = array_map(static function ($item) {
             return $item['email'];
         }, $recipient);
-        return strtolower(json_encode($recipient));
+        return [
+            'emails' => $recipient
+        ];
     }
 
     /**
@@ -333,22 +335,20 @@ class GMailMessages implements CollectorInterface
     /**
      * @param $message
      *
-     * @return string
+     * @return array
      */
-    public function extractUrl($message): string
+    public function extractUrls($message): array
     {
-        $urls = ExtractorHelper::extractUrls($message);
-        return implode(', ', $urls);
+        return ExtractorHelper::extractUrls($message);
     }
 
     /**
      * @param $message
      *
-     * @return string
+     * @return array
      */
-    public function extractEmails($message): string
+    public function extractEmails($message): array
     {
-        $mails = ExtractorHelper::extractEmail($message);
-        return implode(', ', $mails);
+        return ExtractorHelper::extractEmails($message);
     }
 }

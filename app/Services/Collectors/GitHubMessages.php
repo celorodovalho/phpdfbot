@@ -123,7 +123,7 @@ class GitHubMessages implements CollectorInterface
             Opportunity::LOCATION => $this->extractLocation($title . $original),
             Opportunity::TAGS => $this->extractTags($title . $original),
             Opportunity::SALARY => '',
-            Opportunity::URL => $this->extractUrl($original . $message['html_url']),
+            Opportunity::URLS => $this->extractUrls($original . $message['html_url']),
             Opportunity::ORIGIN => $this->extractOrigin($message['html_url']),
             Opportunity::EMAILS => $this->extractEmails($original),
         ];
@@ -193,7 +193,7 @@ class GitHubMessages implements CollectorInterface
     public function extractFiles($message): array
     {
         $urls = ExtractorHelper::extractUrls($message);
-        return array_filter($urls, function ($url) {
+        return array_filter($urls, static function ($url) {
             return Str::endsWith($url, [
                 '.jpg',
                 '.jpeg',
@@ -222,11 +222,13 @@ class GitHubMessages implements CollectorInterface
     /**
      * @param string $message
      *
-     * @return string
+     * @return array
      */
-    public function extractOrigin($message): string
+    public function extractOrigin($message): array
     {
-        return preg_replace('#(https://github.com/)(.+?)(/issues/\d+)#i', '$2', $message);
+        return [
+            'repo' => preg_replace('#(https://github.com/)(.+?)(/issues/\d+)#i', '$2', $message)
+        ];
     }
 
     /**
@@ -262,22 +264,20 @@ class GitHubMessages implements CollectorInterface
     /**
      * @param $message
      *
-     * @return string
+     * @return array
      */
-    public function extractUrl($message): string
+    public function extractUrls($message): array
     {
-        $urls = ExtractorHelper::extractUrls($message);
-        return implode(', ', $urls);
+        return ExtractorHelper::extractUrls($message);
     }
 
     /**
      * @param $message
      *
-     * @return string
+     * @return array
      */
-    public function extractEmails($message): string
+    public function extractEmails($message): array
     {
-        $mails = ExtractorHelper::extractEmail($message);
-        return implode(', ', $mails);
+        return ExtractorHelper::extractEmails($message);
     }
 }
