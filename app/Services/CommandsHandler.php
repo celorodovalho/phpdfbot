@@ -333,7 +333,11 @@ class CommandsHandler
                 Opportunity::ORIGINAL => $text,
                 Opportunity::FILES => $files,
                 Opportunity::URLS => new Collection($urls),
-                Opportunity::ORIGIN => new Collection(['bot' => $this->botName, 'name' => $userName, 'sender' => $sender]),
+                Opportunity::ORIGIN => new Collection([
+                    'bot' => $this->botName,
+                    'name' => $userName,
+                    'sender' => $sender
+                ]),
                 Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
                 Opportunity::TAGS => ExtractorHelper::extractTags($text),
                 Opportunity::EMAILS => array_map(fn($email) => SanitizerHelper::replaceMarkdown($email), $emails),

@@ -70,6 +70,7 @@ class BotHelper
     public static function getFiles(array $files = []): array
     {
         $resultFiles = [];
+        $files = array_filter($files);
         if (filled($files)) {
             /** @var PhotoSize $file */
             foreach ($files as $file) {

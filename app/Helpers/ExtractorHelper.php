@@ -49,7 +49,7 @@ class ExtractorHelper
     public static function extractWords(string $text, array $words = []): array
     {
         $pattern = sprintf(
-            '#(%s)#i',
+            '#\b(%s)\b#i',
             mb_strtolower(implode('|', $words))
         );
 

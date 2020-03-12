@@ -8,7 +8,6 @@ use App\Contracts\Repositories\OpportunityRepository;
 use App\Enums\Arguments;
 use App\Enums\GroupTypes;
 use App\Helpers\ExtractorHelper;
-use App\Helpers\Helper;
 use App\Models\Group;
 use App\Models\Opportunity;
 use App\Notifications\GroupSummaryOpportunities;
