@@ -155,6 +155,7 @@ return [
         'online dating',
         'hotmart',
         'bitcoin',
+        'btc',
     ],
     'cities' => [
         BrazilianStates::getKey('Distrito Federal') => [

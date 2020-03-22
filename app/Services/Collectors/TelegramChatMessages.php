@@ -104,6 +104,7 @@ class TelegramChatMessages implements CollectorInterface
             '@VagasParaTecnologia',
             '@vagastisapbrasil',
             '@vagastiportugal',
+            '@tivagasdev',
         ];
 
         $messages = $this->madeline->loop(function () use ($madeline, $groups) {

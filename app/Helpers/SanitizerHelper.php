@@ -34,6 +34,7 @@ class SanitizerHelper
     public static function removeMarkdown(string $message): string
     {
         $message = self::convertToHtml($message);
+        $message = str_replace(['*', '_', '`', '[', ']'], '', $message);
         return strip_tags($message);
     }
 
@@ -161,21 +162,26 @@ class SanitizerHelper
                 'GrupoClubedeVagas',
                 '!()'
             ];
-
+//            O GME2.ll 37%
             //Start sanitize images
             $singleLineWords = implode('|', [
-                '\d{1,2}:\d{1,2}( \w{0,2})?',
-                '(\w+ )?Pesquisar',
-                '(\w+ )?Gostei',
-                '(\w+ )?Comentar',
-                '(\w+ )?Compartilhar',
-                '(\w+ )?Início',
-                '(\w+ )?Minha rede',
-                '(\w+ )?Publicação',
-                '(\w+ )?Notificações',
-                '(\w+ )?Vagas',
+                '\d{1,2}:\d{1,2}( \w{0,7})?',
+                '([\w ]+)?Pesquisar',
+                '([\w ]+)?Goste[il]',
+                '([\w ]+)?Comentar',
+                '([\w ]+)?Compartilhar',
+                '([\w ]+)?Início',
+                '([\w ]+)?Minha rede',
+                '([\w ]+)?Publicação',
+                '([\w ]+)?Notificações',
+                '([\w ]+)?Vagas',
                 '[\d\.]+ seguidores',
                 '[\d\.]+ comentário(s)?',
+                '[\d]+ h\. (O|0)',
+                '(II|FI)',
+                'CO SR',
+                'ABAP SR',
+                'Itaú([av ]+)?',
                 'Reações',
                 'Deixe seus comentários @',
                 'aqui\.',
@@ -184,8 +190,8 @@ class SanitizerHelper
                 'Todas as atividades',
                 'Artigos',
                 'Publicaçõe(s)?',
-                '([\w ]+)?Vo\)( \dG\+)?',
-                '(.+)?[L ][TY]E2((.+)?%)?',
+                '([\w ]+)?Vo(o\)?)\)( \dG\+)?',
+                '(.+)?[LGeMNTYIE2\.l, ]+((.+)?%)?',
                 '(([\w ]{1,4})?\d{1,2}%)'
             ]);
 

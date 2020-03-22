@@ -7,6 +7,7 @@ use App\Contracts\Repositories\UserRepository;
 use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
 use App\Services\CommandsHandler;
+use App\Services\MadelineProtoService;
 use App\Validators\CollectedOpportunityValidator;
 use Exception;
 use Illuminate\Support\Arr;
@@ -23,22 +24,26 @@ class DefaultController extends Controller
 {
 
     /** @var BotsManager */
-    private $botsManager;
+    private BotsManager $botsManager;
 
     /** @var Handler */
-    private $handler;
+    private Handler $handler;
 
     /** @var Telegram */
-    private $telegram;
+    private Telegram $telegram;
 
     /** @var UserRepository */
-    private $userRepository;
+    private UserRepository $userRepository;
+
+    /** @var MadelineProtoService */
+    private MadelineProtoService $madeline;
 
     /**
      * DefaultController constructor.
      *
      * @param BotsManager                   $botsManager
      * @param Telegram                      $telegram
+     * @param MadelineProtoService          $madeline
      * @param Handler                       $handler
      * @param OpportunityRepository         $repository
      * @param CollectedOpportunityValidator $validator
@@ -47,6 +52,7 @@ class DefaultController extends Controller
     public function __construct(
         BotsManager $botsManager,
         Telegram $telegram,
+        MadelineProtoService $madeline,
         Handler $handler,
         OpportunityRepository $repository,
         CollectedOpportunityValidator $validator,
@@ -54,6 +60,7 @@ class DefaultController extends Controller
     ) {
         $this->botsManager = $botsManager;
         $this->telegram = $telegram;
+        $this->madeline = $madeline;
         $this->handler = $handler;
         $this->userRepository = $userRepository;
         parent::__construct($repository, $validator);
@@ -102,6 +109,7 @@ class DefaultController extends Controller
             (new CommandsHandler(
                 $this->botsManager,
                 $botName,
+                $this->madeline,
                 $this->repository,
                 $this->userRepository,
                 $this->validator

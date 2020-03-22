@@ -14,10 +14,10 @@ use App\Helpers\SanitizerHelper;
 use App\Models\Group;
 use App\Models\Opportunity;
 use App\Validators\CollectedOpportunityValidator;
+use danog\MadelineProto\API as MadlineAPI;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Prettus\Repository\Contracts\RepositoryInterface;
@@ -46,28 +46,32 @@ class CommandsHandler
 {
 
     /** @var string */
-    private $botName;
+    private string $botName;
 
     /** @var Api */
-    private $telegram;
+    private Api $telegram;
 
     /** @var Update */
-    private $update;
+    private Update $update;
 
     /** @var OpportunityRepository */
-    private $repository;
+    private OpportunityRepository $repository;
 
     /** @var UserRepository */
-    private $userRepository;
+    private UserRepository $userRepository;
 
     /** @var CollectedOpportunityValidator */
-    private $validator;
+    private CollectedOpportunityValidator $validator;
+
+    /** @var MadelineProtoService|MadlineAPI */
+    private MadelineProtoService $madeline;
 
     /**
      * CommandsHandler constructor.
      *
      * @param BotsManager                               $botsManager
      * @param string                                    $botName
+     * @param MadelineProtoService                      $madeline
      * @param OpportunityRepository|RepositoryInterface $repository
      * @param UserRepository                            $userRepository
      *
@@ -78,12 +82,14 @@ class CommandsHandler
     public function __construct(
         BotsManager $botsManager,
         string $botName,
+        MadelineProtoService $madeline,
         OpportunityRepository $repository,
         UserRepository $userRepository,
         CollectedOpportunityValidator $validator
     ) {
         $this->botName = $botName;
         $this->telegram = $botsManager->bot($botName);
+        $this->madeline = $madeline;
         $this->repository = $repository;
         $this->userRepository = $userRepository;
         $this->validator = $validator;
@@ -183,19 +189,34 @@ class CommandsHandler
                 $this->processCommand($data[0]);
                 break;
         }
+
+        /** @todo remover isso */
+        $group = Group::where('admin', true)->first();
+        $groupId = $group->name;
+        $messageId = $callbackQuery->message->messageId;
         try {
-            /** @todo remover isso */
-            $group = Group::where('admin', true)->first();
             $this->telegram->deleteMessage([
-                'chat_id' => $group->name,
-                'message_id' => $callbackQuery->message->messageId
+                'chat_id' => $groupId,
+                'message_id' => $messageId
             ]);
         } catch (TelegramResponseException $exception) {
-            Log::info(TelegramResponseException::class, [
-                'DATA' => $data,
-                'EXCEPTION' => $exception,
-                'CALLBACK_MESSAGE' => $callbackQuery->message
-            ]);
+            try {
+                $this->madeline->async(true);
+                $madeline = $this->madeline;
+                $messages = $this->madeline->loop(static function () use ($madeline, $groupId, $messageId) {
+                    yield $madeline->start();
+                    $messages = $madeline->channels->deleteMessages(['channel' => $groupId, 'id' => [$messageId], ]);
+                    yield $madeline->stop();
+                    return $messages;
+                });
+            } catch (Exception $madelineException) {
+                Log::info(TelegramResponseException::class, [
+                    'DATA' => $data,
+                    'TELEGRAM_EXCEPTION' => $exception,
+                    'MADELINE_EXCEPTION' => $madelineException,
+                    'CALLBACK_MESSAGE' => $callbackQuery->message
+                ]);
+            }
             /**
              * A message can only be deleted if it was sent less than 48 hours ago.
              * Bots can delete outgoing messages in groups and supergroups.
