@@ -201,14 +201,14 @@ class CommandsHandler
             ]);
         } catch (TelegramResponseException $exception) {
             try {
-                $this->madeline->async(true);
+                /*$this->madeline->async(true);
                 $madeline = $this->madeline;
                 $messages = $this->madeline->loop(static function () use ($madeline, $groupId, $messageId) {
                     yield $madeline->start();
                     $messages = $madeline->channels->deleteMessages(['channel' => $groupId, 'id' => [$messageId], ]);
                     yield $madeline->stop();
                     return $messages;
-                });
+                });*/
             } catch (Exception $madelineException) {
                 Log::info(TelegramResponseException::class, [
                     'DATA' => $data,
