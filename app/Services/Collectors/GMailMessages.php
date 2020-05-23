@@ -27,6 +27,7 @@ use Illuminate\Support\Str;
 use Prettus\Validator\Contracts\ValidatorInterface;
 use Prettus\Validator\Exceptions\ValidatorException;
 use Spatie\Emoji\Emoji;
+use Telegram\Bot\Laravel\Facades\Telegram;
 
 /**
  * Class GMailMessages
@@ -130,7 +131,19 @@ class GMailMessages implements CollectorInterface
                     $annotations .= $annotation."\n\n";
                 }
             }
+
+            //TODO: remover
+            Telegram::sendMessage([
+                'chat_id' => 144068960,
+                'text' => 'FILLED: ' . $annotations,
+            ]);
         }
+
+        //TODO: remover
+        Telegram::sendMessage([
+            'chat_id' => 144068960,
+            'text' => 'ANNOTATION: ' . $annotations,
+        ]);
 
         $description = $this->extractDescription($annotations . $original);
 
