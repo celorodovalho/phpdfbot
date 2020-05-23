@@ -14,7 +14,6 @@ use App\Helpers\SanitizerHelper;
 use App\Models\Group;
 use App\Models\Opportunity;
 use App\Validators\CollectedOpportunityValidator;
-use danog\MadelineProto\API as MadlineAPI;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
@@ -63,15 +62,11 @@ class CommandsHandler
     /** @var CollectedOpportunityValidator */
     private CollectedOpportunityValidator $validator;
 
-    /** @var MadelineProtoService|MadlineAPI */
-    private MadelineProtoService $madeline;
-
     /**
      * CommandsHandler constructor.
      *
      * @param BotsManager                               $botsManager
      * @param string                                    $botName
-     * @param MadelineProtoService                      $madeline
      * @param OpportunityRepository|RepositoryInterface $repository
      * @param UserRepository                            $userRepository
      *
@@ -82,14 +77,12 @@ class CommandsHandler
     public function __construct(
         BotsManager $botsManager,
         string $botName,
-        MadelineProtoService $madeline,
         OpportunityRepository $repository,
         UserRepository $userRepository,
         CollectedOpportunityValidator $validator
     ) {
         $this->botName = $botName;
         $this->telegram = $botsManager->bot($botName);
-        $this->madeline = $madeline;
         $this->repository = $repository;
         $this->userRepository = $userRepository;
         $this->validator = $validator;
@@ -200,23 +193,6 @@ class CommandsHandler
                 'message_id' => $messageId
             ]);
         } catch (TelegramResponseException $exception) {
-            try {
-                /*$this->madeline->async(true);
-                $madeline = $this->madeline;
-                $messages = $this->madeline->loop(static function () use ($madeline, $groupId, $messageId) {
-                    yield $madeline->start();
-                    $messages = $madeline->channels->deleteMessages(['channel' => $groupId, 'id' => [$messageId], ]);
-                    yield $madeline->stop();
-                    return $messages;
-                });*/
-            } catch (Exception $madelineException) {
-                Log::info(TelegramResponseException::class, [
-                    'DATA' => $data,
-                    'TELEGRAM_EXCEPTION' => $exception,
-                    'MADELINE_EXCEPTION' => $madelineException,
-                    'CALLBACK_MESSAGE' => $callbackQuery->message
-                ]);
-            }
             /**
              * A message can only be deleted if it was sent less than 48 hours ago.
              * Bots can delete outgoing messages in groups and supergroups.
@@ -225,9 +201,29 @@ class CommandsHandler
              * If the bot has can_delete_messages permission in a supergroup or a channel,
              * it can delete any message there. Returns True on success.
              */
-            if ($exception->getCode() !== 400) {
-                throw $exception;
+            if ($exception->getCode() === 400) {
+                try {
+                    /** @var \danog\MadelineProto\API $madeline */
+                    $madeline = (new MadelineProtoService());
+                    $madeline->async(true);
+                    $madeline->loop(static function () use ($madeline, $groupId, $messageId) {
+                        yield $madeline->start();
+                        $messages = $madeline->channels->deleteMessages(['channel' => $groupId, 'id' => [$messageId], ]);
+                        yield $madeline->stop();
+                        return $messages;
+                    });
+                    $madeline->stop();
+                } catch (Exception $madelineException) {
+                    Log::info(TelegramResponseException::class, [
+                        'DATA' => $data,
+                        'TELEGRAM_EXCEPTION' => $exception,
+                        'MADELINE_EXCEPTION' => $madelineException,
+                        'CALLBACK_MESSAGE' => $callbackQuery->message
+                    ]);
+                }
+                return;
             }
+            throw $exception;
         }
     }
 
