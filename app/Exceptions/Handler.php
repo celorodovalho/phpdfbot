@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpFoundation\Response;
+use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
 /**
@@ -110,9 +111,11 @@ class Handler extends ExceptionHandler
 
             $issueBody = sprintf(
                 "⚠️\nMessage:\n%s\n\n" .
-                "File/Line:\n%s\n\n",
+                "File/Line:\n%s\n\n".
+                "Code:\n%s",
                 $exception->getMessage(),
-                $exception->getFile() . '::' . $exception->getLine()
+                $exception->getFile() . '::' . $exception->getLine(),
+                $exception->getCode()
             );
 
             /** @todo remover isso */
@@ -121,6 +124,14 @@ class Handler extends ExceptionHandler
             Telegram::sendMessage([
                 'chat_id' => $group->name,
                 'text' => $issueBody,
+            ]);
+
+            Telegram::sendDocument([
+                'chat_id' => $group->name,
+                'document' => InputFile::createFromContents(
+                    $exception->getTraceAsString(),
+                    $exception->getMessage() . ' - ' . time()
+                ),
             ]);
         } catch (Exception $exception) {
             Log::error('ERROR_LOG_ERROR', [$exception]);
