@@ -7,6 +7,9 @@ return [
     'requiredWords' => [
         'administrador de dados',
         'analista de dados',
+        'analista de infraestrutura',
+        'analista de monitoração',
+        'analista de produção',
         'analista de sistemas',
         'analista de testes',
         'analista de teste',
@@ -22,6 +25,7 @@ return [
         'big data',
         'big-data',
         'bigdata',
+        'cientista de dados',
         'computação',
         'continuous delivery',
         'continuous integration',
