@@ -49,9 +49,5 @@ $files[] = sprintf(($isEmail ? '!' : '') . '[🖼](%s)', $file)
 {{$bold}}Como se candidatar:{{$bold}}
 {{$opportunity->emails->concat($opportunity->urls)->filter()->implode(', ')}}
 @endif
-@if(\Illuminate\Support\Str::contains(strtolower($opportunity->origin->implode('|')), ['clubinfobsb', 'clubedevagas']))
-
-{{$bold}}Fonte:{{$bold}} www.clubedevagas.com.br
-@endif
 
 {{\App\Helpers\BotHelper::getGroupSign($isEmail)}}
