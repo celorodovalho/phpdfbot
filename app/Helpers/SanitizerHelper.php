@@ -195,7 +195,7 @@ class SanitizerHelper
                 '(([\w ]{1,4})?\d{1,2}%)'
             ]);
 
-            $message = preg_replace('/^(' . $singleLineWords . ')$/uim', '', $message);
+            $message = preg_replace('/^(' . $singleLineWords . ')$/ui', '', $message);
             //End sanitize images
 
 
