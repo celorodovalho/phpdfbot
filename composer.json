@@ -30,7 +30,7 @@
         "jrm2k6/cloudder": "^0.6",
         "laravel/framework": "^6.14",
         "laravel/tinker": "^2.2",
-        "laravelcollective/html": "^6.0",
+        "laravelcollective/html": "^6.1",
         "league/flysystem-aws-s3-v3": "^1.0",
         "league/html-to-markdown": "^4.9",
         "maxbanton/cwh": "^2.0",
