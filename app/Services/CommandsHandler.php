@@ -292,9 +292,7 @@ class CommandsHandler
                 $files[] = $document->first();
             }
 
-            Log::info('FILES_BEFORE', $files);
             $files = BotHelper::getFiles($files);
-            Log::info('FILES_AFTER', $files);
 
             if (filled($files)) {
                 $files = array_values($files);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Contracts\Repositories\OpportunityRepository;
+use App\Enums\Arguments;
 use App\Enums\GroupTypes;
 use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
@@ -38,15 +39,16 @@ class OpportunityController extends Controller
     /**
      * OpportunityController constructor.
      *
-     * @param OpportunityRepository         $repository
+     * @param OpportunityRepository $repository
      * @param CollectedOpportunityValidator $validator
-     * @param Telegram                      $telegram
+     * @param Telegram $telegram
      */
     public function __construct(
         OpportunityRepository $repository,
         CollectedOpportunityValidator $validator,
         Telegram $telegram
-    ) {
+    )
+    {
         parent::__construct($repository, $validator);
         $this->telegram = $telegram;
     }
@@ -78,11 +80,11 @@ class OpportunityController extends Controller
      */
     public function create()
     {
-        dump(Session::all());
         /**
          * Because withInput is not working, so I'm forcing persisting old_input in session
          */
-        return view('opportunities.create', (array)Session::get('_old_input'));
+//        return view('opportunities.create', (array)Session::get('_old_input'));
+        return view('opportunities.create');
     }
 
     /**
@@ -95,16 +97,23 @@ class OpportunityController extends Controller
     public function store(OpportunityCreateRequest $request): ?BaseResponse
     {
         try {
-            $this->validator->with($request->all())->passesOrFail(ValidatorInterface::RULE_CREATE);
-
             $opportunity = $this->repository->createOpportunity(
                 $request
                     ->merge([Opportunity::ORIGIN => $request->ip()])
                     ->all()
             );
 
+            Artisan::call(
+                'process:messages',
+                [
+                    '--type' => Arguments::APPROVAL,
+                    '--opportunity' => $opportunity->id,
+                ]
+            );
+
             $response = [
-                'message' => 'Opportunity created.',
+                'message' => 'Enviada com sucesso! '
+                    . 'A oportunidade sera publicada no canal https://t.me/VagasBrasil_TI assim que aprovada.',
                 'data' => $opportunity->toArray(),
             ];
 
@@ -126,7 +135,7 @@ class OpportunityController extends Controller
     }
 
     /**
-     * @param string      $type
+     * @param string $type
      * @param string|null $collectors
      *
      * @return string
@@ -134,7 +143,8 @@ class OpportunityController extends Controller
     public function processMessages(
         string $type,
         ?string $collectors = null
-    ): string {
+    ): string
+    {
         Artisan::call(
             'process:messages',
             [
@@ -239,7 +249,8 @@ class OpportunityController extends Controller
                     ->pluck('data')
                     ->pluck('telegram_ids', 'opportunity');
 
-                dump($telegramIds);die;
+                dump($telegramIds);
+                die;
 
                 $opportunities = $opportunities->map(static function (Opportunity $opportunity) use ($telegramIds) {
                     if ($telegramIds->has($opportunity->id)) {

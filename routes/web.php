@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
-Route::get('/', static fn() => redirect()->route('opportunity.index'));
+Route::get('/', static fn() => redirect()->route('opportunity.index'))->name('home');
 
 Route::group([], static function() {
     Route::get('/oauth/gmail', static fn() => LaravelGmail::redirect());

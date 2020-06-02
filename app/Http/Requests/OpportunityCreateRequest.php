@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\ExtractorHelper;
+use App\Models\Opportunity;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -31,5 +34,34 @@ class OpportunityCreateRequest extends FormRequest
         return [
             //
         ];
+    }
+
+    /**
+     * @return Validator
+     */
+    public function getValidatorInstance(): Validator
+    {
+//        $this->injectAddonAttributes();
+
+        return parent::getValidatorInstance();
+    }
+
+    /**
+     * Inject fields that don't came from original Request Form
+     */
+    private function injectAddonAttributes(): void
+    {
+        $this->merge([
+            Opportunity::TAGS => ExtractorHelper::extractTags(implode(
+                ',',
+                $this->only([
+                    Opportunity::TITLE,
+                    Opportunity::DESCRIPTION,
+                    Opportunity::COMPANY,
+                    Opportunity::POSITION,
+                    Opportunity::LOCATION,
+                ])
+            ))
+        ]);
     }
 }

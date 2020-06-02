@@ -16,6 +16,8 @@ use Illuminate\Support\Str;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Eloquent\BaseRepository;
 use Prettus\Repository\Exceptions\RepositoryException;
+use Prettus\Validator\Contracts\ValidatorInterface;
+use Prettus\Validator\Exceptions\ValidatorException;
 
 /**
  * Class OpportunityRepositoryEloquent
@@ -85,15 +87,17 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
 
     /**
      * @param array $data
-     * @return Opportunity|mixed
+     * @return Opportunity
+     * @throws ValidatorException
      */
     public function createOpportunity(array $data): Opportunity
     {
+        $original = SanitizerHelper::sanitizeBody($data[Opportunity::DESCRIPTION] ?? null);
+
         $files = [];
         /** @var UploadedFile $file */
-        $file = $data[Opportunity::FILES];
-        if (isset($data[Opportunity::FILES])
-            && $data[Opportunity::FILES] instanceof UploadedFile
+        if (($file = $data[Opportunity::FILES] ?? null)
+            && $file instanceof UploadedFile
             && !($file->getSize() < 50000 && strpos($file->getMimeType(), 'image') !== false)
         ) {
             $fileName = Helper::base64UrlEncode($file->getClientOriginalName())
@@ -106,23 +110,41 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
             File::delete($filePath->getPathname());
         }
 
+        $annotations = '';
+        if (filled($files)) {
+            $files = array_values($files);
+
+            foreach ($files as $file) {
+                if ($annotation = Helper::getImageAnnotation($file)) {
+                    $annotations .= $annotation."\n\n";
+                }
+            }
+        }
+
+        $description = SanitizerHelper::sanitizeBody($annotations . $original);
+
         $opportunity = [
             Opportunity::TITLE => SanitizerHelper::sanitizeSubject(Str::limit($data[Opportunity::TITLE], 50)),
-            Opportunity::DESCRIPTION => SanitizerHelper::sanitizeBody($data[Opportunity::DESCRIPTION]),
-            Opportunity::ORIGINAL => $data[Opportunity::DESCRIPTION],
-            Opportunity::FILES => $files,
-            Opportunity::URLS => ExtractorHelper::extractUrls($data[Opportunity::URLS] . ' ' . $data[Opportunity::DESCRIPTION]),
+            Opportunity::DESCRIPTION => $description,
+            Opportunity::ORIGINAL => $original,
+            Opportunity::FILES => filled($files) ? $files : null,
+            Opportunity::URLS =>
+                ExtractorHelper::extractUrls(
+                    $data[Opportunity::URLS] ?? '' . ' ' . $description
+                ),
             Opportunity::ORIGIN => [
                 'type' => 'web',
                 'ip' => $data[Opportunity::ORIGIN],
             ],
             Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($data[Opportunity::LOCATION])),
-            Opportunity::TAGS => ExtractorHelper::extractTags(implode(', ', $data)),
-            Opportunity::EMAILS => SanitizerHelper::replaceMarkdown($data[Opportunity::EMAILS]),
+            Opportunity::TAGS => ExtractorHelper::extractTags(json_encode($data)),
+            Opportunity::EMAILS => SanitizerHelper::replaceMarkdown($data[Opportunity::EMAILS] ?? ''),
             Opportunity::POSITION => $data[Opportunity::POSITION],
             Opportunity::SALARY => $data[Opportunity::SALARY],
             Opportunity::COMPANY => $data[Opportunity::COMPANY],
         ];
+
+        $this->validator->with($opportunity)->passesOrFail(ValidatorInterface::RULE_CREATE);
 
         return $this->make($opportunity);
     }

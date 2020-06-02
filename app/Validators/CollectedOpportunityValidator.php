@@ -41,24 +41,26 @@ class CollectedOpportunityValidator extends LaravelValidator
                 Rule::requiredIf(function () {
                     return blank($this->data[Opportunity::URLS])
                         && blank($this->data[Opportunity::EMAILS]);
-                })
+                }),
+                'nullable',
+                'mimes:jpeg,bmp,png,gif,webp'
             ],
             Opportunity::URLS => [
                 Rule::requiredIf(function () {
-                    return blank($this->data[Opportunity::FILES])
+                    return blank($this->data[Opportunity::FILES] ?? null)
                         && blank($this->data[Opportunity::EMAILS]);
                 })
             ],
             Opportunity::EMAILS => [
                 Rule::requiredIf(function () {
-                    return blank($this->data[Opportunity::FILES])
+                    return blank($this->data[Opportunity::FILES] ?? null)
                         && blank($this->data[Opportunity::URLS]);
                 })
             ],
             Opportunity::TAGS => [
                 Rule::requiredIf(function () {
                     return filled($this->data[Opportunity::DESCRIPTION])
-                        && blank($this->data[Opportunity::FILES]);
+                        && blank($this->data[Opportunity::FILES] ?? null);
                 })
             ],
             Opportunity::TITLE => [
@@ -68,13 +70,13 @@ class CollectedOpportunityValidator extends LaravelValidator
             ],
             Opportunity::DESCRIPTION => [
                 Rule::requiredIf(function () {
-                    return blank($this->data[Opportunity::FILES]);
+                    return blank($this->data[Opportunity::FILES] ?? null);
                 }),
                 /** IF contains denied words */
                 new Contains(Config::get('constants.deniedWords')),
                 /** IF NOT contains required words */
                 new NotContains(Config::get('constants.requiredWords'), function () {
-                    return blank($this->data[Opportunity::FILES]);
+                    return blank($this->data[Opportunity::FILES] ?? null);
                 }),
             ]
 

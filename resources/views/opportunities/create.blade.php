@@ -6,9 +6,6 @@
     <fieldset>
 
         <legend>Enviar nova vaga</legend>
-        @dump(session('success'))
-        @dump(Session::all())
-        @dump($success ?? null)
 
         @if(Session::has('success'))
             <p class="alert {{ Session::get('alert-class', 'alert-info') }}">{{ Session::get('success') }}</p>
