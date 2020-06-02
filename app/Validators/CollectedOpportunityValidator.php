@@ -42,8 +42,8 @@ class CollectedOpportunityValidator extends LaravelValidator
                     return blank($this->data[Opportunity::URLS])
                         && blank($this->data[Opportunity::EMAILS]);
                 }),
-                'nullable',
-                'mimes:jpeg,bmp,png,gif,webp'
+                //'nullable',
+                //'mimes:jpeg,bmp,png,gif,webp'
             ],
             Opportunity::URLS => [
                 Rule::requiredIf(function () {
