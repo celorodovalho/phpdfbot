@@ -370,7 +370,6 @@ class CommandsHandler
             /** @var Opportunity $opportunity */
             $opportunity = $this->repository->make($messageOpportunity);
 
-            $opportunity->status = Opportunity::STATUS_INACTIVE;
             $opportunity->telegram_user_id = $message->from->id;
 
             $opportunity->save();

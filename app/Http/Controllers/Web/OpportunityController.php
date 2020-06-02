@@ -8,6 +8,7 @@ use App\Helpers\BotHelper;
 use App\Helpers\ExtractorHelper;
 use App\Helpers\SanitizerHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\OpportunityCreateRequest;
 use App\Models\Group;
 use App\Models\Opportunity;
 use App\Notifications\GroupSummaryOpportunities;
@@ -17,8 +18,11 @@ use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
 use Prettus\Validator\Contracts\ValidatorInterface;
+use Prettus\Validator\Exceptions\ValidatorException;
+use Symfony\Component\HttpFoundation\Response as BaseResponse;
 use Telegram\Bot\Api as Telegram;
 
 /**
@@ -55,8 +59,8 @@ class OpportunityController extends Controller
 
         $opportunities = $this->repository->scopeQuery(static function ($query) {
             return $query->withTrashed()->where('status', '<>', '0');
-        })->orderBy('created_at', 'DESC')->paginate();
-        return view('home', compact('opportunities'));
+        })->orderBy('created_at', 'DESC')->paginate(60);
+        return view('opportunities.index', compact('opportunities'));
     }
 
     /**
@@ -67,6 +71,58 @@ class OpportunityController extends Controller
     public function show(Opportunity $opportunity)
     {
         return view('opportunities.show', compact('opportunity'));
+    }
+
+    /**
+     * @return Factory|View
+     */
+    public function create()
+    {
+        dump(Session::all());
+        /**
+         * Because withInput is not working, so I'm forcing persisting old_input in session
+         */
+        return view('opportunities.create', (array)Session::get('_old_input'));
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param OpportunityCreateRequest $request
+     *
+     * @return BaseResponse
+     */
+    public function store(OpportunityCreateRequest $request): ?BaseResponse
+    {
+        try {
+            $this->validator->with($request->all())->passesOrFail(ValidatorInterface::RULE_CREATE);
+
+            $opportunity = $this->repository->createOpportunity(
+                $request
+                    ->merge([Opportunity::ORIGIN => $request->ip()])
+                    ->all()
+            );
+
+            $response = [
+                'message' => 'Opportunity created.',
+                'data' => $opportunity->toArray(),
+            ];
+
+            if ($request->wantsJson()) {
+                return response()->json($response);
+            }
+
+            return redirect()->back()->with(['success' => $response['message']]);
+        } catch (ValidatorException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'error' => true,
+                    'message' => $e->getMessageBag()
+                ]);
+            }
+
+            return redirect()->back()->withErrors($e->getMessageBag())->withInput();
+        }
     }
 
     /**

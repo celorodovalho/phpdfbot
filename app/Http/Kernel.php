@@ -4,7 +4,6 @@ namespace App\Http;
 
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\CheckForMaintenanceMode;
-use App\Http\Middleware\Cors;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\TrimStrings;
@@ -41,12 +40,13 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
+        // \App\Http\Middleware\TrustHosts::class,
         TrustProxies::class,
+        \Fruitcake\Cors\HandleCors::class,
         CheckForMaintenanceMode::class,
         ValidatePostSize::class,
         TrimStrings::class,
         ConvertEmptyStringsToNull::class,
-        Cors::class
     ];
 
     /**
@@ -67,7 +67,7 @@ class Kernel extends HttpKernel
 
         'api' => [
             'throttle:60,1',
-            'bindings',
+            SubstituteBindings::class,
         ],
     ];
 
@@ -90,21 +90,4 @@ class Kernel extends HttpKernel
         'throttle' => ThrottleRequests::class,
         'verified' => EnsureEmailIsVerified::class,
     ];
-
-    /**
-     * The priority-sorted list of middleware.
-     *
-     * This forces non-global middleware to always be in the given order.
-     *
-     * @var array
-     */
-    protected $middlewarePriority = array(
-        StartSession::class,
-        ShareErrorsFromSession::class,
-        Authenticate::class,
-        ThrottleRequests::class,
-        AuthenticateSession::class,
-        SubstituteBindings::class,
-        Authorize::class,
-    );
 }

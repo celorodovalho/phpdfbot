@@ -1,58 +1,54 @@
-<h3>title:</h3>
-<pre><code>{{$opportunity->title}}</code></pre>
+@extends('layouts.app')
 
-<h3>position:</h3>
-<pre><code>{{$opportunity->position}}</code></pre>
-
-<h3>description:</h3>
-<pre><code>{{$opportunity->description}}</code></pre>
-
-<h3>original:</h3>
-<pre><code>{{$opportunity->original}}</code></pre>
-
-<h3>salary:</h3>
-<pre><code>{{$opportunity->salary}}</code></pre>
-
-<h3>company:</h3>
-<pre><code>{{$opportunity->company}}</code></pre>
-
-<h3>location:</h3>
-<pre><code>{{$opportunity->location}}</code></pre>
-
-<h3>files:</h3>
-<pre>
-<code>
-@if(!empty($opportunity->files))
-{{$opportunity->files->implode(', ')}}
-@endif
-</code>
-</pre>
-
-<h3>telegram_id:</h3>
-<pre><code>{{$opportunity->telegram_id}}</code></pre>
-
-<h3>status:</h3>
-<pre><code>{{$opportunity->status}}</code></pre>
-
-<h3>telegram_user_id:</h3>
-<pre><code>{{$opportunity->telegram_user_id}}</code></pre>
-
-<h3>url:</h3>
-<pre><code>{{$opportunity->url}}</code></pre>
-
-<h3>origin:</h3>
-<pre><code>{{$opportunity->origin}}</code></pre>
-
-<h3>tags:</h3>
-<pre>
-<code>
-@if(!empty($opportunity->tags))
-{{$opportunity->tags->implode(', ')}}
-@endif
-</code>
-</pre>
-
-<h3>emails:</h3>
-<pre><code>{{$opportunity->emails}}</code></pre>
-
-@dump($opportunity->toArray())
+@section('content')
+    @if(filled($opportunity->title))
+        <h3 class="pb-3 mb-4 border-bottom mt-3">{{ $opportunity->title }}</h3>
+    @endif
+    @if(filled($opportunity->files) && $opportunity->files->isNotEmpty())
+        <p>
+        @foreach(json_decode($opportunity->files) as $file)
+            <img class="img-fluid" src="{{$file}}" title="{{$opportunity->title}}" alt="{{$opportunity->title}}"/>
+        @endforeach
+        </p>
+    @endif
+    @if(filled($opportunity->description))
+        <strong>Descrição:</strong>
+        <div>{!! \GrahamCampbell\Markdown\Facades\Markdown::convertToHtml($opportunity->description) !!}</div>
+    @endif
+    @if(filled($opportunity->position))
+        <p>
+        <strong>Cargo:</strong>
+        {{$opportunity->position}}
+        </p>
+    @endif
+    @if(filled($opportunity->company))
+        <p>
+        <strong>Empresa:</strong>
+        {{$opportunity->company}}
+        </p>
+    @endif
+    @if(filled($opportunity->salary))
+        <p>
+        <strong>Salário:</strong>
+        {{$opportunity->salary}}
+        </p>
+    @endif
+    @if(filled($opportunity->location))
+        <p>
+        <strong>Localização:</strong>
+        {{$opportunity->location}}
+        </p>
+    @endif
+    @if(filled($opportunity->tags) && $opportunity->tags->isNotEmpty())
+        <p>
+        <strong>Tags:</strong>
+        {{$opportunity->tags->implode(' ')}}
+        </p>
+    @endif
+    @if((filled($opportunity->emails) && $opportunity->emails->isNotEmpty()) || (filled($opportunity->urls) && $opportunity->urls->isNotEmpty()))
+        <p>
+        <strong>Como se candidatar:</strong>
+        {{$opportunity->emails->concat($opportunity->urls)->filter()->implode(', ')}}
+        </p>
+    @endif
+@endsection

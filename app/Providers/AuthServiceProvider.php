@@ -29,9 +29,5 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
-
-        Gate::define('viewWebTinker', static function ($user = null) {
-            return env('DB_USERNAME') === request()->path();
-        });
     }
 }

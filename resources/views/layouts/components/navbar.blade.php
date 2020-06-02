@@ -1,18 +1,24 @@
-<div class="container">
-    <div class="nav-scroller py-1 mb-2">
-        <nav class="nav d-flex justify-content-between">
-            <a class="p-2 text-muted" href="#">World</a>
-            <a class="p-2 text-muted" href="#">U.S.</a>
-            <a class="p-2 text-muted" href="#">Technology</a>
-            <a class="p-2 text-muted" href="#">Design</a>
-            <a class="p-2 text-muted" href="#">Culture</a>
-            <a class="p-2 text-muted" href="#">Business</a>
-            <a class="p-2 text-muted" href="#">Politics</a>
-            <a class="p-2 text-muted" href="#">Opinion</a>
-            <a class="p-2 text-muted" href="#">Science</a>
-            <a class="p-2 text-muted" href="#">Health</a>
-            <a class="p-2 text-muted" href="#">Style</a>
-            <a class="p-2 text-muted" href="#">Travel</a>
-        </nav>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">
+        <img src="{{ asset('img/phpdf.webp') }}" width="70" class="d-inline-block align-top" alt="">
+        PHPDF Vagas
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="#">Inicio <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('opportunity.create') }}">Cadastrar Vaga</a>
+            </li>
+        </ul>
+{{--        <form class="form-inline my-2 my-lg-0">--}}
+{{--            <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">--}}
+{{--            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>--}}
+{{--        </form>--}}
     </div>
-</div>
+</nav>

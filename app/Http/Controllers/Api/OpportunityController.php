@@ -3,18 +3,26 @@
 namespace App\Http\Controllers\Api;
 
 use App\Contracts\Repositories\OpportunityRepository;
+use App\Helpers\SanitizerHelper;
 use App\Http\Controllers\ApiController;
 use App\Http\Requests\OpportunityCreateRequest;
 use App\Http\Requests\OpportunityUpdateRequest;
+use App\Models\Opportunity;
+use App\Repositories\OpportunityRepositoryEloquent;
 use App\Validators\CollectedOpportunityValidator;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
+use Prettus\Repository\Contracts\RepositoryCriteriaInterface;
+use Prettus\Repository\Contracts\RepositoryInterface;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Validator\Contracts\ValidatorInterface;
 use Prettus\Validator\Exceptions\ValidatorException;
+use Symfony\Component\HttpFoundation\Response as BaseResponse;
 
 /**
  * Class OpportunityController
- *
+ * @property OpportunityRepositoryEloquent $repository
+ * @property ValidatorInterface $validator
  * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 class OpportunityController extends ApiController
@@ -55,14 +63,18 @@ class OpportunityController extends ApiController
      *
      * @param OpportunityCreateRequest $request
      *
-     * @return Response
+     * @return BaseResponse
      */
-    public function store(OpportunityCreateRequest $request): ?Response
+    public function store(OpportunityCreateRequest $request): ?BaseResponse
     {
         try {
             $this->validator->with($request->all())->passesOrFail(ValidatorInterface::RULE_CREATE);
 
-            $opportunity = $this->repository->create($request->all());
+            $opportunity = $this->repository->createOpportunity(
+                $request
+                    ->merge([Opportunity::ORIGIN => $request->ip()])
+                    ->all()
+            );
 
             $response = [
                 'message' => 'Opportunity created.',
@@ -73,7 +85,7 @@ class OpportunityController extends ApiController
                 return response()->json($response);
             }
 
-            return redirect()->back()->with('message', $response['message']);
+            return redirect()->back()->with(['success' => $response['message']]);
         } catch (ValidatorException $e) {
             if ($request->wantsJson()) {
                 return response()->json([

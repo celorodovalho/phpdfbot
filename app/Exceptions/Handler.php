@@ -12,6 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Laravel\Facades\Telegram;
+use Throwable;
 
 /**
  * Class Handler
@@ -42,13 +43,12 @@ class Handler extends ExceptionHandler
     /**
      * Report or log an exception.
      *
-     * @param Exception $exception
-     *
+     * @param  Throwable  $exception
      * @return void
      *
      * @throws Exception
      */
-    public function report(Exception $exception): void
+    public function report(Throwable $exception)
     {
         if (App::environment('production')) {
             self::log($exception);
@@ -61,22 +61,22 @@ class Handler extends ExceptionHandler
      * Render an exception into an HTTP response.
      *
      * @param Request   $request
-     * @param Exception $exception
+     * @param  \Throwable  $exception
      *
      * @return Response
      *
-     * @throws Exception
+     * @throws Throwable
      */
-    public function render($request, Exception $exception): Response
+    public function render($request, Throwable $exception): Response
     {
         return parent::render($request, $exception);
     }
 
     /**
      * @param OutputInterface $output
-     * @param Exception       $exception
+     * @param Throwable       $exception
      */
-    public function renderForConsole($output, Exception $exception): void
+    public function renderForConsole($output, Throwable $exception): void
     {
         $output->writeln('<error>Something wrong!</error>', 32);
         $output->writeln("<error>{$exception->getMessage()}</error>", 32);
@@ -90,11 +90,11 @@ class Handler extends ExceptionHandler
     /**
      * Generate a log on server, and send a notification to admin
      *
-     * @param Exception $exception
+     * @param Throwable $exception
      * @param string    $message
      * @param null      $context
      */
-    public static function log(Exception $exception, $message = '', $context = null): void
+    public static function log(Throwable $exception, $message = '', $context = null): void
     {
         try {
             $logMessage = [
@@ -130,7 +130,7 @@ class Handler extends ExceptionHandler
                 'chat_id' => $group->name,
                 'document' => InputFile::createFromContents(
                     $exception->getTraceAsString(),
-                    $exception->getMessage() . ' - ' . time()
+                    $exception->getMessage() . ' - ' . time() . '.txt'
                 ),
             ]);
         } catch (Exception $exception) {
