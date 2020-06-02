@@ -34,6 +34,8 @@ Route::namespace('Web')
         Route::any('process/messages/{type}/{collectors?}', 'OpportunityController@processMessages');
 
 //        Route::resource('opportunity', 'OpportunityController');
+        Route::get('opportunity', 'OpportunityController@index')->name('opportunity.index');
+        Route::get('opportunity/{opportunity}/show', 'OpportunityController@show')->name('opportunity.show');
         Route::get('opportunity/create', 'OpportunityController@create')->name('opportunity.create');
         Route::post('opportunity', 'OpportunityController@store')->name('opportunity.store');
 

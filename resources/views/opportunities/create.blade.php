@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    {!! Form::open(['route' => 'test.store', 'method' => 'post', 'files' => true]) !!}
+    {!! Form::open(['route' => 'opportunity.store', 'method' => 'post', 'files' => true]) !!}
 
     <fieldset>
 
