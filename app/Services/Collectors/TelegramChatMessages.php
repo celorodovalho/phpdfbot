@@ -268,16 +268,18 @@ class TelegramChatMessages implements CollectorInterface
     /**
      * @param $message
      *
-     * @return array
+     * @return array|null
      */
-    public function extractFiles($message): array
+    public function extractFiles($message): ?array
     {
-        $files = [];
         if (array_key_exists('files', $message) && is_string($message['files'])) {
-            $files[$message['files']] = Helper::cloudinaryUpload($message['files']);
+            $files = [
+                $message['files'] => Helper::cloudinaryUpload($message['files'])
+            ];
             Storage::delete($message['files']);
+            return $files;
         }
-        return $files;
+        return null;
     }
 
     /**

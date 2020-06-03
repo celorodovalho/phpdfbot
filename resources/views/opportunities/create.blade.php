@@ -136,7 +136,7 @@
                     {{$errors->first('files')}}
                 </span>
                 @endif
-                <span class="help-block">PNG, JPG, GIF, WEBP.</span>
+                <span class="help-block">Formatos: PEG, JPG, BMP, PNG, GIF, WEBP, TIFF ou TIF.</span>
             </div>
         </div>
 

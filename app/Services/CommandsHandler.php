@@ -346,7 +346,7 @@ class CommandsHandler
                 Opportunity::TITLE => SanitizerHelper::sanitizeSubject(Str::limit($title, 50)),
                 Opportunity::DESCRIPTION => SanitizerHelper::sanitizeBody($text),
                 Opportunity::ORIGINAL => $text,
-                Opportunity::FILES => $files,
+                Opportunity::FILES => filled($files) ? $files : null,
                 Opportunity::URLS => new Collection($urls),
                 Opportunity::ORIGIN => new Collection([
                     'bot' => $this->botName,

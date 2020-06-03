@@ -6,6 +6,7 @@ namespace App\Validators;
 use App\Models\Opportunity;
 use App\Rules\Contains;
 use App\Rules\NotContains;
+use App\Rules\UrlFileExtension;
 use Illuminate\Contracts\Validation\Factory;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Validation\Rule;
@@ -42,8 +43,8 @@ class CollectedOpportunityValidator extends LaravelValidator
                     return blank($this->data[Opportunity::URLS])
                         && blank($this->data[Opportunity::EMAILS]);
                 }),
-                //'nullable',
-                //'mimes:jpeg,bmp,png,gif,webp'
+                'nullable',
+                new UrlFileExtension('jpeg|jpg|bmp|png|gif|webp|tiff|tif')
             ],
             Opportunity::URLS => [
                 Rule::requiredIf(function () {

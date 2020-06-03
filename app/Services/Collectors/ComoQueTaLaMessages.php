@@ -181,12 +181,12 @@ class ComoQueTaLaMessages implements CollectorInterface
      *
      * @param string $message
      *
-     * @return array
+     * @return array|null
      * @throws Exception
      */
-    public function extractFiles($message): array
+    public function extractFiles($message): ?array
     {
-        return [];
+        return null;
     }
 
     /**

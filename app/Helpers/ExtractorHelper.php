@@ -81,7 +81,7 @@ class ExtractorHelper
      */
     public static function extractUrls(string $text): array
     {
-        if (preg_match_all('#\bhttps?://[^,\s()<>]+(?:\([\w]+\)|([^,[:punct:]\s]|/))#', $text, $match)) {
+        if (preg_match_all('#\b(https?://|www)[^,\s()<>]+(?:\([\w]+\)|([^,[:punct:]\s]|/))#', $text, $match)) {
             return array_unique($match[0]);
         }
         return [];

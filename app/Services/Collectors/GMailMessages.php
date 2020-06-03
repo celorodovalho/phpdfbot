@@ -105,7 +105,7 @@ class GMailMessages implements CollectorInterface
             $message->markAsRead();
             $message->addLabel(self::LABEL_ENVIADO_PRO_BOT);
             $message->removeLabel(self::LABEL_STILL_UNREAD);
-            $message->sendToTrash();
+            $message->removeLabel('INBOX');
         }
         return $this->opportunities;
     }
@@ -156,7 +156,7 @@ class GMailMessages implements CollectorInterface
                 ->passesOrFail(ValidatorInterface::RULE_CREATE);
 
             /** @var Collection $hasOpportunities */
-            $hasOpportunities = $this->repository->scopeQuery(function ($query) {
+            $hasOpportunities = $this->repository->scopeQuery(static function ($query) {
                 return $query->withTrashed();
             })->findWhere([
                 Opportunity::TITLE => $message[Opportunity::TITLE],
@@ -225,17 +225,17 @@ class GMailMessages implements CollectorInterface
      *
      * @param Mail $message
      *
-     * @return array
+     * @return array|null
      * @throws Exception
      */
-    public function extractFiles($message): array
+    public function extractFiles($message): ?array
     {
-        $files = [];
         if ($message->hasAttachments()) {
+            $files = [];
             $attachments = $message->getAttachments();
             /** @var Attachment $attachment */
             foreach ($attachments as $attachment) {
-                if (!($attachment->getSize() < 50000
+                if (!($attachment->getSize() < 40000
                     && strpos($attachment->getMimeType(), 'image') !== false)
                 ) {
                     $extension = File::extension($attachment->getFileName());
@@ -248,8 +248,9 @@ class GMailMessages implements CollectorInterface
                     Storage::delete($filePath);
                 }
             }
+            return $files;
         }
-        return $files;
+        return null;
     }
 
     /**

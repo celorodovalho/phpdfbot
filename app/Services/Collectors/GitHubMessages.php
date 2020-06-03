@@ -187,24 +187,30 @@ class GitHubMessages implements CollectorInterface
      *
      * @param string $message
      *
-     * @return array
+     * @return array|null
      * @throws Exception
      */
-    public function extractFiles($message): array
+    public function extractFiles($message): ?array
     {
         $urls = ExtractorHelper::extractUrls($message);
-        return array_filter($urls, static function ($url) {
-            return Str::endsWith($url, [
-                '.jpg',
-                '.jpeg',
-                '.png',
-                '.gif',
-                '.webp',
-                '.tiff',
-                '.tif',
-                '.bmp',
-            ]);
-        });
+        if (filled($urls)) {
+            $files = array_filter($urls, static function ($url) {
+                return Str::endsWith($url, [
+                    '.jpg',
+                    '.jpeg',
+                    '.png',
+                    '.gif',
+                    '.webp',
+                    '.tiff',
+                    '.tif',
+                    '.bmp',
+                ]);
+            });
+            if (filled($files)) {
+                return $files;
+            }
+        }
+        return null;
     }
 
     /**

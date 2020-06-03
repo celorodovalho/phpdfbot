@@ -55,9 +55,9 @@ interface CollectorInterface
      *
      * @param $message
      *
-     * @return array
+     * @return array|null
      */
-    public function extractFiles($message): array;
+    public function extractFiles($message): ?array;
 
     /**
      * Parse the origin

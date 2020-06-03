@@ -129,7 +129,7 @@ class SanitizerHelper
     public static function sanitizeBody(string $message): string
     {
         if ($message) {
-            $delimiters = [
+            $delimitersEnd = [
                 'As informações contidas neste',
                 'You are receiving this because you are subscribed to this thread',
                 'Você recebeu esta mensagem porque está inscrito para o Google',
@@ -155,6 +155,11 @@ class SanitizerHelper
                 '[Profissão Futuro]',
                 'Se cadastre em nosso portal',
                 'At.te,',
+                'Já se cadastrou em nosso portal'
+            ];
+
+            $delimitersBegin = [
+                'Segue vaga cadastrada em nosso portal www.clubedevagas.com.br',
             ];
 
             $omitting = [
@@ -162,7 +167,7 @@ class SanitizerHelper
                 'GrupoClubedeVagas',
                 '!()'
             ];
-//            O GME2.ll 37%
+
             //Start sanitize images
             $singleLineWords = implode('|', [
                 '\d{1,2}:\d{1,2}( \w{0,7})?',
@@ -175,10 +180,10 @@ class SanitizerHelper
                 '([\w ]+)?Publicação',
                 '([\w ]+)?Notificações',
                 '([\w ]+)?Vagas',
-                '[\d\.]+ seguidores',
-                '[\d\.]+ comentário(s)?',
+                '[\d\.\- ]+ seguidores',
+                '([\d\.]|Deixe seus)+ comentário(s)?',
                 '[\d]+ h\. (O|0)',
-                '(II|FI)',
+                '(II|FI|DO|III)',
                 'CO SR',
                 'ABAP SR',
                 'Itaú([av ]+)?',
@@ -190,12 +195,15 @@ class SanitizerHelper
                 'Todas as atividades',
                 'Artigos',
                 'Publicaçõe(s)?',
-                '([\w ]+)?Vo(o\)?)\)( \dG\+)?',
-                '(.+)?[LGeMNTYIE2\.l, ]+((.+)?%)?',
-                '(([\w ]{1,4})?\d{1,2}%)'
+                '\+?[LtTE\d]+?',
+                '\d{1,2} ?([A-z]+( )?[•\.]? ?)+[0O@®]?', //6 h ou 9 h• O ou 7h. 0 ou 8 h. ® ou 9 h. Editado • O
+                '\d{1,2}:\d{1,2}', //22:00
+                '(([\w ]{1,4})?\d{1,2}%)', //    2
+                /** @NOTE: Vo) ou "vo ll 74%" ou "N G2l 77%" ou "N GrLTE2 .ll 76%" ou "Y l 74% i" ou "O N l 86%" ou "O N LIE2.l 81%*/
+                '([NVYoO]+(\)+)?)( )?(([YNGr2lLITE\.]+)?( )?)+?(\d{1,3}%)?( )?([i])?'
             ]);
 
-            $message = preg_replace('/^(' . $singleLineWords . ')$/ui', '', $message);
+            $message = preg_replace('/^(' . $singleLineWords . ')$/mui', '', $message);
             //End sanitize images
 
 
@@ -207,9 +215,12 @@ class SanitizerHelper
 
             $message = trim($message, '\\');
 
-            $messageArray = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $message));
+            // Get first part of string
+            $messageArray = explode($delimitersEnd[0], str_replace($delimitersEnd, $delimitersEnd[0], $message));
+            // Get last part of string
+            $messageArray = explode($delimitersBegin[0], str_replace($delimitersBegin, $delimitersBegin[0], reset($messageArray)));
 
-            $message = $messageArray[0];
+            $message = end($messageArray);
 
             $message = preg_replace('/<img (.+)src="cid:(.+)>/m', '', $message);
             $message = preg_replace(
