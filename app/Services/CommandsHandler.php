@@ -164,7 +164,7 @@ class CommandsHandler
                         'message_id' => $callbackQuery->message->messageId,
                         'text' => sprintf(
                             'Mensagem rejeitada: %s',
-                            url("opportunity/{$opportunity->id}")
+                            route('opportunity.show', ['opportunity' => $opportunity->id])
                         ),
                         'reply_markup' => '',
                     ]);

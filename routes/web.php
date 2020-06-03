@@ -33,11 +33,11 @@ Route::namespace('Web')
     ->group(static function () {
         Route::any('process/messages/{type}/{collectors?}', 'OpportunityController@processMessages');
 
-//        Route::resource('opportunity', 'OpportunityController');
-        Route::get('opportunity', 'OpportunityController@index')->name('opportunity.index');
-        Route::get('opportunity/{opportunity}/show', 'OpportunityController@show')->name('opportunity.show');
-        Route::get('opportunity/create', 'OpportunityController@create')->name('opportunity.create');
-        Route::post('opportunity', 'OpportunityController@store')->name('opportunity.store');
+        Route::resource('opportunity', 'OpportunityController');
+//        Route::get('opportunity', 'OpportunityController@index')->name('opportunity.index');
+//        Route::get('opportunity/{opportunity}/show', 'OpportunityController@show')->name('opportunity.show');
+//        Route::get('opportunity/create', 'OpportunityController@create')->name('opportunity.create');
+//        Route::post('opportunity', 'OpportunityController@store')->name('opportunity.store');
 
         Route::post('send', 'OpportunityController@sendMessage');
         Route::get('valid', 'OpportunityController@testValidation');
