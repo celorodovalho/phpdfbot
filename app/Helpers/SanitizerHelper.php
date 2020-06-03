@@ -105,7 +105,7 @@ class SanitizerHelper
      */
     public static function sanitizeSubject(string $message): string
     {
-        $message = preg_replace('/^(RE:|FWD:|FW:|ENC:|VAGA( de| para)?|Oportunidade( de|para)?)S?:?/im', '', $message, -1);
+        $message = preg_replace('/^(RE:|FWD:|FW:|ENC:|VAGA( de | para )?|Oportunidade( de | para )?)S?:?/im', '', $message, -1);
         $message = preg_replace('/(\d{0,999} (view|application)s?)/', '', $message);
         $message = str_replace(
             ['[ClubInfoBSB]', '[leonardoti]', '[NVagas]', '[ProfissãoFuturo]', '[GEBE Oportunidades]', '[N]'],
