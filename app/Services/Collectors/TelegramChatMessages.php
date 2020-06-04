@@ -206,6 +206,7 @@ class TelegramChatMessages implements CollectorInterface
         $telegramUserId = $message['user']['id'];
 
         $original = $message['message'];
+        $messageOriginal = $message;
 
         $files = $this->extractFiles($message);
 
@@ -219,9 +220,6 @@ class TelegramChatMessages implements CollectorInterface
                 }
             }
         }
-
-        $id = $message['id'];
-        $groupId = $message['to_id']['channel_id'];
 
         $message['message'] = $this->extractDescription($annotations . $message['message']);
 
@@ -264,7 +262,9 @@ class TelegramChatMessages implements CollectorInterface
                 ]);
 
                 $this->opportunities->add($opportunity);
-                return [$groupId => $id];
+                if (array_key_exists('username', $messageOriginal['user'])) {
+                    return [$messageOriginal['to_id']['channel_id'] => $messageOriginal['id']];
+                }
             }
         } catch (ValidatorException $exception) {
             $errors = $exception->getMessageBag()->all();
