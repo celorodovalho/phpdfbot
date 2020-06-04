@@ -51,11 +51,11 @@ class TelegramChatMessages implements CollectorInterface
     /**
      * TelegramChatMessages constructor.
      *
-     * @param Collection                    $opportunities
-     * @param MadelineProtoService          $madeline
-     * @param OpportunityRepository         $repository
+     * @param Collection $opportunities
+     * @param MadelineProtoService $madeline
+     * @param OpportunityRepository $repository
      * @param CollectedOpportunityValidator $validator
-     * @param callable                      $output
+     * @param callable $output
      */
     public function __construct(
         Collection $opportunities,
@@ -77,9 +77,40 @@ class TelegramChatMessages implements CollectorInterface
     public function collectOpportunities(): Collection
     {
         $messages = $this->fetchMessages();
+        $messagesIds = [];
         foreach ($messages as $message) {
-            $this->createOpportunity($message);
+            $messagesIds[] = $this->createOpportunity($message);
         }
+
+        $messagesIds = array_filter($messagesIds);
+
+        if (filled($messagesIds)) {
+            $groupedIds = [];
+            foreach ($messagesIds as $messageId) {
+                $groupedIds[key($messageId)][] = reset($messageId);
+            }
+
+            $this->madeline->async(true);
+            $madeline = $this->madeline;
+            $this->madeline->loop(function () use ($madeline, $groupedIds) {
+                yield $madeline->start();
+                foreach ($groupedIds as $groupedId => $messagesIds) {
+                    try {
+                        yield $this->madeline->messages->forwardMessages([
+                            'id' => $messagesIds,
+                            'to_peer' => '@phperson',
+                            'from_peer' => 'channel#' . $groupedId,
+                        ]);
+
+                    } catch (Exception $exception) {
+
+                    }
+                }
+                yield $madeline->stop();
+            });
+            $this->madeline->stop();
+        }
+
         return $this->opportunities;
     }
 
@@ -189,6 +220,9 @@ class TelegramChatMessages implements CollectorInterface
             }
         }
 
+        $id = $message['id'];
+        $groupId = $message['to_id']['channel_id'];
+
         $message['message'] = $this->extractDescription($annotations . $message['message']);
 
         $title = $this->extractTitle($message['message']);
@@ -214,7 +248,7 @@ class TelegramChatMessages implements CollectorInterface
                 ->passesOrFail(ValidatorInterface::RULE_CREATE);
 
             /** @var Collection $opportunities */
-            $opportunities = $this->repository->scopeQuery(function ($query) {
+            $opportunities = $this->repository->scopeQuery(static function ($query) {
                 return $query->withTrashed();
             })->findWhere([
                 Opportunity::TITLE => $message[Opportunity::TITLE],
@@ -230,6 +264,7 @@ class TelegramChatMessages implements CollectorInterface
                 ]);
 
                 $this->opportunities->add($opportunity);
+                return [$groupId => $id];
             }
         } catch (ValidatorException $exception) {
             $errors = $exception->getMessageBag()->all();
