@@ -1,6 +1,5 @@
 <?php
 
-use Dingo\Api\Routing\Router;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -17,21 +16,4 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:api')->get('/user', static function (Request $request) {
     return $request->user();
-});
-
-/** @var Router $api */
-$api = app(Router::class);
-
-$api->version('v1', static function (Router $api) {
-    $api->get('test', static function () {
-        dump('test');die;
-    });
-
-    $api->group([
-        'prefix' => 'opportunity',
-        'namespace' => 'App\Http\Controllers\Api',
-//        'middleware' => 'web' // We MUST TO keep it for flash sessions messages
-    ], static function (Router $api) {
-        $api->post('store', 'OpportunityController@store')->name('api.opportunity.store');
-    });
 });

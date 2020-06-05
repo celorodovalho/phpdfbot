@@ -17,7 +17,6 @@
         "cweagans/composer-patches": "^1.6",
         "dacastro4/laravel-gmail": "^4.0",
         "danog/madelineproto": "^5.0",
-        "dingo/api": "^3.0",
         "doctrine/dbal": "^2.10",
         "fabpot/goutte": "^4.0",
         "fideloper/proxy": "^4.2",
