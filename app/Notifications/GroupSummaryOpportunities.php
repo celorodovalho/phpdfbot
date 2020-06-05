@@ -6,6 +6,7 @@ use App\Helpers\BotHelper;
 use App\Helpers\Helper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Group;
+use App\Notifications\Channels\DatabaseChannel;
 use App\Notifications\Channels\TelegramChannel;
 use App\Services\TelegramMessage;
 use Illuminate\Bus\Queueable;
@@ -51,7 +52,7 @@ class GroupSummaryOpportunities extends Notification
     {
         return [
             TelegramChannel::class,
-            'database'
+            DatabaseChannel::class
         ];
     }
 

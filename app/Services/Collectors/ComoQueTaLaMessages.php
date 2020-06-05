@@ -114,8 +114,10 @@ class ComoQueTaLaMessages implements CollectorInterface
             if ($hasOpportunities->isEmpty()) {
                 /** @var Opportunity $opportunity */
                 $opportunity = $this->repository->make($message);
-                $this->opportunities->add($opportunity);
+            } else {
+                $opportunity = $hasOpportunities->first();
             }
+            $this->opportunities->add($opportunity);
         } catch (ValidatorException $exception) {
             $errors = $exception->getMessageBag()->all();
             $info = $this->output;

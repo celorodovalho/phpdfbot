@@ -119,7 +119,7 @@ return [
     'uuid' => 'O campo :attribute deve ser um UUID válido.',
 
     'not_contains' => 'O :attribute não contém as palavras obrigatórias.',
-    'contains' => 'O :attribute contém palavras proibidas.',
+    'contains' => 'O :attribute contém palavras proibidas: :words.',
 
     /*
     |--------------------------------------------------------------------------

@@ -256,16 +256,16 @@ class TelegramChatMessages implements CollectorInterface
             if ($opportunities->isEmpty()) {
                 /** @var Opportunity $opportunity */
                 $opportunity = $this->repository->make($message);
-
                 $opportunity->update([
                     'telegram_user_id' => $telegramUserId
                 ]);
-
-                $this->opportunities->add($opportunity);
                 if (array_key_exists('username', $messageOriginal['user'])) {
                     return [$messageOriginal['to_id']['channel_id'] => $messageOriginal['id']];
                 }
+            } else {
+                $opportunity = $opportunities->first();
             }
+            $this->opportunities->add($opportunity);
         } catch (ValidatorException $exception) {
             $errors = $exception->getMessageBag()->all();
             $info = $this->output;

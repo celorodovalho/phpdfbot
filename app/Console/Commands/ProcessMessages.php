@@ -21,10 +21,12 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotification as Notification;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Telegram\Bot\Api;
 use Telegram\Bot\BotsManager;
@@ -209,7 +211,14 @@ class ProcessMessages extends Command
      */
     protected function notifyGroup(): void
     {
-        $opportunities = $this->repository->findWhere([['status', '=', Opportunity::STATUS_ACTIVE]]);
+        $allOpportunities = DatabaseNotification::where([
+            ['type', '=', GroupSummaryOpportunities::class],
+        ])->pluck('data')->pluck('opportunities')->flatten()->unique();
+
+        $opportunities = $this->repository
+            ->where([['status', '=', Opportunity::STATUS_ACTIVE]])
+            ->whereNotIn('id', $allOpportunities->filter()->toArray())
+            ->get();
 
         $allGroups = $this->groupRepository->findWhere([
             ['type', '=', GroupTypes::GROUP],
@@ -276,9 +285,9 @@ class ProcessMessages extends Command
                 }
             }
 
-            $opportunities->each(static function (Opportunity $opportunity) {
+            /*$opportunities->each(static function (Opportunity $opportunity) {
                 $opportunity->delete();
-            });
+            });*/
             $this->info(sprintf(
                 'The notification were sent: %s opportunities to %s groups',
                 $opportunities->count(),

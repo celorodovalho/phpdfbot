@@ -16,9 +16,13 @@ use App\Notifications\GroupSummaryOpportunities;
 use App\Notifications\SendOpportunity;
 use App\Validators\CollectedOpportunityValidator;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
 use Prettus\Validator\Contracts\ValidatorInterface;
@@ -58,10 +62,13 @@ class OpportunityController extends Controller
      */
     public function index()
     {
-
-        $opportunities = $this->repository->scopeQuery(static function ($query) {
-            return $query->withTrashed()->where('status', '<>', '0');
-        })->orderBy('created_at', 'DESC')->paginate(60);
+        $opportunities = $this->repository->scopeQuery(static function (Opportunity $query) {
+            /** @var Builder $query */
+            return $query
+                ->where('updated_at', '>=', Carbon::now()->subDays(30))
+                ->where('status', '<>', 0)
+                ->orderBy('updated_at', 'DESC');
+        })->paginate(60);
         return view('opportunities.index', compact('opportunities'));
     }
 
@@ -143,8 +150,7 @@ class OpportunityController extends Controller
     public function processMessages(
         string $type,
         ?string $collectors = null
-    ): string
-    {
+    ): string {
         Artisan::call(
             'process:messages',
             [
@@ -308,5 +314,56 @@ class OpportunityController extends Controller
                 $groups->count()
             ));
         }
+    }
+
+    public function testNotification()
+    {
+        $allOpportunities = DatabaseNotification::where([
+            ['type', '=', \App\Notifications\GroupSummaryOpportunities::class],
+        ])->pluck('data')->pluck('opportunities')->flatten()->unique();
+
+        dump($allOpportunities->contains(12584));
+        dump($allOpportunities->contains(12549));
+        dump($allOpportunities->filter()->toArray());
+
+        DB::enableQueryLog(); // Enable query log
+
+
+
+         // Show results of log
+
+        $opportunities = $this->repository
+            ->where([
+                ['status', '=', 1],
+            ])
+            ->whereNotIn('id', $allOpportunities->filter()->toArray())->get();
+//            ;
+
+        dump(DB::getQueryLog());
+
+        dd($opportunities);
+
+//        $opportunity = $this->repository->findWhere([['id', '=', 1]])->first();
+//        dump(\App\Notifications\SendOpportunity::class);
+//        $opportunities = $this->repository->with(['notification'])->scopeQuery(static function($query) {
+//            /** @var Builder $query */
+//            return $query->whereDoesntHave('notification', function ($query) {
+//                return $query->where([
+//                    ['type', '=', \App\Notifications\SendOpportunity::class],
+//                    ['data', 'LIKE', '%VagasBrasil_TI%'],
+//                ]);
+//            });
+//        })->findWhere([
+//            ['status', '=', 1],
+//        ])->all();
+//
+//        $adminGroup = Group::where([
+//            ['type', '=', GroupTypes::GROUP],
+//            ['admin', '=', true],
+//        ])->first();
+//
+//
+//        $adminGroup->notify(new SendOpportunity($opportunity));
+        dump($opportunities);die;
     }
 }

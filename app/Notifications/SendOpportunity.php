@@ -9,13 +9,13 @@ use App\Helpers\ExtractorHelper;
 use App\Mail\SendOpportunity as Mailable;
 use App\Models\Group;
 use App\Models\Opportunity;
+use App\Notifications\Channels\DatabaseChannel;
 use App\Notifications\Channels\TelegramChannel;
 use App\Services\TelegramMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Str;
 use League\CommonMark\CommonMarkConverter;
 use Throwable;
 
@@ -55,7 +55,7 @@ class SendOpportunity extends Notification
      */
     public function via($notifiable): array
     {
-        $channels = ['database'];
+        $channels = [DatabaseChannel::class];
         switch ($notifiable->type) {
             case GroupTypes::CHANNEL:
             case GroupTypes::GROUP:

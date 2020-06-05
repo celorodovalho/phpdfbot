@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Notifications\Channels\DatabaseChannel;
+use Illuminate\Notifications\Channels\DatabaseChannel as IlluminateDatabaseChannel;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
@@ -37,6 +39,8 @@ class AppServiceProvider extends ServiceProvider
         if (env('APP_ENV') !== 'local') {
             $this->app['request']->server->set('HTTPS', true);
         }
+
+        $this->app->instance(IlluminateDatabaseChannel::class, new DatabaseChannel);
 
         Schema::defaultStringLength(191);
     }

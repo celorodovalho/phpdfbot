@@ -157,14 +157,14 @@ class CommandsHandler
                 break;
             case Callbacks::REMOVE:
                 if ($opportunity) {
-                    //$opportunity->delete();
+                    $opportunity->delete();
                     $group = Group::where('admin', true)->first();
                     $this->telegram->editMessageText([
                         'chat_id' => $group->name,
                         'message_id' => $callbackQuery->message->messageId,
                         'text' => sprintf(
                             'Mensagem rejeitada: %s',
-                            route('opportunity.show', ['opportunity' => $opportunity->id])
+                            $opportunity->id
                         ),
                         'reply_markup' => '',
                     ]);
@@ -365,12 +365,23 @@ class CommandsHandler
                 ->with($messageOpportunity)
                 ->passesOrFail(ValidatorInterface::RULE_CREATE);
 
-            /** @var Opportunity $opportunity */
-            $opportunity = $this->repository->make($messageOpportunity);
+            /** @var \Illuminate\Database\Eloquent\Collection $opportunities */
+            $opportunities = $this->repository->scopeQuery(static function ($query) {
+                return $query->withTrashed();
+            })->findWhere([
+                Opportunity::TITLE => $messageOpportunity[Opportunity::TITLE],
+                Opportunity::DESCRIPTION => $messageOpportunity[Opportunity::DESCRIPTION],
+            ]);
 
-            $opportunity->telegram_user_id = $message->from->id;
-
-            $opportunity->save();
+            if ($opportunities->isEmpty()) {
+                /** @var Opportunity $opportunity */
+                $opportunity = $this->repository->make($messageOpportunity);
+                $opportunity->update([
+                    'telegram_user_id' => $message->from->id
+                ]);
+            } else {
+                $opportunity = $opportunities->first();
+            }
 
             $this->sendOpportunityToApproval($opportunity);
         }

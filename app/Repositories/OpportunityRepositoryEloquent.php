@@ -146,6 +146,17 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
 
         $this->validator->with($opportunity)->passesOrFail(ValidatorInterface::RULE_CREATE);
 
-        return $this->make($opportunity);
+        /** @var \Illuminate\Database\Eloquent\Collection $hasOpportunities */
+        $hasOpportunities = $this->scopeQuery(static function ($query) {
+            return $query->withTrashed();
+        })->findWhere([
+            Opportunity::TITLE => $opportunity[Opportunity::TITLE],
+            Opportunity::DESCRIPTION => $opportunity[Opportunity::DESCRIPTION],
+        ]);
+
+        if ($hasOpportunities->isEmpty()) {
+            return $this->make($opportunity);
+        }
+        return $hasOpportunities->first();
     }
 }

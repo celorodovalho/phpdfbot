@@ -42,6 +42,7 @@ Route::namespace('Web')
         Route::post('send', 'OpportunityController@sendMessage');
         Route::get('valid', 'OpportunityController@testValidation');
         Route::get('test', 'OpportunityController@testCode');
+        Route::get('notification', 'OpportunityController@testNotification');
     });
 
 Route::namespace('Bot')

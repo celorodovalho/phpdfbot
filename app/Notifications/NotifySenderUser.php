@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Helpers\SanitizerHelper;
 use App\Models\Group;
 use App\Models\Opportunity;
+use App\Notifications\Channels\DatabaseChannel;
 use App\Notifications\Channels\TelegramChannel;
 use App\Services\TelegramMessage;
 use Illuminate\Bus\Queueable;
@@ -43,7 +44,10 @@ class NotifySenderUser extends Notification
      */
     public function via($notifiable): array
     {
-        return [TelegramChannel::class, 'database'];
+        return [
+            TelegramChannel::class,
+            DatabaseChannel::class
+        ];
     }
 
     /**

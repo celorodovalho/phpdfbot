@@ -15,6 +15,9 @@ class Contains implements Rule
     /** @var array */
     private $words;
 
+    /** @var array */
+    private $foundWords;
+
     /**
      * Create a new rule instance.
      *
@@ -36,7 +39,14 @@ class Contains implements Rule
     public function passes($attribute, $value): bool
     {
         // Revert the result of CONTAINS: IF contains return FALSE
-        return blank($this->words) || !Str::contains(mb_strtolower($value), $this->words);
+        $passes = blank($this->words) || !Str::contains(mb_strtolower($value), $this->words);
+        if (!$passes) {
+            $pattern = '/\b(?:' . implode('|', $this->words) . ')\b/i';
+            if (preg_match_all($pattern, $value, $matches)) {
+                $this->foundWords = $matches[0];
+            }
+        }
+        return $passes;
     }
 
     /**
@@ -46,6 +56,6 @@ class Contains implements Rule
      */
     public function message(): string
     {
-        return trans('validation.contains');
+        return trans('validation.contains', ['words' => implode(', ', $this->foundWords)]);
     }
 }

@@ -6,6 +6,7 @@ use App\Traits\RoutesNotifications;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\HasDatabaseNotifications;
 use Illuminate\Support\Collection;
 use Prettus\Repository\Contracts\Transformable;
@@ -116,5 +117,13 @@ class Opportunity extends Model implements Transformable
             $this->description,
             $this->tags,
         ]);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function notification()
+    {
+        return $this->hasMany(DatabaseNotification::class, 'model_id', 'id');
     }
 }
