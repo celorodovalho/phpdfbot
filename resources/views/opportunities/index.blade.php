@@ -17,9 +17,8 @@
                             <h6 class="card-subtitle mb-2 text-muted">{{utf8_decode($opportunity->position)}}</h6>
                         @endif
                         @if(filled($opportunity->files))
-                            @foreach(json_decode($opportunity->files) as $file)
-                                <p><img class="img-fluid" src="{{$file}}" title="{{$opportunity->title}}" alt="{{$opportunity->title}}"/></p>
-                            @endforeach
+                            @php($file = \Illuminate\Support\Arr::first(json_decode($opportunity->files)))
+                            <p><img class="img-fluid" src="{{$file}}" title="{{$opportunity->title}}" alt="{{$opportunity->title}}"/></p>
                         @elseif(filled($opportunity->description))
                             <div class="card-text">
                                 <p>{{\Illuminate\Support\Str::words(strip_tags(\GrahamCampbell\Markdown\Facades\Markdown::convertToHtml($opportunity->description)), 20, '...')}}</p>
