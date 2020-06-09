@@ -43,6 +43,7 @@ Route::namespace('Web')
         Route::get('valid', 'OpportunityController@testValidation');
         Route::get('test', 'OpportunityController@testCode');
         Route::get('notification', 'OpportunityController@testNotification');
+        Route::get('title', 'OpportunityController@testTitle');
     });
 
 Route::namespace('Bot')

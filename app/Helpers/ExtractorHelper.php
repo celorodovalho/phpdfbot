@@ -122,4 +122,93 @@ class ExtractorHelper
         }
         return false;
     }
+
+    /**
+     * @param string $text
+     * @return array
+     */
+    public static function extractPosition(string $text): array
+    {
+        $fragment1 = [
+            'Administrador',
+            'Analista',
+            'Arquiteto',
+            'Cientista',
+            'Desenvolvedor',
+            'Designer',
+            'Developer',
+            'Estagiário',
+            'Gerente',
+            'Tester',
+            'Programador',
+            'Engineer',
+            'Especialista',
+            'Gerente',
+            'Web[ -]?design',
+            'Técnico',
+        ];
+        $fragment2 = [
+            'Web',
+            'Gráfico',
+            'Dados',
+            'Infraestrutura',
+            'Monitoração',
+            'Monitoramento',
+            'Produção',
+            'Sistemas',
+            'Testes',
+            'Redes',
+            'Back[ -]?end',
+            'Big[ -]?data',
+            'Computação',
+            'Entrega',
+            'Front[ -]?end',
+            'Negócios',
+            'Projetos',
+            'Suporte',
+            'Full[ -]?stack',
+            'Requisitos',
+            'Mobile',
+            'Desenvolvimento',
+            //
+            'Angular',
+            'Dev[ -]?ops',
+            'Android',
+            'E[ -]?commerce',
+            'Java',
+            'Javascript',
+            'Kotlin',
+            'Laravel',
+            'Magento',
+            'Mysql',
+            'Php',
+            'Python',
+            'React',
+            'Ruby',
+            'Symfony',
+            'Wordpress',
+            'Ionic',
+            '\.Net',
+        ];
+        $fragment3 = [
+            'Junior',
+            'Pleno',
+            'Medium',
+            'Senior',
+            'Developer',
+            'Engineer',
+        ];
+        $pattern = "/((" . implode('|', $fragment1) . ") ?(de )?)?(" . implode('|', $fragment2) . ")( ?(" . implode('|', $fragment3) . "))?+/im";
+        $positionFragments = [];
+        if (preg_match_all($pattern, mb_strtolower($text), $matches)) {
+            $positionFragments = array_filter(array_unique($matches[0]));
+        }
+        $fragments = array_merge($fragment1, $fragment2, $fragment3);
+        usort($positionFragments, function ($a, $b) use ($fragments) {
+            $pos_a = array_search($a, $fragments);
+            $pos_b = array_search($b, $fragments);
+            return $pos_a - $pos_b;
+        });
+        return $positionFragments;
+    }
 }

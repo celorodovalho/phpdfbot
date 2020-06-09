@@ -88,7 +88,7 @@ class ComoQueTaLaMessages implements CollectorInterface
             Opportunity::DESCRIPTION => $description,
             Opportunity::ORIGINAL => $original,
             Opportunity::FILES => $this->extractFiles($title . $original),
-            Opportunity::POSITION => '',
+            Opportunity::POSITION => $this->extractPosition($description),
             Opportunity::COMPANY => $message[Opportunity::COMPANY],
             Opportunity::LOCATION => $this->extractLocation($original . $message[Opportunity::LOCATION]),
             Opportunity::TAGS => $this->extractTags($title . $original . $message[Opportunity::LOCATION]),
@@ -263,5 +263,15 @@ class ComoQueTaLaMessages implements CollectorInterface
     public function extractEmails($message): array
     {
         return ExtractorHelper::extractEmails($message);
+    }
+
+    /**
+     * @param $message
+     *
+     * @return string
+     */
+    public function extractPosition($message): string
+    {
+        return implode(' | ', ExtractorHelper::extractPosition($message));
     }
 }

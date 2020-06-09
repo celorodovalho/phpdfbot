@@ -103,4 +103,13 @@ interface CollectorInterface
      * @return array
      */
     public function extractEmails($message): array;
+
+    /**
+     * Parse the positions
+     *
+     * @param $message
+     *
+     * @return string
+     */
+    public function extractPosition($message): string;
 }

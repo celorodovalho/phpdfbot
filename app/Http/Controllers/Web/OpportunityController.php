@@ -366,4 +366,17 @@ class OpportunityController extends Controller
 //        $adminGroup->notify(new SendOpportunity($opportunity));
         dump($opportunities);die;
     }
+
+    public function testTitle()
+    {
+        $opportunities = $this->repository->scopeQuery(static function ($query) {
+            return $query->withTrashed();
+        })->limit(100)->get();
+
+        $opportunities = $opportunities->map(function ($opportunity) {
+            return [$opportunity->title, ExtractorHelper::extractPosition($opportunity->title.$opportunity->description)];
+        });
+
+        dump($opportunities->toArray());
+    }
 }

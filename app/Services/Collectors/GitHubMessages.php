@@ -118,7 +118,7 @@ class GitHubMessages implements CollectorInterface
             Opportunity::DESCRIPTION => $description,
             Opportunity::ORIGINAL => $original,
             Opportunity::FILES => $files,
-            Opportunity::POSITION => '',
+            Opportunity::POSITION => $title,
             Opportunity::COMPANY => '',
             Opportunity::LOCATION => $this->extractLocation($title . $original),
             Opportunity::TAGS => $this->extractTags($title . $original),
@@ -287,5 +287,15 @@ class GitHubMessages implements CollectorInterface
     public function extractEmails($message): array
     {
         return ExtractorHelper::extractEmails($message);
+    }
+
+    /**
+     * @param $message
+     *
+     * @return string
+     */
+    public function extractPosition($message): string
+    {
+        return implode(' | ', ExtractorHelper::extractPosition($message));
     }
 }

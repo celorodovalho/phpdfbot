@@ -356,7 +356,7 @@ class CommandsHandler
                 Opportunity::LOCATION => implode(' / ', ExtractorHelper::extractLocation($text)),
                 Opportunity::TAGS => ExtractorHelper::extractTags($text),
                 Opportunity::EMAILS => array_map(fn($email) => SanitizerHelper::replaceMarkdown($email), $emails),
-                Opportunity::POSITION => null,
+                Opportunity::POSITION => implode(' | ', ExtractorHelper::extractPosition($text)),
                 Opportunity::SALARY => null,
                 Opportunity::COMPANY => null,
             ];

@@ -2,9 +2,13 @@
 
 namespace App\Helpers;
 
+use App\Enums\BrazilianStates;
+use App\Enums\Countries;
 use DOMDocument;
 use DOMNode;
 use GrahamCampbell\Markdown\Facades\Markdown;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Traits\Macroable;
 use League\CommonMark\CommonMarkConverter;
 use League\HTMLToMarkdown\HtmlConverter;
@@ -99,24 +103,34 @@ class SanitizerHelper
     /**
      * Sanitizes the subject and remove annoying content
      *
-     * @param string $message
+     * @param string $title
      *
      * @return string
      */
-    public static function sanitizeSubject(string $message): string
+    public static function sanitizeSubject(string $title): string
     {
-        $message = preg_replace('/^(RE:|FWD:|FW:|ENC:|(#?VAGA|Oportunidade)( de | para )?)S?:?/im', '', $message, -1);
-        $message = preg_replace('/(\d{0,999} (view|application)s?)/', '', $message);
-        $message = str_replace(
+        $title = preg_replace('/^(RE|FWD|FW|ENC):?/im', '', $title, -1);
+        $title = preg_replace('/(\d{0,999} (view|application)s?)/', '', $title);
+        $title = str_replace(
             ['[ClubInfoBSB]', '[leonardoti]', '[NVagas]', '[ProfissãoFuturo]', '[GEBE Oportunidades]', '[N]'],
             '',
-            $message
+            $title
         );
-        $message = trim($message, '[]{}()');
-        $message = str_replace(["\n", '[', '{', '}', '(', ')'], '', $message);
-        $message = str_replace([']'], ' -', $message);
-        $message = self::removeMarkdown($message);
-        return trim($message, "- \t\n\r\0\x0B");
+        $title = trim($title, '[]{}()');
+        $title = str_replace(["\n", '[', '{', '}', '(', ')'], '', $title);
+        $title = str_replace([']'], ' -', $title);
+        $title = self::removeMarkdown($title);
+
+        $title = str_replace(array_merge(
+            Arr::flatten(Config::get('constants.cities')),
+            BrazilianStates::toArray(),
+            Countries::toArray()
+        ), '', $title);
+
+        $title = preg_replace("/\b(Temos )?(#?VAGA|Oportunidade)s?( de | para )?\b/im", '', $title);
+        $title = preg_replace("/\b(Bo[ma] (tarde|dia|noite))\b/im", '', $title);
+
+        return trim($title, "- \t\n\r\0\x0B");
     }
 
     /**
@@ -200,7 +214,8 @@ class SanitizerHelper
                 '\d{1,2}:\d{1,2}', //22:00
                 '(([\w ]{1,4})?\d{1,2}%)', //    2
                 /** @NOTE: Vo) ou "vo ll 74%" ou "N G2l 77%" ou "N GrLTE2 .ll 76%" ou "Y l 74% i" ou "O N l 86%" ou "O N LIE2.l 81%*/
-                '([NVYoO]+(\)+)?)( )?(([YNGr2lLITE\.]+)?( )?)+?(\d{1,3}%)?( )?([i])?'
+                '([NVYoO]+(\)+)?)( )?(([YNGr2lLITE\.]+)?( )?)+?(\d{1,3}%)?( )?([i])?',
+                'Clube de Vagas'
             ]);
 
             $message = preg_replace('/^(' . $singleLineWords . ')$/mui', '', $message);

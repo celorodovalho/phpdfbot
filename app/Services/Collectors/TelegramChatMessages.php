@@ -136,6 +136,7 @@ class TelegramChatMessages implements CollectorInterface
             '@vagastisapbrasil',
             '@vagastiportugal',
             '@tivagasdev',
+            '@vagas_tibr',
         ];
 
         $messages = $this->madeline->loop(function () use ($madeline, $groups) {
@@ -230,7 +231,7 @@ class TelegramChatMessages implements CollectorInterface
             Opportunity::DESCRIPTION => $message['message'],
             Opportunity::ORIGINAL => $original,
             Opportunity::FILES => $files,
-            Opportunity::POSITION => '',
+            Opportunity::POSITION => $this->extractPosition($message['message']),
             Opportunity::COMPANY => '',
             Opportunity::LOCATION => $this->extractLocation($message['message']),
             Opportunity::TAGS => $this->extractTags($message['message']),
@@ -390,5 +391,15 @@ class TelegramChatMessages implements CollectorInterface
     public function extractEmails($message): array
     {
         return ExtractorHelper::extractEmails($message['message']);
+    }
+
+    /**
+     * @param $message
+     *
+     * @return string
+     */
+    public function extractPosition($message): string
+    {
+        return implode(' | ', ExtractorHelper::extractPosition($message));
     }
 }

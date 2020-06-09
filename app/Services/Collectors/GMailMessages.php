@@ -140,7 +140,7 @@ class GMailMessages implements CollectorInterface
             Opportunity::DESCRIPTION => $description,
             Opportunity::ORIGINAL => $original,
             Opportunity::FILES => $files,
-            Opportunity::POSITION => '',
+            Opportunity::POSITION => $this->extractPosition($title . $description),
             Opportunity::COMPANY => '',
             Opportunity::LOCATION => $this->extractLocation($title . $description),
             Opportunity::TAGS => $this->extractTags($title . $description),
@@ -354,5 +354,15 @@ class GMailMessages implements CollectorInterface
     public function extractEmails($message): array
     {
         return ExtractorHelper::extractEmails($message);
+    }
+
+    /**
+     * @param $message
+     *
+     * @return string
+     */
+    public function extractPosition($message): string
+    {
+        return implode(' | ', ExtractorHelper::extractPosition($message));
     }
 }
