@@ -109,7 +109,7 @@ class SanitizerHelper
      */
     public static function sanitizeSubject(string $title): string
     {
-        $title = preg_replace('/^(RE|FWD|FW|ENC):?/im', '', $title, -1);
+        $title = preg_replace('/^\b(RE|FWD|FW|ENC):?\b/im', '', $title, -1);
         $title = preg_replace('/(\d{0,999} (view|application)s?)/', '', $title);
         $title = str_replace(
             ['[ClubInfoBSB]', '[leonardoti]', '[NVagas]', '[ProfissãoFuturo]', '[GEBE Oportunidades]', '[N]'],

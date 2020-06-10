@@ -135,7 +135,7 @@ class ExtractorHelper
             'Arquiteto',
             'Cientista',
             'Desenvolvedor',
-            'Designer',
+            'Design(er)?',
             'Developer',
             'Estagiário',
             'Gerente',
@@ -146,9 +146,15 @@ class ExtractorHelper
             'Gerente',
             'Web[ -]?design',
             'Técnico',
+            'Dev\.?',
+            'DBA',
         ];
         $fragment2 = [
+            'DBA',
+            'Oracle',
             'Web',
+            'Design(er)?',
+            'Desenvolvedor',
             'Gráfico',
             'Dados',
             'Infraestrutura',
@@ -171,12 +177,14 @@ class ExtractorHelper
             'Mobile',
             'Desenvolvimento',
             //
+            'Engenharia',
+            'Middleware',
             'Angular',
             'Dev[ -]?ops',
             'Android',
             'E[ -]?commerce',
-            'Java',
             'Javascript',
+            'Java',
             'Kotlin',
             'Laravel',
             'Magento',
@@ -198,7 +206,7 @@ class ExtractorHelper
             'Developer',
             'Engineer',
         ];
-        $pattern = "/((" . implode('|', $fragment1) . ") ?(de )?)?(" . implode('|', $fragment2) . ")( ?(" . implode('|', $fragment3) . "))?+/im";
+        $pattern = "/((" . implode('|', array_merge($fragment1, $fragment2)) . ")a? ?(de )?)?(" . implode('|', array_merge($fragment2, $fragment1)) . ")( ?(" . implode('|', $fragment3) . "))?+/im";
         $positionFragments = [];
         if (preg_match_all($pattern, mb_strtolower($text), $matches)) {
             $positionFragments = array_filter(array_unique($matches[0]));

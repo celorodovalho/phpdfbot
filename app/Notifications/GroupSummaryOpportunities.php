@@ -74,7 +74,7 @@ class GroupSummaryOpportunities extends Notification
                     '➩ [%s](%s)',
                     Helper::excerpt(
                         SanitizerHelper::sanitizeSubject(
-                            SanitizerHelper::removeBrackets($opportunity->title)
+                            SanitizerHelper::removeBrackets($opportunity->position ?? $opportunity->title)
                         ),
                         41 - strlen($opportunity->telegram_id)
                     ),

@@ -231,7 +231,7 @@ class TelegramChatMessages implements CollectorInterface
             Opportunity::DESCRIPTION => $message['message'],
             Opportunity::ORIGINAL => $original,
             Opportunity::FILES => $files,
-            Opportunity::POSITION => $this->extractPosition($message['message']),
+            Opportunity::POSITION => $this->extractPosition($title . $message['message']),
             Opportunity::COMPANY => '',
             Opportunity::LOCATION => $this->extractLocation($message['message']),
             Opportunity::TAGS => $this->extractTags($message['message']),
