@@ -150,6 +150,7 @@ class ExtractorHelper
             'DBA',
         ];
         $fragment2 = [
+            'Soluções',
             'DBA',
             'Oracle',
             'Web',
