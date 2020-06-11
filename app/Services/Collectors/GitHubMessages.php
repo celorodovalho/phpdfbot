@@ -150,6 +150,7 @@ class GitHubMessages implements CollectorInterface
                 $opportunity = $this->repository->make($message);
             } else {
                 $opportunity = $hasOpportunities->first();
+                $opportunity->restore();
             }
             $this->opportunities->add($opportunity);
         } catch (ValidatorException $exception) {

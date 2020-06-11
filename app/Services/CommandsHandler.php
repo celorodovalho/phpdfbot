@@ -381,6 +381,7 @@ class CommandsHandler
                 ]);
             } else {
                 $opportunity = $opportunities->first();
+                $opportunity->restore();
             }
 
             $this->sendOpportunityToApproval($opportunity);

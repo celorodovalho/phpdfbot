@@ -161,6 +161,7 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
         if ($hasOpportunities->isEmpty()) {
             return $this->make($opportunity);
         }
+        $hasOpportunities->first()->restore();
         return $hasOpportunities->first();
     }
 }
