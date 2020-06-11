@@ -80,7 +80,8 @@ class GroupSummaryOpportunities extends Notification
                                 (filled($opportunity->position) ? Str::upper($opportunity->position) : $opportunity->title)
                             )
                         ),
-                        41 - strlen($opportunity->telegram_id)
+                        //41
+                        81 - strlen($opportunity->telegram_id)
                     ),
                     sprintf('https://t.me/%s/%s', $mainChannel->title, $opportunity->telegram_id)
                 );
