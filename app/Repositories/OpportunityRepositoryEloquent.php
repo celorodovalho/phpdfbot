@@ -119,9 +119,13 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
                     $annotations .= $annotation."\n\n";
                 }
             }
+
+            if (filled($annotations)) {
+                $annotations = "\nTranscrição das imagens:\n" . $annotations;
+            }
         }
 
-        $description = SanitizerHelper::sanitizeBody($annotations . $original);
+        $description = SanitizerHelper::sanitizeBody($original . $annotations);
 
         $opportunity = [
             Opportunity::TITLE => SanitizerHelper::sanitizeSubject(Str::limit($data[Opportunity::TITLE], 50)),

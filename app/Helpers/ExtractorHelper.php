@@ -130,33 +130,41 @@ class ExtractorHelper
     public static function extractPosition(string $text): array
     {
         $fragment1 = [
-            'Administrador',
+            'Administra(ção|dor(a|es)?)',
             'Analista',
-            'Arquiteto',
+            'Arquitet(o|ura|a)( ?\([oa]\))?',
             'Cientista',
-            'Desenvolvedor',
+            'Desenvolv(imento|edor(a|es)?)( ?\([oa]\))?',
             'Design(er)?',
-            'Developer',
-            'Estagiário',
-            'Gerente',
-            'Tester',
-            'Programador',
-            'Engineer',
-            'Especialista',
-            'Gerente',
-            'Web[ -]?design',
-            'Técnico',
-            'Dev\.?',
-            'DBA',
+            'Dev(\.|eloper)?\b',
+            'Estagi[aá]ri[oa](s)?( ?\([oa]\))?',
+            'Gerente(s)?',
+            'Tester(s)?',
+            'Programador(a|es)?( ?\([oa]\))?',
+            'Engineer(s)?',
+            'Especialista(s)?',
+            'Web[ -]?design(er)?',
+            'T[eé]cnico',
+            'L[ií]der',
+            '\bDBA\b',
+            'Trainee',
+            'Consultor(ia|a|es)?( ?\([oa]\))?',
+            'Engenh(aria|eir[oa])( ?\([oa]\))?'
         ];
         $fragment2 = [
+            'Automação',
+            'Operações',
+            'Segurança',
+            'Sysadmin',
             'Soluções',
             'DBA',
+            '\bITIL\b',
+            '\bABAP\b',
+            '\bSAP\b',
             'Oracle',
             'Web',
             'Design(er)?',
-            'Desenvolvedor',
-            'Gráfico',
+            'Gr[aá]fico',
             'Dados',
             'Infraestrutura',
             'Monitoração',
@@ -170,13 +178,16 @@ class ExtractorHelper
             'Computação',
             'Entrega',
             'Front[ -]?end',
-            'Negócios',
+            'Neg[oó]cios',
             'Projetos',
             'Suporte',
             'Full[ -]?stack',
             'Requisitos',
             'Mobile',
             'Desenvolvimento',
+            'Software',
+            'Full[ -]?Stack',
+            'Scrum[ -]?Master',
             //
             'Engenharia',
             'Middleware',
@@ -197,26 +208,34 @@ class ExtractorHelper
             'Symfony',
             'Wordpress',
             'Ionic',
-            '\.Net',
+            'C#',
+            '(Dot ?|\.)Net',
+            'Node( ?js)?',
+            '\b(ux|ui|ios|t\.?i\.?|i\.?t\.?)\b',
         ];
         $fragment3 = [
-            'Junior',
-            'Pleno',
+            'J([uúÚ]nior|R\b)',
+            'Pl(eno|\b)',
             'Medium',
-            'Senior',
-            'Developer',
+            'S([Êêe]nior|R\b)',
+            'Dev(\.|eloper)?\b',
             'Engineer',
         ];
-        $pattern = "/((" . implode('|', array_merge($fragment1, $fragment2)) . ")a? ?(de )?)?(" . implode('|', array_merge($fragment2, $fragment1)) . ")( ?(" . implode('|', $fragment3) . "))?+/im";
+        $pattern = "/((" . implode('|', array_merge($fragment1, $fragment2)) . ")a? ?(de )?)?(" . implode('|', array_merge($fragment2, $fragment1)) . ")( ?(" . implode('|', $fragment3) . "))?+/uim";
         $positionFragments = [];
         if (preg_match_all($pattern, mb_strtolower($text), $matches)) {
             $positionFragments = array_filter(array_unique($matches[0]));
         }
-        $fragments = array_merge($fragment1, $fragment2, $fragment3);
-        usort($positionFragments, function ($a, $b) use ($fragments) {
-            $pos_a = array_search($a, $fragments);
-            $pos_b = array_search($b, $fragments);
-            return $pos_a - $pos_b;
+//        $fragments = array_merge($fragment1, $fragment2, $fragment3);
+//        usort($positionFragments, function ($a, $b) use ($fragments) {
+//            $pos_a = array_search($a, $fragments);
+//            $pos_b = array_search($b, $fragments);
+//            return $pos_a - $pos_b;
+//        });
+
+
+        usort($positionFragments, static function ($array1, $array2) {
+            return strlen($array2) - strlen($array1);
         });
         return $positionFragments;
     }

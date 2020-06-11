@@ -220,9 +220,13 @@ class TelegramChatMessages implements CollectorInterface
                     $annotations .= $annotation . "\n\n";
                 }
             }
+
+            if (filled($annotations)) {
+                $annotations = "\nTranscrição das imagens:\n" . $annotations;
+            }
         }
 
-        $message['message'] = $this->extractDescription($annotations . $message['message']);
+        $message['message'] = $this->extractDescription($message['message'] . $annotations);
 
         $title = $this->extractTitle($message['message']);
 

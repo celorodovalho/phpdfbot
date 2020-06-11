@@ -40,10 +40,10 @@ Route::namespace('Web')
 //        Route::post('opportunity', 'OpportunityController@store')->name('opportunity.store');
 
         Route::post('send', 'OpportunityController@sendMessage');
-        Route::get('valid', 'OpportunityController@testValidation');
-        Route::get('test', 'OpportunityController@testCode');
-        Route::get('notification', 'OpportunityController@testNotification');
-        Route::get('title', 'OpportunityController@testTitle');
+        Route::get('valid', 'TestController@testValidation');
+        Route::get('test', 'TestController@testCode');
+        Route::get('notification', 'TestController@testNotification');
+        Route::get('title', 'TestController@testTitle');
     });
 
 Route::namespace('Bot')

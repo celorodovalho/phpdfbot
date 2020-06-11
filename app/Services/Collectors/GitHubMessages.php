@@ -109,16 +109,20 @@ class GitHubMessages implements CollectorInterface
                     $annotations .= $annotation."\n\n";
                 }
             }
+
+            if (filled($annotations)) {
+                $annotations = "\nTranscrição das imagens:\n" . $annotations;
+            }
         }
 
-        $description = $this->extractDescription($annotations . $original);
+        $description = $this->extractDescription($original . $annotations);
 
         $message = [
             Opportunity::TITLE => $title,
             Opportunity::DESCRIPTION => $description,
             Opportunity::ORIGINAL => $original,
             Opportunity::FILES => $files,
-            Opportunity::POSITION => $title,
+            Opportunity::POSITION => $this->extractPosition($title . $description),
             Opportunity::COMPANY => '',
             Opportunity::LOCATION => $this->extractLocation($title . $original),
             Opportunity::TAGS => $this->extractTags($title . $original),

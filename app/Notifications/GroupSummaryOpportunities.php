@@ -13,6 +13,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Database\Eloquent\Collection as DatabaseCollection;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 /**
  * Class GroupSummaryOpportunities
@@ -74,7 +75,10 @@ class GroupSummaryOpportunities extends Notification
                     '➩ [%s](%s)',
                     Helper::excerpt(
                         SanitizerHelper::sanitizeSubject(
-                            SanitizerHelper::removeBrackets(filled($opportunity->position) ? $opportunity->position : $opportunity->title)
+                            SanitizerHelper::removeBrackets(
+                                (filled($opportunity->location) ? $opportunity->location . ' - ' : '') .
+                                (filled($opportunity->position) ? Str::upper($opportunity->position) : $opportunity->title)
+                            )
                         ),
                         41 - strlen($opportunity->telegram_id)
                     ),

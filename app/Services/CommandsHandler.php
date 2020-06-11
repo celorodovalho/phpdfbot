@@ -299,7 +299,7 @@ class CommandsHandler
 
                 foreach ($files as $file) {
                     if ($annotation = Helper::getImageAnnotation($file)) {
-                        $text = $annotation . $text;
+                        $text .= "\nTranscrição das imagens:\n" . $annotation;
                     }
                 }
             }

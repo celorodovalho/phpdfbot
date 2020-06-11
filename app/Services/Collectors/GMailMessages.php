@@ -131,9 +131,13 @@ class GMailMessages implements CollectorInterface
                     $annotations .= $annotation."\n\n";
                 }
             }
+
+            if (filled($annotations)) {
+                $annotations = "\nTranscrição das imagens:\n" . $annotations;
+            }
        }
 
-        $description = $this->extractDescription($annotations . $original);
+        $description = $this->extractDescription($original . $annotations);
 
         $message = [
             Opportunity::TITLE => $title,
