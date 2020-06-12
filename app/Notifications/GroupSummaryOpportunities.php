@@ -73,16 +73,18 @@ class GroupSummaryOpportunities extends Notification
             $listOpportunities = $this->opportunities->map(static function ($opportunity) use ($mainChannel) {
                 return sprintf(
                     '➩ [%s](%s)',
-                    Helper::excerpt(
-                        SanitizerHelper::sanitizeSubject(
-                            SanitizerHelper::removeBrackets(
-                                (filled($opportunity->location) ? $opportunity->location . ' - ' : '') .
-                                (filled($opportunity->position) ? Str::upper($opportunity->position) : $opportunity->title)
-                            )
-                        ),
-                        //41
-                        81 - strlen($opportunity->telegram_id)
-                    ),
+                    Str::of(
+                        Helper::excerpt(
+                            SanitizerHelper::sanitizeSubject(
+                                SanitizerHelper::removeBrackets(
+                                    (filled($opportunity->position) ? Str::upper($opportunity->position) : $opportunity->title) .
+                                    (filled($opportunity->location) ? ' - ' . $opportunity->location : '')
+                                )
+                            ),
+                            //41
+                            55 - strlen($opportunity->telegram_id)
+                        )
+                    )->trim(' ,'),
                     sprintf('https://t.me/%s/%s', $mainChannel->title, $opportunity->telegram_id)
                 );
             });

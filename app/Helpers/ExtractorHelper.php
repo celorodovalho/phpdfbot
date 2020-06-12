@@ -6,6 +6,7 @@ use App\Enums\BrazilianStates;
 use App\Enums\Countries;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
 
 /**
@@ -129,6 +130,24 @@ class ExtractorHelper
      */
     public static function extractPosition(string $text): array
     {
+        $roles = [
+            'Analista',
+            'Desenvolvedor',
+            'Programador',
+            'Engenheiro',
+            'Arquiteto',
+            'Dev',
+            'Engineer',
+            'Administrador',
+            'Cientista',
+            'Gerente',
+            'Especialista',
+            'Consultor',
+            'Estagiário',
+            'Técnico',
+            'Tester',
+            'Designer',
+        ];
         $fragment1 = [
             'Administra(ção|dor(a|es)?)',
             'Analista',
@@ -149,7 +168,8 @@ class ExtractorHelper
             '\bDBA\b',
             'Trainee',
             'Consultor(ia|a|es)?( ?\([oa]\))?',
-            'Engenh(aria|eir[oa])( ?\([oa]\))?'
+            'Engenh(aria|eir[oa])( ?\([oa]\))?',
+            'Tech[ -]?Lead'
         ];
         $fragment2 = [
             'Automação',
@@ -182,7 +202,7 @@ class ExtractorHelper
             'Projetos',
             'Suporte',
             'Full[ -]?stack',
-            'Requisitos',
+            'de Requisitos',
             'Mobile',
             'Desenvolvimento',
             'Software',
@@ -226,17 +246,12 @@ class ExtractorHelper
         if (preg_match_all($pattern, mb_strtolower($text), $matches)) {
             $positionFragments = array_filter(array_unique($matches[0]));
         }
-//        $fragments = array_merge($fragment1, $fragment2, $fragment3);
-//        usort($positionFragments, function ($a, $b) use ($fragments) {
-//            $pos_a = array_search($a, $fragments);
-//            $pos_b = array_search($b, $fragments);
-//            return $pos_a - $pos_b;
-//        });
 
+        $positionFragments = Helper::arraySortByTotalCharacterOccurrence($positionFragments, ' ');
+        $positionFragments = Helper::arraySortByPredefinedListStartsWith($positionFragments, $roles);
+        $positionFragments = array_slice($positionFragments, 0, 3);
+        $positionFragments = Helper::arraySortByTotalCharacterOccurrence($positionFragments, ' ');
 
-        usort($positionFragments, static function ($array1, $array2) {
-            return strlen($array2) - strlen($array1);
-        });
         return $positionFragments;
     }
 }

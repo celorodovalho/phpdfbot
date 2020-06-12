@@ -405,6 +405,6 @@ class TelegramChatMessages implements CollectorInterface
      */
     public function extractPosition($message): string
     {
-        return implode(' | ', ExtractorHelper::extractPosition($message));
+        return implode(', ', ExtractorHelper::extractPosition($message));
     }
 }

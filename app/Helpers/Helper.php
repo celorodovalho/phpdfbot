@@ -171,4 +171,53 @@ class Helper
         }
         return $description;
     }
+
+    public static function arraySortByLength($array): array
+    {
+        usort($array, static function ($array1, $array2) {
+            return strlen($array2) - strlen($array1);
+        });
+        return $array;
+    }
+
+    public static function arraySortByPredefinedList($array, $list): array
+    {
+        usort($array, function ($array1, $array2) use ($list) {
+            $pos_a = array_search($array1, $list);
+            $pos_b = array_search($array2, $list);
+            return $pos_a - $pos_b;
+        });
+        return $array;
+    }
+
+    public static function arraySortByPredefinedListStartsWith($array, $list): array
+    {
+        usort($array, static function ($arrItem1, $arrItem2) use ($list) {
+            $funcArraySearch = static function ($array, $keyword) {
+                foreach($array as $index => $string) {
+                    if (Str::startsWith(Str::lower($string), Str::lower($keyword))) {
+                        return (int)$index+1;
+                    }
+                }
+                return 0;
+            };
+
+            $posA = $funcArraySearch($list, $arrItem1);
+            $posB = $funcArraySearch($list, $arrItem2);
+
+            return $posB - $posA;
+        });
+
+        return $array;
+    }
+
+    public static function arraySortByTotalCharacterOccurrence($array, $char)
+    {
+        usort($array, function ($arrItem1, $arrItem2) use ($char) {
+            $lengthA = substr_count($arrItem1, $char);
+            $lengthB = substr_count($arrItem2, $char);
+            return $lengthB - $lengthA;
+        });
+        return $array;
+    }
 }

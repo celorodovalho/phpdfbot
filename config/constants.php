@@ -169,6 +169,9 @@ return [
             'Asa Sul',
             'Asa Norte',
             'Taguatinga',
+            //non-localized
+            'Remoto',
+            'Home-office',
         ],
         BrazilianStates::getKey('Goiás') => [
             'Goiânia',
