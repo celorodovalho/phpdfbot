@@ -226,12 +226,12 @@ class Helper
      * Validate the attribute is a valid JSON string.
      *
      * @param mixed $value
-     * @return bool|array|object
+     * @return bool|array
      */
     public static function decodeJson(string $value)
     {
         try {
-            return json_decode($value, false, 512, JSON_THROW_ON_ERROR);
+            return json_decode($value, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
             return false;
         }

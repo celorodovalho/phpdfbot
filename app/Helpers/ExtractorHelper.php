@@ -231,7 +231,7 @@ class ExtractorHelper
             'C#',
             '(Dot ?|\.)Net',
             'Node( ?js)?',
-            '\b(ux|ui|ios|t\.?i\.?|i\.?t\.?)\b',
+            '\b(ux|ui|ios|t\.?i\.?|i\.?t\.?|bi)\b',
         ];
         $fragment3 = [
             'J([uúÚ]nior|R\b)',
