@@ -93,19 +93,19 @@ class GMailMessages implements CollectorInterface
      * @return Collection
      * @throws AuthException
      * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function collectOpportunities(): Collection
     {
         $messages = $this->fetchMessages();
-        /** @var Mail $message */
-        foreach ($messages as $message) {
-            $this->createOpportunity($message);
-            $message->markAsRead();
-            $message->addLabel(self::LABEL_ENVIADO_PRO_BOT);
-            $message->removeLabel(self::LABEL_STILL_UNREAD);
-            $message->removeLabel('INBOX');
+        if (filled($messages)) {
+            /** @var Mail $message */
+            foreach ($messages as $message) {
+                $this->createOpportunity($message);
+                $message->markAsRead();
+                $message->addLabel(self::LABEL_ENVIADO_PRO_BOT);
+                $message->removeLabel(self::LABEL_STILL_UNREAD);
+                $message->removeLabel('INBOX');
+            }
         }
         return $this->opportunities;
     }
@@ -194,7 +194,6 @@ class GMailMessages implements CollectorInterface
      *
      * @return BaseCollection|iterable
      * @throws AuthException
-     * @throws Google_Exception
      */
     public function fetchMessages(): iterable
     {
@@ -221,10 +220,24 @@ class GMailMessages implements CollectorInterface
         $messageService->add($fromTo, 'q', false);
         $messageService->add('is:unread', 'q', false);
 
-        $messages = $messageService->preload()->all();
-        return $messages->reject(function (Mail $message) {
-            return in_array($this->gMailService->user(), $message->getFrom(), true);
-        });
+        try {
+            $messages = $messageService->preload()->all();
+            return $messages->reject(function (Mail $message) {
+                return in_array($this->gMailService->user(), $message->getFrom(), true);
+            });
+        } catch (Google_Exception $exception) {
+            $errorMessage = $exception->getMessage();
+            if ($errorMessage = Helper::decodeJson($errorMessage)) {
+                $errorMessage = $errorMessage['error']['message'];
+            }
+            $info = $this->output;
+            $info(sprintf(
+                '%s %s',
+                Emoji::crossMark(),
+                $errorMessage
+            ));
+            return [];
+        }
     }
 
     /**

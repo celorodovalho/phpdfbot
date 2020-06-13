@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
 use JD\Cloudder\CloudinaryWrapper;
+use JsonException;
 
 /**
  * Class Helper
@@ -182,7 +183,7 @@ class Helper
 
     public static function arraySortByPredefinedList($array, $list): array
     {
-        usort($array, function ($array1, $array2) use ($list) {
+        usort($array, static function ($array1, $array2) use ($list) {
             $pos_a = array_search($array1, $list);
             $pos_b = array_search($array2, $list);
             return $pos_a - $pos_b;
@@ -213,11 +214,26 @@ class Helper
 
     public static function arraySortByTotalCharacterOccurrence($array, $char)
     {
-        usort($array, function ($arrItem1, $arrItem2) use ($char) {
+        usort($array, static function ($arrItem1, $arrItem2) use ($char) {
             $lengthA = substr_count($arrItem1, $char);
             $lengthB = substr_count($arrItem2, $char);
             return $lengthB - $lengthA;
         });
         return $array;
+    }
+
+    /**
+     * Validate the attribute is a valid JSON string.
+     *
+     * @param mixed $value
+     * @return bool|array|object
+     */
+    public static function decodeJson(string $value)
+    {
+        try {
+            return json_decode($value, false, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $exception) {
+            return false;
+        }
     }
 }

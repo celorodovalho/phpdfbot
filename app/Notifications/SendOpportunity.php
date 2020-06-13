@@ -83,7 +83,7 @@ class SendOpportunity extends Notification
         $messageText = view('notifications.opportunity', [
             'opportunity' => $this->opportunity,
             'isEmail' => false,
-            'hasAuthor' => $group->admin && $this->opportunity->origin->search($botName)
+            'hasAuthor' => $group->admin && $this->opportunity->origin && $this->opportunity->origin->search($botName)
         ])->render();
 
         if (strlen($messageText) > BotHelper::TELEGRAM_LIMIT) {
