@@ -5,6 +5,7 @@ namespace App\Services\Collectors;
 use App\Contracts\Collector\CollectorInterface;
 use App\Contracts\Repositories\OpportunityRepository;
 use App\Helpers\ExtractorHelper;
+use App\Helpers\Helper;
 use App\Helpers\SanitizerHelper;
 use App\Models\Opportunity;
 use App\Validators\CollectedOpportunityValidator;
@@ -142,40 +143,45 @@ class ComoQueTaLaMessages implements CollectorInterface
     {
         $messages = [];
         $client = new Client();
-        $crawler = $client->request('GET', 'https://comoequetala.com.br/vagas-e-jobs');
-        $crawler->filter('.uk-list.uk-list-space > li')->each(static function (Crawler $node) use (&$messages) {
-            $client = new Client();
-            $pattern = '#(' . implode('|', Config::get('constants.requiredWords')) . ')#i';
-            if (preg_match_all($pattern, $node->text())) {
-                $data = $node->filter('[itemprop="datePosted"]')->attr('content');
-                $data = new Carbon($data);
-                $today = Carbon::now();
-                if ($data->format('Ymd') === $today->format('Ymd')) {
-                    $link = $node->filter('[itemprop="url"]')->attr('content');
-                    $subCrawler = $client->request('GET', $link);
-                    $title = $subCrawler->filter('[itemprop="title"],h3')->text();
-                    $description = [
-                        $subCrawler->filter('[itemprop="description"]')->count() ?
-                            $subCrawler->filter('[itemprop="description"]')->html() : '',
-                        $subCrawler->filter('.uk-container > .uk-grid-divider > .uk-width-1-1:last-child')->count()
-                            ? $subCrawler->filter('.uk-container > .uk-grid-divider > .uk-width-1-1:last-child')->html()
-                            : ''
-                    ];
-                    $company = $node->filter('[itemprop="name"]')->count()
-                        ? $node->filter('[itemprop="name"]')->text() : '';
-                    $location = trim($node->filter('[itemprop="addressLocality"]')->text()) . '/'
-                        . trim($node->filter('[itemprop="addressRegion"]')->text());
+        $baseUrl = 'https://comoequetala.com.br';
+        $crawler = $client->request(
+            'POST',
+            $baseUrl . '/index.php?option=com_vagasejobs&task=oportunidades.loadmore&format=json'
+        );
+        if ($client->getResponse()->getStatusCode() === 200
+            && $jsonContent = Helper::decodeJson($client->getResponse()->getContent())) {
+            $crawler->addContent($jsonContent['oportunidades']);
+            $crawler->filter('li')->each(static function (Crawler $node) use (&$messages, $baseUrl) {
+                $client = new Client();
+                $pattern = '#(' . implode('|', Config::get('constants.requiredWords')) . ')#i';
+                if (preg_match_all($pattern, $node->text())) {
+                    $data = $node->filter('div div div div div div p')->html();
+                    $data = explode("\r\n", trim($data));
+                    $data = str_replace('Data de publicação: ', '', reset($data));
+                    $data = Carbon::createFromFormat('d/m/y', $data);
+                    $today = Carbon::now();
+                    if ($data->format('Ymd') === $today->format('Ymd')) {
+                        $link = $baseUrl . $node->filter('a')->attr('href');
+                        $subCrawler = $client->request('GET', $link);
+                        $title = $subCrawler->filter('h1')->text();
+                        $description = [
+                            $subCrawler->filter('#cabecalho_vaga')->html(),
+                            $subCrawler->filter('#corpo_vaga')->html(),
+                        ];
+                        $company = $node->filter('[itemprop="name"]')->count()
+                            ? $node->filter('[itemprop="name"]')->text() : '';
 
-                    $messages[] = [
-                        Opportunity::TITLE => $title,
-                        Opportunity::DESCRIPTION => implode("\n\n", $description),
-                        Opportunity::COMPANY => trim($company),
-                        Opportunity::LOCATION => trim($location),
-                        Opportunity::URLS => trim($link),
-                    ];
+
+                        $messages[] = [
+                            Opportunity::TITLE => $title,
+                            Opportunity::DESCRIPTION => implode("\n\n", $description),
+                            Opportunity::COMPANY => trim($company),
+                            Opportunity::URLS => trim($link),
+                        ];
+                    }
                 }
-            }
-        });
+            });
+        }
         return $messages;
     }
 
