@@ -165,8 +165,10 @@ class ComoQueTaLaMessages implements CollectorInterface
                         $subCrawler = $client->request('GET', $link);
                         $title = $subCrawler->filter('h1')->text();
                         $description = [
-                            $subCrawler->filter('#cabecalho_vaga')->html(),
-                            $subCrawler->filter('#corpo_vaga')->html(),
+                            $subCrawler->filter('#cabecalho_vaga')->count() ?
+                                $subCrawler->filter('#cabecalho_vaga')->html() : null,
+                            $subCrawler->filter('#corpo_vaga')->count() ?
+                                $subCrawler->filter('#corpo_vaga')->html() : null,
                         ];
                         $company = $node->filter('[itemprop="name"]')->count()
                             ? $node->filter('[itemprop="name"]')->text() : '';
