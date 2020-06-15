@@ -11,6 +11,7 @@ use Exception;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Telegram\Bot\Api as Telegram;
 use Telegram\Bot\BotsManager;
@@ -97,9 +98,19 @@ class TelegramChannel
                     }
                     $chances = false;
                 } catch (TelegramResponseException $exception) {
-                    Handler::log($exception, 'SEND_MESSAGE', $params);
-                    unset($params['parse_mode']);
-                    $params['text'] = SanitizerHelper::removeMarkdown($params['text']);
+                    if (preg_match_all(
+                        '/Too Many Requests: retry after (\d+)/uim',
+                        $exception->getMessage(),
+                        $matches
+                    )) {
+                        $seconds = end($matches);
+                        $seconds = reset($seconds);
+                        sleep($seconds);
+                    } else {
+                        Handler::log($exception, 'SEND_MESSAGE', $params);
+                        unset($params['parse_mode']);
+                        $params['text'] = SanitizerHelper::removeMarkdown($params['text']);
+                    }
                 }
             }
         }
