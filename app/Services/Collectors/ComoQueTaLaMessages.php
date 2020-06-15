@@ -91,8 +91,8 @@ class ComoQueTaLaMessages implements CollectorInterface
             Opportunity::FILES => $this->extractFiles($title . $original),
             Opportunity::POSITION => $this->extractPosition($title . $description),
             Opportunity::COMPANY => $message[Opportunity::COMPANY],
-            Opportunity::LOCATION => $this->extractLocation($original . $message[Opportunity::LOCATION]),
-            Opportunity::TAGS => $this->extractTags($title . $original . $message[Opportunity::LOCATION]),
+            Opportunity::LOCATION => $this->extractLocation($original),
+            Opportunity::TAGS => $this->extractTags($title . $original),
             Opportunity::SALARY => '',
             Opportunity::URLS => $this->extractUrls($original . ' ' . $message[Opportunity::URLS]),
             Opportunity::ORIGIN => $this->extractOrigin($original),
@@ -105,7 +105,7 @@ class ComoQueTaLaMessages implements CollectorInterface
                 ->passesOrFail(ValidatorInterface::RULE_CREATE);
 
             /** @var Collection $hasOpportunities */
-            $hasOpportunities = $this->repository->scopeQuery(function ($query) {
+            $hasOpportunities = $this->repository->scopeQuery(static function ($query) {
                 return $query->withTrashed();
             })->findWhere([
                 Opportunity::TITLE => $message[Opportunity::TITLE],
@@ -117,6 +117,7 @@ class ComoQueTaLaMessages implements CollectorInterface
                 $opportunity = $this->repository->make($message);
             } else {
                 $opportunity = $hasOpportunities->first();
+                $opportunity->update($message);
                 $opportunity->restore();
             }
             $this->opportunities->add($opportunity);

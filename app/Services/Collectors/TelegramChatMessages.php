@@ -270,6 +270,7 @@ class TelegramChatMessages implements CollectorInterface
                 }
             } else {
                 $opportunity = $opportunities->first();
+                $opportunity->update($message);
                 $opportunity->restore();
             }
             $this->opportunities->add($opportunity);
