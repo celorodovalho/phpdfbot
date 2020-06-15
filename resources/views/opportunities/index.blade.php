@@ -10,11 +10,11 @@
             <div class="col mb-4 col-sm-3">
                 <div class="card h-100" title="{{$opportunity->created_at}}">
                     <div class="card-header">
-                        <h5 class="card-title">{{($opportunity->title)}}</h5>
+                        <h5 class="card-title">{{(ucwords($opportunity->position ?? $opportunity->title))}}</h5>
                     </div>
                     <div class="card-body">
-                        @if($opportunity->position)
-                            <h6 class="card-subtitle mb-2 text-muted">{{utf8_decode($opportunity->position)}}</h6>
+                        @if($opportunity->title)
+                            <h6 class="card-subtitle mb-2 text-muted">{{utf8_decode($opportunity->title)}}</h6>
                         @endif
                         @if(filled($opportunity->files))
                             @php($file = \Illuminate\Support\Arr::first(json_decode($opportunity->files)))
@@ -28,9 +28,10 @@
                             </div>
                         @endif
                         <small class="text-muted">
-                            @foreach(json_decode($opportunity->tags) as $tag)
+                            @forelse($opportunity->tags ?? [] as $tag)
                                 <a href="#" class="badge badge-primary">{{$tag}}</a>
-                            @endforeach
+                            @empty
+                            @endforelse
                         </small>
                     </div>
                     <div class="card-footer">
