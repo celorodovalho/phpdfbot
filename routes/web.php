@@ -44,6 +44,7 @@ Route::namespace('Web')
         Route::get('test', 'TestController@testCode');
         Route::get('notification', 'TestController@testNotification');
         Route::get('title', 'TestController@testTitle');
+        Route::get('madeline', 'TestController@testMadeline');
     });
 
 Route::namespace('Bot')

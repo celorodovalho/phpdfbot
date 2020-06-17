@@ -17,9 +17,9 @@ class Seeder0615GroupsTable extends Migration
         DB::table('groups')->insert([
             [
                 'name' => '@vagasticbr',
-                'main' => false,
+                'main' => true,
                 'admin' => false,
-                'type' => GroupTypes::CHANNEL,
+                'type' => GroupTypes::GROUP,
                 'tags' => json_encode([]),
             ],
         ]);

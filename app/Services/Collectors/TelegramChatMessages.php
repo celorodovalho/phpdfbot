@@ -138,6 +138,9 @@ class TelegramChatMessages implements CollectorInterface
             '@tivagasdev',
             '@vagas_tibr',
             '@timacae',
+            '@vagasticeara',
+            '@vagasticbr',
+            '-1481274775',
         ];
 
         $messages = $this->madeline->loop(function () use ($madeline, $groups) {

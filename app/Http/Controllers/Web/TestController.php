@@ -13,7 +13,9 @@ use App\Models\Group;
 use App\Models\Opportunity;
 use App\Notifications\GroupSummaryOpportunities;
 use App\Notifications\SendOpportunity;
+use App\Services\MadelineProtoService;
 use App\Validators\CollectedOpportunityValidator;
+use Carbon\Carbon;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -221,5 +223,42 @@ class TestController extends Controller
         })->paginate();
 
         return view('tests.title', compact('opportunities'));
+    }
+
+    public function testMadeline()
+    {
+        dump(65465);
+        /** @var \danog\MadelineProto\API $MadelineProto */
+        $MadelineProto = (new MadelineProtoService());
+
+//        $dialogs = $MadelineProto->getDialogs();
+//        foreach ($dialogs as $dialog) {
+//            $MadelineProto->logger($dialog);
+//        }
+////        $Peers = $MadelineProto->messages->getDialogs([
+////            'offset_date' => 0, //Carbon::now()->getTimestamp(),
+////            'offset_id' => 0,
+////            'limit' => 15,
+////            'offset_peer' => ['_' => 'inputPeerEmpty', ]
+////        ]);
+//
+//
+//        dump($dialogs);die;
+//
+        $MadelineProto->async(true);
+        $Peers = $MadelineProto->loop(static function () use ($MadelineProto) {
+            yield $MadelineProto->start();
+//            $Peers = $MadelineProto->channels->getGroupsForDiscussion();
+            $Peers = $MadelineProto->messages->getDialogs([
+                'offset_date' => Carbon::now()->getTimestamp(),
+                'offset_id' => 0,
+                'limit' => 150,
+            ]);
+//            $MadelineProto->logger($Peers);
+//            $MadelineProto->stop();
+            return $Peers;
+        });
+        $MadelineProto->stop();
+        dd($Peers);
     }
 }
