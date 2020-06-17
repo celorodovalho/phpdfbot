@@ -172,7 +172,7 @@ class ExtractorHelper
             'Tech[ -]?Lead'
         ];
         $fragment2 = [
-            'Automação',
+            'Automa(ção|tizador)',
             'Operações',
             'Segurança',
             'Sysadmin',
