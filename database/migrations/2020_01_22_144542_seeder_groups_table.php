@@ -23,7 +23,7 @@ class SeederGroupsTable extends Migration
                 'tags' => json_encode([]),
             ],
             [
-                'name' => '@VagasBrasil_TI',
+                'name' => '@VagasBRTI',
                 'main' => true,
                 'admin' => false,
                 'type' => GroupTypes::CHANNEL,

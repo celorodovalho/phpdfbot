@@ -199,7 +199,7 @@ class TestController extends Controller
 //            return $query->whereDoesntHave('notification', function ($query) {
 //                return $query->where([
 //                    ['type', '=', \App\Notifications\SendOpportunity::class],
-//                    ['data', 'LIKE', '%VagasBrasil_TI%'],
+//                    ['data', 'LIKE', '%VagasBRTI%'],
 //                ]);
 //            });
 //        })->findWhere([
@@ -219,7 +219,7 @@ class TestController extends Controller
     public function testTitle()
     {
         $opportunities = $this->repository->scopeQuery(static function ($query) {
-            return $query->withTrashed();
+            return $query->withTrashed()->orderBy('updated_at', 'desc');
         })->paginate();
 
         return view('tests.title', compact('opportunities'));

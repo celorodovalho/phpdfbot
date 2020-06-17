@@ -110,7 +110,7 @@ class OpportunityController extends Controller
 
             $response = [
                 'message' => 'Enviada com sucesso! '
-                    . 'A oportunidade sera publicada no canal https://t.me/VagasBrasil_TI assim que aprovada.',
+                    . 'A oportunidade sera publicada no canal https://t.me/VagasBRTI assim que aprovada.',
                 'data' => $opportunity->toArray(),
             ];
 

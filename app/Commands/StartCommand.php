@@ -58,7 +58,7 @@ class StartCommand extends Command
 //                ]),
 //                Keyboard::inlineButton([
 //                    'text' => 'Vagas de TI',
-//                    'url' => 'https://t.me/VagasBrasil_TI'
+//                    'url' => 'https://t.me/VagasBRTI'
 //                ])
 //            );
 

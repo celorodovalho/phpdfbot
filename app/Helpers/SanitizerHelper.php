@@ -117,7 +117,7 @@ class SanitizerHelper
             $title
         );
         $title = trim($title, '[]{}()');
-        $title = str_replace(["\n", '[', '{', '}', '(', ')'], '', $title);
+        $title = str_replace(["\n", '(a)', '[', '{', '}', '(', ')'], '', $title);
         $title = str_replace([']'], ' -', $title);
         $title = self::removeMarkdown($title);
 

@@ -28,12 +28,12 @@ class SeederConfigTable extends Migration
        ❌🔞 Pornografia
 3️⃣ Antes de postar, releia e analise se o conteúdo:
        📌 Não ofende algum dos membros do grupo;
-       📌 Tem relevância e interesse para o trabalho da grupo; 
+       📌 Tem relevância e interesse para o trabalho da grupo;
        📌 Se o conteúdo tem procedência, só poste se você pode defender a autenticidade do assunto, consulte fontes seguras;
        📌 Seja propositivo, não faça críticas desnecessárias;
        📌 Se precisar chamar a atenção de alguém, faça com mensagens privadas, direto para os responsáveis.
 4️⃣ Visite nossos canais:
-       📌 Canal de vagas: @VagasBrasil_TI
+       📌 Canal de vagas: @VagasBRTI
        📌 Whatsapp (Official): http://bit.ly/phpdf-official
        📌 Whatsapp (Off-Topic): http://bit.ly/phpdf-offtopic"
                 ]

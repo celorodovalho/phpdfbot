@@ -186,7 +186,7 @@ class ExtractorHelper
             'Monitoramento',
             'Produção',
             'Sistemas',
-            'Teste',
+            'Teste(s)?',
             'Redes',
             'Back[ -]?end',
             'Big[ -]?data',
@@ -228,6 +228,10 @@ class ExtractorHelper
             '(Dot ?|\.)Net',
             'Node( ?js)?',
             '\b(ux|ui|ios|t\.?i\.?|i\.?t\.?|bi|sas|ba|itil|abap|sap|web|bpm|qa)\b',
+            'Salesforce',
+            'Mainframe',
+            'Linux',
+            'Weblogic',
         ];
         $fragment3 = [
             'J([uúÚ]nior|R\b)',
@@ -245,8 +249,9 @@ class ExtractorHelper
 
         $positionFragments = Helper::arraySortByTotalCharacterOccurrence($positionFragments, ' ');
         $positionFragments = Helper::arraySortByPredefinedListStartsWith($positionFragments, $roles);
-        $positionFragments = array_slice($positionFragments, 0, 3);
         $positionFragments = Helper::arraySortByTotalCharacterOccurrence($positionFragments, ' ');
+        $positionFragments = array_slice($positionFragments, 0, 4);
+//        $positionFragments = Helper::arraySortByPredefinedListStartsWith($positionFragments, $roles);
 
         return $positionFragments;
     }
