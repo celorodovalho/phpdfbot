@@ -98,18 +98,28 @@ class TelegramChannel
                     }
                     $chances = false;
                 } catch (TelegramResponseException $exception) {
-                    if (preg_match_all(
-                        '/Too Many Requests: retry after (\d+)/uim',
-                        $exception->getMessage(),
-                        $matches
-                    )) {
-                        $seconds = end($matches);
-                        $seconds = reset($seconds);
-                        sleep($seconds);
-                    } else {
-                        Handler::log($exception, 'SEND_MESSAGE', $params);
-                        unset($params['parse_mode']);
-                        $params['text'] = SanitizerHelper::removeMarkdown($params['text']);
+                    switch (true) {
+                        case preg_match_all(
+                            '/Too Many Requests: retry after (\d+)/uim',
+                            $exception->getMessage(),
+                            $matches
+                        ):
+                            $seconds = end($matches);
+                            $seconds = reset($seconds);
+                            sleep($seconds);
+                            break;
+                        case $exception->getMessage() === 'Bad Request: reply message not found':
+                            $messages->forget($messages->keys()->first());
+                            break;
+                        default:
+                            Handler::log($exception, 'SEND_MESSAGE', $params);
+                            unset($params['parse_mode']);
+                            $params['text'] = SanitizerHelper::removeMarkdown($params['text']);
+                            if (is_array($body)) {
+                                foreach ($body as $key => $text) {
+                                    $body[$key] = SanitizerHelper::removeMarkdown($text);
+                                }
+                            }
                     }
                 }
             }

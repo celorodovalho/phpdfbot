@@ -289,7 +289,7 @@ class CommandsHandler
                 })->first();
             }
             if (filled($document)) {
-                $files[] = $document->first();
+                $files[] = $document;
             }
 
             $files = BotHelper::getFiles($files);
