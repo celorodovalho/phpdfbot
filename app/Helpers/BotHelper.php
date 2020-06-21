@@ -74,7 +74,7 @@ class BotHelper
         if (filled($files)) {
             /** @var PhotoSize $file */
             foreach ($files as $file) {
-                /** @var \Telegram\Bot\Objects\File $file */
+                /** @var \Telegram\Bot\Objects\File|\Telegram\Bot\Objects\Document $file */
                 $file = Telegram::getFile($file);
                 $url = str_replace('/bot', '/file/bot', TelegramClient::BASE_BOT_URL);
                 $url .= env('TELEGRAM_BOT_TOKEN') . '/' . $file['file_path'];
