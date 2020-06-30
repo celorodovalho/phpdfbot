@@ -78,7 +78,7 @@ class TelegramChannel
 
         if ($message instanceof TelegramMessage) {
             $body = $params['text'];
-            $chances = true;
+            $chances = 5;
             while ($chances) {
                 try {
                     if (is_array($body)) {
@@ -98,6 +98,7 @@ class TelegramChannel
                     }
                     $chances = false;
                 } catch (TelegramResponseException $exception) {
+                    Handler::log($exception, "SEND_MESSAGE $chances", $params);
                     switch (true) {
                         case preg_match_all(
                             '/Too Many Requests: retry after (\d+)/uim',
@@ -112,7 +113,6 @@ class TelegramChannel
                             $messages->forget($messages->keys()->first());
                             break;
                         default:
-                            Handler::log($exception, 'SEND_MESSAGE', $params);
                             unset($params['parse_mode']);
                             $params['text'] = SanitizerHelper::removeMarkdown($params['text']);
                             if (is_array($body)) {
@@ -121,6 +121,7 @@ class TelegramChannel
                                 }
                             }
                     }
+                    $chances--;
                 }
             }
         }
