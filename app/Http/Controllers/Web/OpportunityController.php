@@ -161,14 +161,14 @@ class OpportunityController extends Controller
         $texts = $request->get('text');
         $group = Group::where('admin', true)->first();
 
-        $texts = explode(
-            '%%%%%%%',
-            wordwrap(
-                $texts,
-                BotHelper::TELEGRAM_LIMIT,
-                '%%%%%%%'
-            )
-        );
+//        $texts = explode(
+//            '%%%%%%%',
+//            wordwrap(
+//                $texts,
+//                BotHelper::TELEGRAM_LIMIT,
+//                '%%%%%%%'
+//            )
+//        );
 
 //        foreach ($texts as $text) {
             $this->telegram->sendMessage([
