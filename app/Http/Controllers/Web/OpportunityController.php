@@ -170,11 +170,11 @@ class OpportunityController extends Controller
             )
         );
 
-        foreach ($texts as $text) {
+//        foreach ($texts as $text) {
             $this->telegram->sendMessage([
                 'chat_id' => $group->name,
-                'text' => $text
+                'text' => $texts
             ]);
-        }
+//        }
     }
 }
