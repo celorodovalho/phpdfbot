@@ -145,11 +145,14 @@ class CommandsHandler
         switch ($data[0]) {
             case Callbacks::APPROVE:
                 if ($opportunity) {
+                    Log::info('APPROVE', [$callbackQuery]);
+                    Log::info('APPROVE', [$callbackQuery->toJson()]);
                     Artisan::call(
                         'process:messages',
                         [
                             '--type' => Arguments::SEND,
-                            '--opportunity' => $opportunity->id
+                            '--opportunity' => $opportunity->id,
+                            '--user' => $callbackQuery->toJson()
                         ]
                     );
                     $this->sendMessage(Artisan::output());

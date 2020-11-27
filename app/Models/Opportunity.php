@@ -28,6 +28,7 @@ use Prettus\Repository\Traits\TransformableTrait;
  * @property int        $telegram_id
  * @property int        $status
  * @property int        $telegram_user_id
+ * @property string     $approver
  * @property Collection $files
  * @property Collection $urls
  * @property Collection $origin
@@ -59,6 +60,7 @@ class Opportunity extends Model implements Transformable
     public const TELEGRAM_ID = 'telegram_id';
     public const STATUS = 'status';
     public const TELEGRAM_USER_ID = 'telegram_user_id';
+    public const APPROVER = 'approver';
 
     /**
      * @var array
@@ -79,6 +81,7 @@ class Opportunity extends Model implements Transformable
         self::ORIGIN,
         self::TAGS,
         self::EMAILS,
+        self::APPROVER,
     ];
 
     /**

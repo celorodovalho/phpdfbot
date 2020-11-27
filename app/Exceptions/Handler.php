@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Enums\GroupTypes;
 use App\Models\Group;
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
@@ -119,7 +120,7 @@ class Handler extends ExceptionHandler
             );
 
             /** @todo remover isso */
-            $group = Group::where('admin', true)->first();
+            $group = Group::where('type', GroupTypes::LOG)->first();
 
             Telegram::sendMessage([
                 'chat_id' => $group->name,

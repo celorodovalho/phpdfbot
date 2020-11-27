@@ -10,6 +10,7 @@ use BenSampo\Enum\Enum;
  * @method static static GROUP()
  * @method static static MAILING()
  * @method static static GITHUB()
+ * @method static static LOG()
  * @author Marcelo Rodovalho <rodovalhomf@gmail.com>
  */
 final class GroupTypes extends Enum
@@ -18,4 +19,5 @@ final class GroupTypes extends Enum
     public const GROUP    = 2;
     public const MAILING  = 3;
     public const GITHUB   = 4;
+    public const LOG      = 5;
 }
