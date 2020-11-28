@@ -45,7 +45,7 @@ class ProcessMessages extends Command
      *
      * @var string
      */
-    protected $signature = 'process:messages {--type=process} {--opportunity=} {--collectors=*} {--user=*}';
+    protected $signature = 'process:messages {--type=process} {--opportunity=} {--collectors=*}';
 
     /**
      * The console command description.

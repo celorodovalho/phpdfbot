@@ -15,6 +15,7 @@ use App\Models\Group;
 use App\Models\Opportunity;
 use App\Validators\CollectedOpportunityValidator;
 use Exception;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -138,21 +139,21 @@ class CommandsHandler
     {
         $data = $callbackQuery->get('data');
         $data = explode(' ', $data);
+
+        /** @var Opportunity $opportunity */
         $opportunity = null;
         if (is_numeric($data[1])) {
             $opportunity = $this->repository->find($data[1]);
         }
+
         switch ($data[0]) {
             case Callbacks::APPROVE:
                 if ($opportunity) {
-                    Log::info('APPROVE', [$callbackQuery]);
-                    Log::info('APPROVE', [$callbackQuery->toJson()]);
                     Artisan::call(
                         'process:messages',
                         [
                             '--type' => Arguments::SEND,
                             '--opportunity' => $opportunity->id,
-                            '--user' => $callbackQuery->toJson()
                         ]
                     );
                     $this->sendMessage(Artisan::output());
@@ -161,17 +162,6 @@ class CommandsHandler
             case Callbacks::REMOVE:
                 if ($opportunity) {
                     $opportunity->delete();
-                    $group = Group::where('admin', true)->first();
-                    $this->telegram->editMessageText([
-                        'chat_id' => $group->name,
-                        'message_id' => $callbackQuery->message->messageId,
-                        'text' => sprintf(
-                            'Mensagem rejeitada: %s',
-                            $opportunity->id
-                        ),
-                        'reply_markup' => '',
-                    ]);
-                    return;
                 }
                 break;
             case Callbacks::OPTIONS:
@@ -186,47 +176,51 @@ class CommandsHandler
                 break;
         }
 
-        /** @todo remover isso */
-        $group = Group::where('admin', true)->first();
-        $groupId = $group->name;
-        $messageId = $callbackQuery->message->messageId;
-        try {
-            $this->telegram->deleteMessage([
-                'chat_id' => $groupId,
-                'message_id' => $messageId
-            ]);
-        } catch (TelegramResponseException $exception) {
-            /**
-             * A message can only be deleted if it was sent less than 48 hours ago.
-             * Bots can delete outgoing messages in groups and supergroups.
-             * Bots granted can_post_messages permissions can delete outgoing messages in channels.
-             * If the bot is an administrator of a group, it can delete any message there.
-             * If the bot has can_delete_messages permission in a supergroup or a channel,
-             * it can delete any message there. Returns True on success.
-             */
-            if ($exception->getCode() === 400) {
-                try {
-                    /** @var \danog\MadelineProto\API $madeline */
-                    $madeline = (new MadelineProtoService());
-                    $madeline->async(true);
-                    $madeline->loop(static function () use ($madeline, $groupId, $messageId) {
-                        yield $madeline->start();
-                        $messages = $madeline->channels->deleteMessages(['channel' => $groupId, 'id' => [$messageId], ]);
-                        yield $madeline->stop();
-                        return $messages;
-                    });
-                    $madeline->stop();
-                } catch (Exception $madelineException) {
-                    Log::info(TelegramResponseException::class, [
-                        'DATA' => $data,
-                        'TELEGRAM_EXCEPTION' => $exception,
-                        'MADELINE_EXCEPTION' => $madelineException,
-                        'CALLBACK_MESSAGE' => $callbackQuery->message
-                    ]);
-                }
-                return;
+        if ($opportunity && in_array($data[0], [Callbacks::APPROVE, Callbacks::REMOVE], true)) {
+            $opportunity->approver = $callbackQuery->from->toJson();
+            $opportunity->update();
+
+            /** @var Group $mainGroup */
+            $mainGroup = Group::where('main', true)->first();
+
+            /** @var Notification $notification */
+            $notification = $mainGroup->notifications()
+                ->where('data', 'like', '%"opportunity":' . $opportunity->id . '%')->first();
+
+            $telegramId = $opportunity->id;
+            if ($notification) {
+                $telegramId = reset($notification->data['telegram_ids']);
             }
-            throw $exception;
+
+            $approver = $callbackQuery->from->id;
+            if ($callbackQuery->from->has('username')) {
+                $approver = "@$callbackQuery->from->username";
+            } elseif ($callbackQuery->from->has('firstName')) {
+                $approver = sprintf(
+                    '[%s](tg://user?id=%s)',
+                    SanitizerHelper::escapeMarkdown($callbackQuery->from->firstName),
+                    $callbackQuery->from->id
+                );
+            }
+
+            $notifyText = sprintf(
+                'Mensagem "%s" %s por %s',
+                $data[0] === Callbacks::APPROVE ?
+                    sprintf('https://t.me/%s/%s', $mainGroup->title, $telegramId) :
+                    $telegramId,
+                $data[0] === Callbacks::APPROVE ? 'aprovada' : 'rejeitada',
+                $approver
+            );
+
+            /** @var Group $adminGroup */
+            $adminGroup = Group::where('admin', true)->first();
+
+            $this->telegram->editMessageText([
+                'chat_id' => $adminGroup->title,
+                'message_id' => $callbackQuery->message->messageId,
+                'text' => $notifyText,
+                'reply_markup' => '',
+            ]);
         }
     }
 
@@ -252,16 +246,6 @@ class CommandsHandler
         $newMembers = $message->newChatMembers;
 
         $text = $message->text ?: $caption;
-
-        Log::info('PROCESS_MESSAGE', [
-            'MESSAGE' => $message,
-            'TEXT' => $message->text,
-            'REPLY' => $reply,
-            'PHOTOS' => $photos,
-            'DOCUMENT' => $document,
-            'CAPTION' => $caption,
-            'NEW_MEMBERS' => $newMembers,
-        ]);
 
         if ($message->chat->type === BotHelper::TG_CHAT_TYPE_PRIVATE) {
             $telegramUser = $message->from;
@@ -323,7 +307,7 @@ class CommandsHandler
                 $from = $message->forwardFrom;
             } elseif ($message->has('from')) {
                 $from = $message->from;
-                $sender = $from->username ?: $from->firstName;
+                $sender = $from->username ?? $from->firstName;
             }
 
             if ($from) {
@@ -465,6 +449,53 @@ class CommandsHandler
             }
 
             $this->telegram->sendMessage($param);
+        }
+    }
+
+    /**
+     * @param $groupId
+     * @param $messageId
+     * @throws TelegramResponseException
+     * @throws TelegramSDKException
+     */
+    private function removeMessage($groupId, $messageId)
+    {
+        try {
+            $this->telegram->deleteMessage([
+                'chat_id' => $groupId,
+                'message_id' => $messageId
+            ]);
+        } catch (TelegramResponseException $exception) {
+            /**
+             * A message can only be deleted if it was sent less than 48 hours ago.
+             * Bots can delete outgoing messages in groups and supergroups.
+             * Bots granted can_post_messages permissions can delete outgoing messages in channels.
+             * If the bot is an administrator of a group, it can delete any message there.
+             * If the bot has can_delete_messages permission in a supergroup or a channel,
+             * it can delete any message there. Returns True on success.
+             */
+            if ($exception->getCode() === 400) {
+                try {
+                    /** @var \danog\MadelineProto\API $madeline */
+                    $madeline = (new MadelineProtoService());
+                    $madeline->async(true);
+                    $madeline->loop(static function () use ($madeline, $groupId, $messageId) {
+                        yield $madeline->start();
+                        $messages = $madeline->channels->deleteMessages(['channel' => $groupId, 'id' => [$messageId], ]);
+                        yield $madeline->stop();
+                        return $messages;
+                    });
+                    $madeline->stop();
+                } catch (Exception $madelineException) {
+                    Log::info(TelegramResponseException::class, [
+                        'TELEGRAM_EXCEPTION' => $exception,
+                        'MADELINE_EXCEPTION' => $madelineException,
+                        'CALLBACK_MESSAGE' => $messageId
+                    ]);
+                }
+                return;
+            }
+            throw $exception;
         }
     }
 }
