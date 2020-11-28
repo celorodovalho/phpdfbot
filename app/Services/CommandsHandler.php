@@ -144,6 +144,8 @@ class CommandsHandler
         $opportunity = null;
         if (is_numeric($data[1])) {
             $opportunity = $this->repository->find($data[1]);
+            $opportunity->approver = $callbackQuery->from->toJson();
+            $opportunity->update();
         }
 
         switch ($data[0]) {
@@ -177,9 +179,6 @@ class CommandsHandler
         }
 
         if ($opportunity && in_array($data[0], [Callbacks::APPROVE, Callbacks::REMOVE], true)) {
-            $opportunity->approver = $callbackQuery->from->toJson();
-            $opportunity->update();
-
             /** @var Group $mainGroup */
             $mainGroup = Group::where('main', true)->first();
 
