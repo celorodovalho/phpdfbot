@@ -193,7 +193,7 @@ class CommandsHandler
             $telegramId = null;
             if (filled($notification) && $notification->data) {
                 Log::info('NOTIFICATION_EXISTS', [$notification, $telegramId]);
-                Log::info('NOTIFICATION_DATA_TYPE', gettype($notification->data));
+                Log::info('NOTIFICATION_DATA_TYPE', [gettype($notification->data)]);
                 $telegramId = reset($notification->data['telegram_ids']);
             }
 
