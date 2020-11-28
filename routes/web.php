@@ -38,6 +38,7 @@ Route::namespace('Web')
 //        Route::get('opportunity/{opportunity}/show', 'OpportunityController@show')->name('opportunity.show');
 //        Route::get('opportunity/create', 'OpportunityController@create')->name('opportunity.create');
 //        Route::post('opportunity', 'OpportunityController@store')->name('opportunity.store');
+        Route::get('opportunity/{opportunity}/rejected', 'OpportunityController@rejected')->name('opportunity.rejected');
 
         Route::post('send', 'OpportunityController@sendMessage');
         Route::get('valid', 'TestController@testValidation');

@@ -73,6 +73,17 @@ class OpportunityController extends Controller
     }
 
     /**
+     * @param Opportunity $opportunity
+     *
+     * @return Factory|View
+     */
+    public function rejected($opportunity)
+    {
+        $opportunity = Opportunity::withTrashed()->find($opportunity);
+        return view('opportunities.show', compact('opportunity'));
+    }
+
+    /**
      * @return Factory|View
      */
     public function create()

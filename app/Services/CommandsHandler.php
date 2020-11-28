@@ -16,6 +16,7 @@ use App\Models\Opportunity;
 use App\Validators\CollectedOpportunityValidator;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
@@ -183,9 +184,9 @@ class CommandsHandler
             /** @var Group $mainGroup */
             $mainGroup = Group::where('main', true)->first();
 
-            /** @var Notification|Model $notification */
-            $notification = $opportunity->notifications()
-                ->where('notifiable_id', '=', $mainGroup->id)
+            /** @var DatabaseNotification|Notification $notification */
+            $notification = DatabaseNotification::where('model_id', $opportunity->id)
+                ->where('notifiable_id', $mainGroup->id)
                 ->orderBy('created_at', 'desc')
                 ->first();
 
@@ -210,7 +211,7 @@ class CommandsHandler
                 'Mensagem "%s" %s por %s',
                 $data[0] === Callbacks::APPROVE && $telegramId ?
                     sprintf('https://t.me/%s/%s', $mainGroup->title, $telegramId) :
-                    route('opportunity.show', ['opportunity' => $opportunity->id]),
+                    route('opportunity.rejected', ['opportunity' => $opportunity->id]),
                 $data[0] === Callbacks::APPROVE ? 'aprovada' : 'rejeitada',
                 $approver
             );
