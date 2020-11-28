@@ -14,6 +14,7 @@ use Prettus\Repository\Traits\TransformableTrait;
 /**
  * Class Groups.
  *
+ * @property int        $id
  * @property string     $name
  * @property string     $title
  * @property boolean    $main

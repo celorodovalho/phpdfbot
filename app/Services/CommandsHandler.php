@@ -184,11 +184,12 @@ class CommandsHandler
             $mainGroup = Group::where('main', true)->first();
 
             /** @var Notification $notification */
-            $notification = $mainGroup->notifications()
-                ->where('data', 'like', '%"opportunity":' . $opportunity->id . '%')->first();
+            $notification = $opportunity->notifications()
+                ->where('notifiable_id', '=', $mainGroup->id)->first();
 
             $telegramId = $opportunity->id;
             if (filled($notification) && filled($notification->data)) {
+                Log::info('NOTIF', [$notification->data]);
                 $telegramId = reset($notification->data['telegram_ids']);
             }
 
