@@ -188,7 +188,7 @@ class CommandsHandler
                 ->where('data', 'like', '%"opportunity":' . $opportunity->id . '%')->first();
 
             $telegramId = $opportunity->id;
-            if ($notification) {
+            if (filled($notification) && filled($notification->data)) {
                 $telegramId = reset($notification->data['telegram_ids']);
             }
 
