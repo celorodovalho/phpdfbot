@@ -191,10 +191,9 @@ class CommandsHandler
                 ->first();
 
             $telegramId = null;
-            if (filled($notification) && $notification->data) {
-                Log::info('NOTIFICATION_EXISTS', [$notification, $telegramId]);
-                Log::info('NOTIFICATION_DATA_TYPE', [gettype($notification->data)]);
-                $telegramId = reset($notification->data['telegram_ids']);
+            if (filled($notification) && $notification->data && $notificationData = $notification->data) {
+                $telegramId = reset($notificationData['telegram_ids']);
+                Log::info('NOTIFICATION_TELEGRAM_IDS', [$notificationData, $telegramId]);
             }
 
             $approver = $callbackQuery->from->id;
