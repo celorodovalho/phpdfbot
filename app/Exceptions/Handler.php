@@ -99,7 +99,7 @@ class Handler extends ExceptionHandler
     {
         try {
             $logMessage = [
-                'ERROR_MSG' => $exception->getMessage(),
+                'EXCEPTION' => $exception->getMessage(),
                 'CONTEXT' => $context,
                 'FILE' => $exception->getFile(),
                 'LINE' => $exception->getLine(),
@@ -111,27 +111,21 @@ class Handler extends ExceptionHandler
             Log::error('ERROR_LOG', $logMessage);
 
             $issueBody = sprintf(
-                "⚠️\nMessage:\n%s\n\n" .
-                "File/Line:\n%s\n\n".
-                "Code:\n%s",
-                $exception->getMessage(),
-                $exception->getFile() . '::' . $exception->getLine(),
-                $exception->getCode()
+                "⚠️: %s\n\n" .
+                "📑: %s\n\n",
+                get_class($exception),
+                $exception->getMessage()
             );
 
             /** @todo remover isso */
             $group = Group::where('type', GroupTypes::LOG)->first();
 
-            Telegram::sendMessage([
-                'chat_id' => $group->name,
-                'text' => $issueBody,
-            ]);
-
             Telegram::sendDocument([
                 'chat_id' => $group->name,
+                'caption' => substr($issueBody, 0, 200),
                 'document' => InputFile::createFromContents(
-                    $exception->getTraceAsString(),
-                    $exception->getMessage() . ' - ' . time() . '.txt'
+                    json_encode($logMessage),
+                    $exception->getMessage() . ' - ' . time() . '.log'
                 ),
             ]);
         } catch (Exception $exception) {

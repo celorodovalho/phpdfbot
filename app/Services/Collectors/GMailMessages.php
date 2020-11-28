@@ -229,7 +229,7 @@ class GMailMessages implements CollectorInterface
         } catch (Google_Exception $exception) {
             $errorMessage = $exception->getMessage();
             if ($errorMessage = Helper::decodeJson($errorMessage)) {
-                $errorMessage = $errorMessage['error']['message'];
+                $errorMessage = $errorMessage['error']['message'] ?? $errorMessage['error'];
             }
             $info = $this->output;
             $info(sprintf(
