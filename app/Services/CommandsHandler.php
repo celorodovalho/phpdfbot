@@ -189,13 +189,12 @@ class CommandsHandler
 
             $telegramId = $opportunity->id;
             if (filled($notification) && filled($notification->data)) {
-                Log::info('NOTIF', [$notification->data]);
                 $telegramId = reset($notification->data['telegram_ids']);
             }
 
             $approver = $callbackQuery->from->id;
             if ($callbackQuery->from->has('username')) {
-                $approver = "@$callbackQuery->from->username";
+                $approver = '@'.$callbackQuery->from->username;
             } elseif ($callbackQuery->from->has('firstName')) {
                 $approver = sprintf(
                     '[%s](tg://user?id=%s)',
