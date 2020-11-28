@@ -23,7 +23,7 @@ class DeniedWordsCommand extends Command
      * @var string Command Description
      */
     protected $description =
-        'Lista todas as palavras proibidas, nenhuma delas estar presente no texto.';
+        'Lista todas as palavras proibidas, nenhuma delas pode estar presente no texto.';
 
     /**
      * @inheritdoc
@@ -36,7 +36,7 @@ class DeniedWordsCommand extends Command
 
         $this->replyWithMessage([
             'parse_mode' => BotHelper::PARSE_MARKDOWN,
-            'text' => "Palavras proibidas:\r\n—" . implode("\r\n— ", $words)
+            'text' => "Palavras proibidas:\r\n— " . implode("\r\n— ", $words)
         ]);
     }
 }

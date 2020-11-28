@@ -36,7 +36,7 @@ class RequiredWordsCommand extends Command
 
         $this->replyWithMessage([
             'parse_mode' => BotHelper::PARSE_MARKDOWN,
-            'text' => "Palavras obrigatórias:\r\n—" . implode("\r\n— ", $words)
+            'text' => "Palavras obrigatórias:\r\n— " . implode("\r\n— ", $words)
         ]);
     }
 }
