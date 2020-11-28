@@ -19,7 +19,7 @@ class StartCommand extends Command
     protected $name = 'start';
 
     /** @var string Command Description */
-    protected $description = 'Start Command to get you started';
+    protected $description = 'Para inicializar o Bot';
 
     /** @var UserRepository */
     private $userRepository;

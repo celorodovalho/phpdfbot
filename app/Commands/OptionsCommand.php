@@ -26,7 +26,7 @@ class OptionsCommand extends Command
     /**
      * @var string Command Description
      */
-    protected $description = 'Show the options for this bot';
+    protected $description = 'Comando administrativo';
 
     /**
      * @inheritdoc

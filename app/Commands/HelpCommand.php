@@ -25,7 +25,7 @@ class HelpCommand extends Command
     /**
      * @var string Command Description
      */
-    protected $description = 'Help command, Get a list of commands';
+    protected $description = 'Comando de ajuda, mostra uma lista de todos os comandos';
 
     /**
      * {@inheritdoc}
@@ -42,6 +42,8 @@ class HelpCommand extends Command
 
         $this->replyWithMessage(compact('text'));
 
-        $this->replyWithMessage('Caso ainda precise de ajuda, entre em contato com @se45ky');
+        $this->replyWithMessage([
+            'text' => 'Caso ainda precise de ajuda, entre em contato com @se45ky'
+        ]);
     }
 }
