@@ -32,11 +32,11 @@ class DeniedWordsCommand extends Command
     {
         $this->replyWithChatAction(['action' => Actions::TYPING]);
 
-        $words = Config::get('constants.requiredWords');
+        $words = Config::get('constants.deniedWords');
 
         $this->replyWithMessage([
             'parse_mode' => BotHelper::PARSE_MARKDOWN,
-            'text' => "Palavras obrigatórias:\r\n" . implode("\r\n— ", $words)
+            'text' => "Palavras proibidas:\r\n—" . implode("\r\n— ", $words)
         ]);
     }
 }
