@@ -140,8 +140,10 @@ class TelegramChatMessages implements CollectorInterface
             '@timacae',
             '@vagasticeara',
             '@vagasticbr',
-            '-1481274775',
+            '-1481274775', //-1001481274775
             '-444960845',
+            '@ITJOBS_EMPREGOSTI',
+            '@vagas_consultoria_TI',
         ];
 
         $messages = $this->madeline->loop(function () use ($madeline, $groups) {
