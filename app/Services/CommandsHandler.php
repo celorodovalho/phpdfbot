@@ -15,6 +15,7 @@ use App\Models\Group;
 use App\Models\Opportunity;
 use App\Validators\CollectedOpportunityValidator;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
@@ -182,13 +183,16 @@ class CommandsHandler
             /** @var Group $mainGroup */
             $mainGroup = Group::where('main', true)->first();
 
-            /** @var Notification $notification */
+            /** @var Notification|Model $notification */
             $notification = $opportunity->notifications()
-                ->where('notifiable_id', '=', $mainGroup->id)->first();
+                ->where('notifiable_id', '=', $mainGroup->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
 
-            $telegramId = $opportunity->id;
-            if (filled($notification) && filled($notification->data)) {
+            $telegramId = null;
+            if (filled($notification) && $notification->data) {
                 $telegramId = reset($notification->data['telegram_ids']);
+                Log::info('NOTIFICATION_EXISTS', [$notification, $telegramId]);
             }
 
             $approver = $callbackQuery->from->id;
@@ -204,9 +208,9 @@ class CommandsHandler
 
             $notifyText = sprintf(
                 'Mensagem "%s" %s por %s',
-                $data[0] === Callbacks::APPROVE ?
+                $data[0] === Callbacks::APPROVE && $telegramId ?
                     sprintf('https://t.me/%s/%s', $mainGroup->title, $telegramId) :
-                    $telegramId,
+                    route('opportunity.show', ['opportunity' => $opportunity->id]),
                 $data[0] === Callbacks::APPROVE ? 'aprovada' : 'rejeitada',
                 $approver
             );
