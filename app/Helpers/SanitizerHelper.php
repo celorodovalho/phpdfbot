@@ -169,7 +169,8 @@ class SanitizerHelper
                 '[Profissão Futuro]',
                 'Se cadastre em nosso portal',
                 'At.te,',
-                'Já se cadastrou em nosso portal'
+                'Já se cadastrou em nosso portal',
+                'Encontre vagas em nosso portal',
             ];
 
             $delimitersBegin = [

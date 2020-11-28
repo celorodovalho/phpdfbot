@@ -118,8 +118,8 @@ return [
     'url'                  => 'O campo :attribute tem um formato inválido.',
     'uuid' => 'O campo :attribute deve ser um UUID válido.',
 
-    'not_contains' => 'O :attribute não contém as palavras obrigatórias.',
-    'contains' => 'O :attribute contém palavras proibidas: :words.',
+    'not_contains' => 'O :attribute não contém ao menos uma das palavras obrigatórias descritas aqui: /required_words',
+    'contains' => 'O :attribute contém palavras proibidas: :words. /denied_words',
 
     /*
     |--------------------------------------------------------------------------

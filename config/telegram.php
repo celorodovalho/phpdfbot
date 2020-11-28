@@ -114,6 +114,8 @@ return [
 //        App\Commands\HelpCommand::class,
 //        App\Commands\RulesCommand::class,
         App\Commands\OptionsCommand::class,
+        App\Commands\RequiredWordsCommand::class,
+        App\Commands\DeniedWordsCommand::class,
     ],
 
     /*
