@@ -121,7 +121,7 @@ class OpportunityRepositoryEloquent extends BaseRepository implements Opportunit
             }
 
             if (filled($annotations)) {
-                $annotations = "\nTranscrição das imagens:\n" . $annotations;
+                $annotations = "\nTranscrição:\n" . $annotations;
             }
         }
 
