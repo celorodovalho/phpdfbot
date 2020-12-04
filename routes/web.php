@@ -40,12 +40,12 @@ Route::namespace('Web')
 //        Route::post('opportunity', 'OpportunityController@store')->name('opportunity.store');
         Route::get('opportunity/{opportunity}/rejected', 'OpportunityController@rejected')->name('opportunity.rejected');
 
-        Route::post('send', 'OpportunityController@sendMessage');
-        Route::get('valid', 'TestController@testValidation');
-        Route::get('test', 'TestController@testCode');
-        Route::get('notification', 'TestController@testNotification');
-        Route::get('title', 'TestController@testTitle');
-        Route::get('madeline', 'TestController@testMadeline');
+//        Route::post('send', 'OpportunityController@sendMessage');
+//        Route::get('valid', 'TestController@testValidation');
+//        Route::get('test', 'TestController@testCode');
+//        Route::get('notification', 'TestController@testNotification');
+//        Route::get('title', 'TestController@testTitle');
+//        Route::get('madeline', 'TestController@testMadeline');
     });
 
 Route::namespace('Bot')
