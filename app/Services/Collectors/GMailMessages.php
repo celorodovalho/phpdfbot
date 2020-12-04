@@ -220,7 +220,7 @@ class GMailMessages implements CollectorInterface
 
         $messageService->add($fromTo, 'q', false);
         $messageService->add('is:unread', 'q', false);
-        $messageService->add('newer_than:2d', 'q', false);
+        $messageService->add('newer_than:7d', 'q', false);
 
         try {
             $messages = $messageService->preload()->all();
