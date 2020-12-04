@@ -129,9 +129,9 @@ class Opportunity extends Model implements Transformable
     {
         return md5(
             $this->description
-            . $this->files->toJson()
-            . $this->emails->toJson()
-            . $this->urls->toJson()
+            . ($this->files ? $this->files->toJson() : '')
+            . ($this->emails ? $this->emails->toJson() : '')
+            . ($this->urls ? $this->urls->toJson() : '')
         );
     }
 
