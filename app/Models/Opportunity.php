@@ -123,6 +123,19 @@ class Opportunity extends Model implements Transformable
     }
 
     /**
+     * @return string
+     */
+    public function toUnique(): string
+    {
+        return md5(
+            $this->description
+            . $this->files->toJson()
+            . $this->emails->toJson()
+            . $this->urls->toJson()
+        );
+    }
+
+    /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function notification()

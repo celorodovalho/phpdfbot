@@ -133,7 +133,7 @@ class GMailMessages implements CollectorInterface
             }
 
             if (filled($annotations)) {
-                $annotations = "\nTranscrição das imagens:\n" . $annotations;
+                $annotations = "\nTranscrição:\n" . $annotations;
             }
        }
 

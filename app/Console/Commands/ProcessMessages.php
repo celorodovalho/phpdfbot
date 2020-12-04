@@ -163,6 +163,10 @@ class ProcessMessages extends Command
             }
         }
 
+        $opportunities = $opportunities->unique(function (Opportunity $opportunity) {
+            return $opportunity->toUnique();
+        });
+
         $opportunities->map(static function (Opportunity $opportunity) {
             $opportunity->save();
         });
