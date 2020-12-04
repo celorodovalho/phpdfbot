@@ -146,7 +146,7 @@ class Opportunity extends Model implements Transformable
     {
         parent::boot();
         static::creating(function (self $model) {
-            $model->original = json_encode($model->toUnique()) . ' ' . json_encode($model->original);
+            $model->origin  = $model->origin->concat(['unique' => $model->toUnique()]);
         });
     }
 }
