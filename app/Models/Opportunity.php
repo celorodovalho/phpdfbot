@@ -128,10 +128,9 @@ class Opportunity extends Model implements Transformable
     public function toUnique(): string
     {
         return md5(
-            $this->description
-            . ($this->files ? $this->files->toJson() : '')
+            filled($this->description) ? $this->description : (($this->files ? $this->files->toJson() : '')
             . ($this->emails ? $this->emails->toJson() : '')
-            . ($this->urls ? $this->urls->toJson() : '')
+            . ($this->urls ? $this->urls->toJson() : ''))
         );
     }
 
@@ -141,5 +140,13 @@ class Opportunity extends Model implements Transformable
     public function notification()
     {
         return $this->hasMany(DatabaseNotification::class, 'model_id', 'id');
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function (self $model) {
+            $model->original = $model->toUnique() . ' ' . $model->original;
+        });
     }
 }
