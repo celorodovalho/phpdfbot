@@ -37,7 +37,7 @@ return [
     'channels' => [
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['daily'],
+            'channels' => ['loggly', 'daily'],
             'ignore_exceptions' => false,
         ],
 
@@ -99,5 +99,10 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
+
+        'loggly' => [
+            'driver' => 'custom',
+            'via' => App\Services\LogglyLogger::class,
+        ]
     ],
 ];

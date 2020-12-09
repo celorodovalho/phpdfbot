@@ -34,4 +34,9 @@ return [
         'token' => env('TELEGRAM_BOT_TOKEN')
     ],
 
+    'loggly' => [
+        'key' => env('LOGGLY_KEY'),
+        'tag' => str_replace(' ', '_', env('APP_NAME') . '_' . env('APP_ENV')),
+    ]
+
 ];
