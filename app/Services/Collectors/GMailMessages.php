@@ -222,6 +222,8 @@ class GMailMessages implements CollectorInterface
         $messageService->add('is:unread', 'q', false);
         $messageService->add('newer_than:7d', 'q', false);
 
+        Log::info('QUERY', [$messageService]);
+
         try {
             $messages = $messageService->preload()->all();
             return $messages->reject(function (Mail $message) {

@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Collection as DatabaseCollection;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Spatie\Emoji\Emoji;
 
 /**
  * Class GroupSummaryOpportunities
@@ -70,7 +71,7 @@ class GroupSummaryOpportunities extends Notification
             $mainChannel = $this->channels->filter(static function ($item) {
                 return $item->main;
             })->first();
-            $listOpportunities = $this->opportunities->map(static function ($opportunity) use ($mainChannel) {
+            /*$listOpportunities = $this->opportunities->map(static function ($opportunity) use ($mainChannel) {
                 return sprintf(
                     '➩ [%s](%s)',
                     Str::of(
@@ -87,20 +88,24 @@ class GroupSummaryOpportunities extends Notification
                     )->trim(' ,'),
                     sprintf('https://t.me/%s/%s', $mainChannel->title, $opportunity->telegram_id)
                 );
-            });
+            });*/
 
             $text = sprintf(
                 "[%s](%s)\n%s\n",
                 '🄿🄷🄿🄳🄵',
                 str_replace('/index.php', '', asset('/img/phpdf.webp')),
-                'Há novas vagas no canal!'
+                sprintf(
+                    'Há %s novas vagas no canal!',
+                    $this->opportunities->count()
+                )
             );
 
+            /*
             $listOpportunities->prepend($text);
 
             $listSize = $listOpportunities->map(static function ($title) {
                 return strlen($title);
-            });
+            });*
 
             $chunkSize = $listSize->sum() >= (BotHelper::TELEGRAM_LIMIT - $listSize->count())
                 ? (int)(BotHelper::TELEGRAM_LIMIT / $listSize->max())
@@ -109,12 +114,20 @@ class GroupSummaryOpportunities extends Notification
                 ->map(static function ($item) use ($listOpportunities) {
                     return $listOpportunities->only($item->keys())->implode("\n");
                 });
+            */
 
-            $telegramMessage->content($listOpportunities->toArray());
+            $telegramMessage->content($text);
 
             foreach ($this->channels as $channel) {
                 $telegramMessage->button($channel->name, 'https://t.me/' . $channel->title);
             }
+
+            $firstOpportunity = $this->opportunities->first();
+
+            $telegramMessage->button(
+                Emoji::openFileFolder() . ' Ver novas vagas',
+                sprintf('https://t.me/%s/%s', $mainChannel->title, $firstOpportunity->telegram_id)
+            );
         }
 
         $telegramMessage->to($group->name);
